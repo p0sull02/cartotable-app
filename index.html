@@ -76,6 +76,10 @@ input[type=range]{width:100%}
 .over .in{max-width:640px;margin:0 auto}
 .choice{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:10px 0;cursor:pointer}
 .choice b{font-size:20px;display:block;margin-bottom:4px}
+#scrBar{position:absolute;left:0;right:0;top:0;height:calc(46px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 6px 0 6px;display:flex;align-items:center;gap:5px;background:var(--bar);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+#scrBar::-webkit-scrollbar{display:none}
+#scrWrap{position:absolute;left:0;right:0;bottom:0;top:calc(46px + env(safe-area-inset-top));overflow:hidden;touch-action:none;background:#000}
+#scrImg{position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;pointer-events:none}
 #toast{position:absolute;left:50%;transform:translateX(-50%);bottom:24px;background:var(--bar);border:1px solid var(--line);border-radius:10px;padding:8px 14px;z-index:30;display:none;max-width:90%}
 @media (max-width:760px){
  #wrap{right:0;bottom:46vh}
@@ -102,6 +106,8 @@ input[type=range]{width:100%}
 <div id="side"><div id="grip"></div><div id="tabs"></div><div id="pane"></div></div>
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
 <div id="modePick" class="over"><div class="in" id="modeIn"></div></div>
+<div id="pcOver" class="over" style="z-index:22"><div class="in" id="pcIn"></div></div>
+<div id="scr" class="over" style="padding:0;background:#000;z-index:25;overflow:hidden"><div id="scrBar"><button class="ib" id="scrClose" title="Back">✕</button><button class="ib" id="scrFit" title="Fit the screen">⤢</button><button class="ib" id="scrDrag" title="One finger drags on the computer">🖱 Drag</button><button class="ib" id="scrKbB" title="Keyboard">⌨</button><button class="ib" id="scrUp" title="Scroll up / zoom in">▲</button><button class="ib" id="scrDn" title="Scroll down / zoom out">▼</button><button class="ib" id="scrEsc">Esc</button><button class="ib" id="scrEnt">Enter</button><button class="ib" id="scrFind" title="Find (Ctrl+K)">🔍</button><button class="ib" id="scrX" title="Close the dialog on top">Close dialog</button><span id="scrMsg" class="mut" style="font-size:12px"></span></div><div id="scrWrap"><img id="scrImg" alt=""></div><input id="scrKb" type="text" autocomplete="off" autocapitalize="off" style="position:absolute;left:-2000px;top:0;width:40px;opacity:0"></div>
 <div id="toast"></div>
 <input type="file" id="pick" style="display:none">
 <script>
@@ -127,7 +133,7 @@ function savedCaves(){return dbDo('readonly',function(s){return s.getAllKeys();}
 // ======================================================================= the cave
 var S,N,X,Y,Z,SH,M,ED,byName,leadAt,tripsAt,depthMax,files={},imgs={},ground=null,G=null,sinks=[];
 var view={az:0,tilt:90,cx:0,cy:0,cz:0,ppm:1}, mode='plan', colour='travel', sel=-1, trip=-1, route=null, W=0,H=0;
-var lay={base:null,baseOp:1,contours:false,cint:10,sinks:false,names:true,leads:true,ents:true,extra:{},ground3d:'see',light:'whole',vex:1,live:0};
+var lay={prefix:store('ct-prefix')=='1',base:null,baseOp:1,contours:false,cint:10,sinks:false,names:true,leads:true,ents:true,extra:{},ground3d:'see',light:'whole',vex:1,live:0};
 var measure={on:false,a:null,b:null}, CAVE=store('ct-mode')=='cave';
 function b64(s){var bin=atob(s),n=bin.length,u=new Uint8Array(n);for(var i=0;i<n;i++)u[i]=bin.charCodeAt(i);return u.buffer;}
 function getFile(name){if(files[name])return Promise.resolve(files[name]);var v=D.files&&D.files[name];
@@ -241,7 +247,12 @@ function worldTransform(){var c=Math.cos(view.az*Math.PI/180),s=Math.sin(view.az
  var e=W/2+p*(-view.cx*c+view.cy*s),f=H/2-p*(-view.cx*s-view.cy*c);return[p*c*dpr,-p*s*dpr,-p*s*dpr,-p*c*dpr,e*dpr,f*dpr];}
 function drawRaster(img,x0,y0,mpp,op){if(!img)return;var t=worldTransform();g.save();g.globalAlpha=op;
  g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);g.transform(mpp,0,0,-mpp,x0,y0);g.imageSmoothingEnabled=true;g.drawImage(img,0,0);g.restore();}
-function paint(){
+var LB=null,LX=0,LY=0;   // labels placed this frame (a 40 px grid of their boxes), and where the last free spot was
+function lbl(n){if(lay.prefix)return n;var k=n.lastIndexOf(':');return k>=0&&k<n.length-1?n.slice(k+1):n;}
+function room(x,y,w,h){if(!LB)LB={};var x0=Math.floor(x/40),x1=Math.floor((x+w)/40),y0=Math.floor(y/40),y1=Math.floor((y+h)/40),i,j,k,l;
+ for(i=x0;i<=x1;i++)for(j=y0;j<=y1;j++){l=LB[i+','+j];if(l)for(k=0;k<l.length;k++){var b=l[k];if(x<b[0]+b[2]+3&&b[0]<x+w+3&&y<b[1]+b[3]&&b[1]<y+h)return false;}}
+ var r=[x,y,w,h];for(i=x0;i<=x1;i++)for(j=y0;j<=y1;j++)(LB[i+','+j]=LB[i+','+j]||[]).push(r);LX=x;LY=y;return true;}
+function paint(){LB={};
  g.setTransform(dpr,0,0,dpr,0,0);g.fillStyle=CAVE?'#07090c':'#121820';g.fillRect(0,0,W,H);var attr=[];
  if(P2.length!=2*N)P2=new Float64Array(2*N);for(var i=0;i<N;i++){var p=proj(X[i],Y[i],Z[i]);P2[2*i]=p[0];P2[2*i+1]=p[1];}
  if(mode=='plan'){var dim=CAVE?0.55:1;
@@ -261,9 +272,11 @@ function paint(){
  if(route&&route.length>1){g.save();g.strokeStyle='#fbbf24';g.lineWidth=lw+2.6;g.setLineDash([9,6]);g.beginPath();g.moveTo(P2[2*route[0]],P2[2*route[0]+1]);for(i=1;i<route.length;i++)g.lineTo(P2[2*route[i]],P2[2*route[i]+1]);g.stroke();g.restore();}
  if(lay.leads){g.fillStyle='#d65fd6';D.leads.forEach(function(l){g.beginPath();g.arc(P2[2*l.s],P2[2*l.s+1],3.4,0,7);g.fill();});}
  if(lay.ents)D.ent.forEach(function(e){var x=P2[2*e],y=P2[2*e+1];g.fillStyle='#2f80ed';g.beginPath();g.moveTo(x,y-9);g.lineTo(x-7,y+4);g.lineTo(x+7,y+4);g.closePath();g.fill();g.strokeStyle='#0e141b';g.lineWidth=1.5;g.stroke();
-  g.fillStyle='#e6ecf2';g.font='600 12px system-ui,sans-serif';g.fillText(S[e][0],x+9,y-6);});
- if(lay.names&&view.ppm>0.55){g.font=(CAVE?'12px':'11px')+' system-ui,sans-serif';g.fillStyle='#c3cdd8';var taken={},n=0;
-  for(i=0;i<N&&n<700;i++){var x=P2[2*i],y=P2[2*i+1];if(x<0||y<0||x>W||y>H)continue;var key=Math.floor(x/64)+','+Math.floor(y/18);if(taken[key])continue;taken[key]=1;n++;g.fillText(S[i][0],x+4,y-3);}}
+  g.fillStyle='#e6ecf2';g.font='600 12px system-ui,sans-serif';var t=lbl(S[e][0]);if(room(x+9,y-18,g.measureText(t).width,15))g.fillText(t,x+9,y-6);});
+ if(lay.names&&view.ppm>0.55){var fs=CAVE?12:11;g.font=fs+'px system-ui,sans-serif';g.fillStyle='#c3cdd8';var n=0;
+  if(sel>=0){var sx=P2[2*sel],sy=P2[2*sel+1],st=lbl(S[sel][0]);if(room(sx+4,sy-3-fs,g.measureText(st).width,fs+3))g.fillText(st,sx+4,sy-3);}
+  for(i=0;i<N&&n<700;i++){if(i==sel)continue;var x=P2[2*i],y=P2[2*i+1];if(x<0||y<0||x>W||y>H)continue;var t=lbl(S[i][0]),w=g.measureText(t).width;
+   if(!room(x+4,y-3-fs,w,fs+3)&&!room(x-4-w,y-3-fs,w,fs+3)&&!room(x+4,y+2,w,fs+3))continue;n++;g.fillText(t,LX,LY+fs);}}
  if(sel>=0){var sx=P2[2*sel],sy=P2[2*sel+1];g.strokeStyle='#fbbf24';g.lineWidth=2.5;g.beginPath();g.arc(sx,sy,9,0,7);g.stroke();
   var h95=S[sel][5];if(h95>0&&mode=='plan'){g.setLineDash([4,4]);g.lineWidth=1.5;g.beginPath();g.arc(sx,sy,Math.max(12,h95*view.ppm),0,7);g.stroke();g.setLineDash([]);}}
  drawMeasure();
@@ -299,9 +312,10 @@ cv.addEventListener('pointerdown',function(e){cv.setPointerCapture(e.pointerId);
  if(ks.length==1)drag={x:e.offsetX,y:e.offsetY,rot:e.shiftKey||e.button==2};else if(ks.length==2){var a=ptrs[ks[0]],b=ptrs[ks[1]];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),ang:Math.atan2(b[1]-a[1],b[0]-a[0]),ppm:view.ppm,az:view.az,mx:(a[0]+b[0])/2,my:(a[1]+b[1])/2};drag=null;}});
 cv.addEventListener('pointermove',function(e){if(!ptrs[e.pointerId])return;ptrs[e.pointerId]=[e.offsetX,e.offsetY];var ks=Object.keys(ptrs);
  if(pinch&&ks.length==2){var a=ptrs[ks[0]],b=ptrs[ks[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;shiftScreen(mx-pinch.mx,my-pinch.my);pinch.mx=mx;pinch.my=my;
-  zoomAt(mx,my,pinch.ppm*d/pinch.d/view.ppm);if(mode=='plan'){var ang=Math.atan2(b[1]-a[1],b[0]-a[0]),da=(ang-pinch.ang)*180/Math.PI;if(Math.abs(da)>10||pinch.rot){pinch.rot=true;rotateAbout(mx,my,pinch.az-da-view.az);}}moved=true;return;}
+  zoomAt(mx,my,pinch.ppm*d/pinch.d/view.ppm);if(mode=='plan'){var ang=Math.atan2(b[1]-a[1],b[0]-a[0]),da=(ang-pinch.ang)*180/Math.PI;if(Math.abs(da)>10||pinch.rot){pinch.rot=true;var pv=pivotPx();rotateAbout(pv?pv[0]:mx,pv?pv[1]:my,pinch.az-da-view.az);}}moved=true;return;}
  if(!drag)return;var dx=e.offsetX-drag.x,dy=e.offsetY-drag.y;if(Math.abs(dx)+Math.abs(dy)>3)moved=true;drag.x=e.offsetX;drag.y=e.offsetY;
- if(drag.rot){view.az=(view.az+dx*0.4+360)%360;}else shiftScreen(dx,dy);draw();});
+ if(drag.rot){var pv=pivotPx()||[W/2,H/2];rotateAbout(pv[0],pv[1],dx*0.4);}else shiftScreen(dx,dy);draw();});
+function pivotPx(){if(sel<0||!P2)return null;var x=P2[2*sel],y=P2[2*sel+1];return x>=0&&y>=0&&x<=W&&y<=H?[x,y]:null;}
 function up(e){var had=!!ptrs[e.pointerId];delete ptrs[e.pointerId];if(Object.keys(ptrs).length<2)pinch=null;if(had&&Object.keys(ptrs).length==0){if(!moved)tap(e.offsetX,e.offsetY);drag=null;}}
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',function(e){delete ptrs[e.pointerId];pinch=null;drag=null;});cv.addEventListener('contextmenu',function(e){e.preventDefault();});
 cv.addEventListener('wheel',function(e){e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.pow(1.0015,-e.deltaY));},{passive:false});
@@ -417,7 +431,7 @@ function layersHtml(){var h='<div class="k">Base map</div>';
  if(D.ground){h+='<div class="k">Ground</div><label class="lab"><input type="checkbox" id="lyC"'+(lay.contours?' checked':'')+'> Contours every <select id="cint" style="margin-left:4px">'+[2,5,10,20,40,100].map(function(v){return'<option'+(v==lay.cint?' selected':'')+'>'+v+'</option>';}).join('')+'</select> ft</label>'+
   '<label class="lab"><input type="checkbox" id="lyS"'+(lay.sinks?' checked':'')+'> Sinks ('+sinks.length+')</label>';}
  var ex=D.rasters.map(function(r,i){return r.base?'':'<label class="lab"><input type="checkbox" data-ex="'+i+'"'+(lay.extra[i]!=null?' checked':'')+'> '+esc(r.name)+'</label>'+(r.kind=='drafted'?'<button class="btn alt" style="padding:2px 10px;margin:0 0 6px 28px" data-dfdel="'+i+'">Remove</button>':'');}).join('');h+='<div class="k">Map layers</div>'+ex+'<div style="margin-top:6px"><button class="btn alt" id="dfAdd">+ Add a drafted map (PDF / .ai)</button></div>';
- h+='<div class="k">Survey</div><label class="lab"><input type="checkbox" id="lyN"'+(lay.names?' checked':'')+'> Station names</label><label class="lab"><input type="checkbox" id="lyL"'+(lay.leads?' checked':'')+'> Leads</label><label class="lab"><input type="checkbox" id="lyE"'+(lay.ents?' checked':'')+'> Entrances</label>';
+ h+='<div class="k">Survey</div><label class="lab"><input type="checkbox" id="lyN"'+(lay.names?' checked':'')+'> Station names</label><label class="lab"><input type="checkbox" id="lyP"'+(lay.prefix?' checked':'')+'> With the survey prefix (BBB903:LT27)</label><label class="lab"><input type="checkbox" id="lyL"'+(lay.leads?' checked':'')+'> Leads</label><label class="lab"><input type="checkbox" id="lyE"'+(lay.ents?' checked':'')+'> Entrances</label>';
  h+='<div class="k">3-D</div><div class="mut" style="font-size:12px">Ground</div><div class="seg" id="g3"><button data-g="off"'+(lay.ground3d=='off'?' class="on"':'')+'>Off</button><button data-g="see"'+(lay.ground3d=='see'?' class="on"':'')+'>See-through</button><button data-g="solid"'+(lay.ground3d=='solid'?' class="on"':'')+'>Solid</button></div>'+
   '<div class="mut" style="font-size:12px;margin-top:8px">Light</div><div class="seg" id="l3"><button data-l="whole"'+(lay.light=='whole'?' class="on"':'')+'>Whole cave</button><button data-l="head"'+(lay.light=='head'?' class="on"':'')+'>Headlamp</button></div>';
  return h;}
@@ -463,7 +477,7 @@ function bind(){var q=function(s){return document.querySelectorAll('#pane '+s);}
  if(e=$('baseOp'))e.oninput=function(){lay.baseOp=+e.value;draw();};
  if(e=$('lyC'))e.onchange=function(){lay.contours=e.checked;draw();};if(e=$('cint'))e.onchange=function(){lay.cint=+e.value;lay.contours=true;$('lyC').checked=true;draw();};
  if(e=$('lyS'))e.onchange=function(){lay.sinks=e.checked;draw();};
- if(e=$('lyN'))e.onchange=function(){lay.names=e.checked;draw();};if(e=$('lyL'))e.onchange=function(){lay.leads=e.checked;draw();};if(e=$('lyE'))e.onchange=function(){lay.ents=e.checked;draw();};
+ if(e=$('lyN'))e.onchange=function(){lay.names=e.checked;draw();};if(e=$('lyP'))e.onchange=function(){lay.prefix=e.checked;store('ct-prefix',e.checked?'1':'');draw();};if(e=$('lyL'))e.onchange=function(){lay.leads=e.checked;draw();};if(e=$('lyE'))e.onchange=function(){lay.ents=e.checked;draw();};
  [].forEach.call(q('[data-ex]'),function(c){c.onchange=function(){if(c.checked)lay.extra[c.dataset.ex]=D.rasters[c.dataset.ex].op||0.8;else delete lay.extra[c.dataset.ex];draw();};});
  [].forEach.call(q('#g3 button'),function(b){b.onclick=function(){lay.ground3d=b.dataset.g;showTab('layers');draw();};});
  [].forEach.call(q('#l3 button'),function(b){b.onclick=function(){lay.light=b.dataset.l;showTab('layers');draw();};});
@@ -477,7 +491,7 @@ function isInstalled(){return /TopsideApp/.test(navigator.userAgent)||(window.ma
 // "click this to install" (Sully, 15 Nov 2026 20:14): one button - Chrome's own install box when the phone offers it, otherwise the
 // exact steps for this phone and browser
 var UA=navigator.userAgent,IOS=/iPhone|iPad|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),ANDROID=/Android/.test(UA);
-function installHtml(id){if(!HOSTED||isInstalled())return'';
+function installHtml(id){if(!HOSTED||isInstalled()||window.TOPSIDE_PC)return'';
  var big='width:100%;font-size:17px;padding:14px;margin:0 0 8px 0;justify-content:center;text-decoration:none';
  // the app itself, downloaded from this site - no store, any browser (Sully, 15 Nov 2026 20:45)
  if(ANDROID)return'<a class="btn" style="'+big+'" href="Topside.apk" download>⬇ Download Topside for Android</a><div class="mut" style="font-size:12.5px;margin:-2px 0 6px">Open the download and tap <b>Install</b>. The first time, Android asks to let your browser install apps - allow it. Play Protect may say it doesn\'t know the developer: tap <b>More details → Install anyway</b>.</div><button class="btn alt" id="'+id+'" style="margin:0 0 10px 0">Or install from Chrome instead</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div>';
@@ -651,7 +665,8 @@ function make3D(){var c=$('gl'),gl=c.getContext('webgl2',{antialias:true,preserv
   if(pn&&ks.length==2){var a=pt[ks[0]],b=pt[ks[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;cam.dist=Math.max(1,pn.dist*pn.d/Math.max(10,d));pan(mx-pn.mx,my-pn.my);pn.mx=mx;pn.my=my;mv=true;draw();return;}
   if(!dr)return;var dx=e.offsetX-dr.x,dy=e.offsetY-dr.y;if(Math.abs(dx)+Math.abs(dy)>3)mv=true;dr.x=e.offsetX;dr.y=e.offsetY;if(dr.pan)pan(dx,dy);else{cam.az=(cam.az-dx*0.4+360)%360;cam.el=Math.max(-89,Math.min(89,cam.el+dy*0.3));}draw();});
  function pan(dx,dy){var m=MV||mats(),s=2*cam.dist*Math.tan(cam.fov*Math.PI/360)/(c.height/dpr);cam.tx-=(m.right[0]*dx-m.up[0]*dy)*s;cam.ty-=(m.right[1]*dx-m.up[1]*dy)*s;cam.tz-=(m.right[2]*dx-m.up[2]*dy)*s;}
- function up3(e){var had=!!pt[e.pointerId];delete pt[e.pointerId];if(Object.keys(pt).length<2)pn=null;if(had&&!Object.keys(pt).length){if(!mv){var i=pick(e.offsetX,e.offsetY);if(i>=0)select(i,false);}dr=null;}}
+ function up3(e){var had=!!pt[e.pointerId];delete pt[e.pointerId];if(Object.keys(pt).length<2)pn=null;if(had&&!Object.keys(pt).length){if(!mv){var i=pick(e.offsetX,e.offsetY);if(i>=0){select(i,false);pivotTo(i);}}dr=null;}}
+ function pivotTo(i){var a=[cam.tx,cam.ty,cam.tz],b=[X[i],Y[i],Z[i]],t0=performance.now();(function step(){var f=Math.min(1,(performance.now()-t0)/260);f=f*f*(3-2*f);cam.tx=a[0]+(b[0]-a[0])*f;cam.ty=a[1]+(b[1]-a[1])*f;cam.tz=a[2]+(b[2]-a[2])*f;draw();if(f<1)requestAnimationFrame(step);})();}
  c.addEventListener('pointerup',up3);c.addEventListener('pointercancel',function(e){delete pt[e.pointerId];pn=null;dr=null;});c.addEventListener('contextmenu',function(e){e.preventDefault();});
  c.addEventListener('wheel',function(e){e.preventDefault();var f=Math.pow(1.0015,e.deltaY),m=MV||mats(),s=2*cam.dist*Math.tan(cam.fov*Math.PI/360)/(c.height/dpr),dx=e.offsetX-c.clientWidth/2,dy=e.offsetY-c.clientHeight/2;
   if(f<1){var k=(1-f);cam.tx+=(m.right[0]*dx-m.up[0]*dy)*s*k;cam.ty+=(m.right[1]*dx-m.up[1]*dy)*s*k;cam.tz+=(m.right[2]*dx-m.up[2]*dy)*s*k;}cam.dist=Math.max(1,cam.dist*f);draw();},{passive:false});
@@ -765,11 +780,12 @@ function pickMode(){$('modeIn').innerHTML=installHtml('mInstall')+'<div class="b
 function homeShow(){var h=installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
  if(D&&D.st)h+='<div class="k">Open now</div><div class="book" id="hCur"><div class="cover"><div class="f">CAVE</div><div class="n" style="font-size:11px;text-align:center;padding:0 3px">'+esc((D.name||'').slice(0,10))+'</div></div><div><div style="font-weight:600">'+esc(D.name)+'</div><div class="mut">'+ft(D.len)+' · published '+esc(D.when)+'</div></div></div>';
  h+='<div class="k">Caves on this device</div><div id="hList" class="mut">…</div>';
- h+='<div class="k">Add a cave</div><button class="btn" id="hOpen">Open a cave file (.ctcave)</button><div class="mut" style="margin-top:6px;font-size:13px">In Topside on the computer: <b>Send to phone</b> puts the cave in your Google Drive / OneDrive / iCloud. Here, tap Open a cave file and pick it from there. The app keeps it - it opens with no signal.</div>';
+ h+='<div class="k">Add a cave</div><button class="btn" id="hOpen">Open a cave file (.ctcave)</button><div class="mut" style="margin-top:6px;font-size:13px">Easiest: on the computer, Topside's first screen has <b>Connect a phone</b> - pair this phone once, then your caves come straight over (My computer, below). Or open a .ctcave file from Drive, Files or a message. The app keeps every cave - they open with no signal.</div>';
+ h+=pcCard();
  h+='<div class="k">Mode</div><button class="btn alt" id="hMode">'+(CAVE?'🔦 In the cave - switch to Topside':'☀ Topside - switch to In the cave')+'</button>';
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';resize();};if(e=$('hOpen'))e.onclick=function(){$('pick').click();};hookInstall('hInstallTop');
- if(e=$('hMode'))e.onclick=function(){setCave(!CAVE);homeShow();};
+ if(e=$('hMode'))e.onclick=function(){setCave(!CAVE);homeShow();};pcHookCard();
  savedCaves().then(function(keys){var L=$('hList');if(!L)return;if(!keys||!keys.length){L.textContent='None yet.';return;}
   L.innerHTML=keys.map(function(k){return'<div class="row" data-k="'+esc(k)+'" style="display:flex;justify-content:space-between;align-items:center"><span class="t">'+esc(k)+'</span><button class="btn alt" data-del="'+esc(k)+'" style="margin:0;padding:4px 9px">Remove</button></div>';}).join('');
   [].forEach.call(L.querySelectorAll('[data-k]'),function(r){r.onclick=function(ev){if(ev.target.dataset.del)return;dbDo('readonly',function(s){return s.get(r.dataset.k);}).then(function(d){if(d)load(d);});};});
@@ -780,8 +796,182 @@ function openCaveText(t){try{var d=JSON.parse(t);if(!d.st)throw new Error('not a
 window.CTopenCaveB64=function(b){try{var bin=atob(b),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);openCaveText(new TextDecoder().decode(u));}catch(x){toast('Couldn\'t open it: '+esc(x.message));}};   // the Android app hands over a shared .ctcave
 $('pick').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){openCaveText(r.result);};r.readAsText(f);e.target.value='';};
 if(HOSTED&&'serviceWorker' in navigator&&location.protocol=='https:')navigator.serviceWorker.register('sw.js').catch(function(){});
+// ======================================================================= my computer: Phone link (Sully, 15 Nov 2026, 21:01)
+// Topside on the home computer, over the Wi-Fi or Tailscale: its caves copied here fresh, Check and Reckon run there, files and notes sent
+// there, and its screen here to use with taps and typing. Pairs once with the 6-digit code Topside shows (File > Phone link); the computer's
+// home and Tailscale addresses are kept, and tried in turn. From the https site only the Android app (or Topside's own copy of this page,
+// served by the computer) can reach a computer on the home network - other browsers are sent to that copy.
+var PC=(function(){try{return JSON.parse(store('ct-pc')||'null');}catch(e){return null;}})(),PCBASE=null,PCVIA='';
+var LOCALPC=!!window.TOPSIDE_PC,INAPP=/TopsideApp/.test(navigator.userAgent),BRIDGE=window.TopsideAndroid&&typeof TopsideAndroid.http=='function';
+function pcSave(){store('ct-pc',PC?JSON.stringify(PC):'');}
+function phoneName(){var m=navigator.userAgent.match(/Android [\d.]+; ([^;)]+)/);return m?m[1].replace(/ Build.*$/,''):IOS?'iPhone or iPad':ANDROID?'Android phone':'Browser';}
+function hostOf(a){a=String(a||'').trim().replace(/^https?:\/\//,'').replace(/\/.*$/,'');if(!a)return'';return /:\d+$/.test(a)?a:a+':8770';}
+function pcCanReach(){return LOCALPC||INAPP||location.protocol=='http:';}
+// one request: fetch, or the Android app's own HTTP when the WebView refuses an http address from the https page
+var bridgeN=0,bridgeCb={},HTTPWAY=null;window.CThttpDone=function(id,status,hdr,b64){var cb=bridgeCb[id];delete bridgeCb[id];if(cb)cb(status,hdr,b64);};
+function rawReq(base,method,path,body,timeout){var url=(base===''?'':'http://'+base)+path,hd={};if(PC&&PC.key)hd['X-Topside-Key']=PC.key;
+ var viaFetch=function(){var ctl=window.AbortController?new AbortController():null,t=ctl?setTimeout(function(){ctl.abort();},timeout||8000):0;
+  return fetch(url,{method:method,headers:hd,body:body,signal:ctl?ctl.signal:undefined,cache:'no-store'}).then(function(r){clearTimeout(t);return r;},function(e){clearTimeout(t);throw e;});};
+ if(!BRIDGE||base===''||HTTPWAY=='fetch')return viaFetch().then(function(r){if(BRIDGE&&base!=='')HTTPWAY='fetch';return r;});
+ var viaBridge=function(){return new Promise(function(ok,no){var id=++bridgeN;bridgeCb[id]=function(st,h,b64){if(st<0)return no(new Error(h||'no answer'));var bin=atob(b64||''),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);var H=JSON.parse(h||'{}');
+   ok({status:st,ok:st>=200&&st<300,headers:{get:function(k){for(var x in H)if(x.toLowerCase()==k.toLowerCase())return H[x];return null;}},text:function(){return Promise.resolve(new TextDecoder().decode(u));},json:function(){return Promise.resolve(JSON.parse(new TextDecoder().decode(u)));},blob:function(){return Promise.resolve(new Blob([u]));}});};
+  var b=body==null?'':typeof body=='string'?btoa(unescape(encodeURIComponent(body))):null;
+  if(b===null&&body instanceof Blob){var fr=new FileReader();fr.onload=function(){TopsideAndroid.http(id,method,url,JSON.stringify(hd),fr.result.split(',')[1]||'',timeout||8000);};fr.readAsDataURL(body);}else TopsideAndroid.http(id,method,url,JSON.stringify(hd),b,timeout||8000);});};
+ // the app: whichever way answers first time is kept (the WebView may refuse http from the https page; the app's own HTTP never does)
+ if(HTTPWAY=='bridge')return viaBridge();
+ return viaFetch().then(function(r){HTTPWAY='fetch';return r;},function(){return viaBridge().then(function(r){HTTPWAY='bridge';return r;});});}
+function pcBases(){if(LOCALPC)return[''];var l=[];if(PCBASE)l.push(PCBASE);(PC&&PC.addrs||[]).forEach(function(a){a=hostOf(a);if(l.indexOf(a)<0)l.push(a);});return l;}
+// tries the address that last worked, then the home addresses, then Tailscale's
+function pcReq(method,path,body,timeout){var bases=pcBases(),i=0;
+ return new Promise(function(ok,no){(function next(err){if(i>=bases.length)return no(err||new Error('no address'));var b=bases[i++];
+  rawReq(b,method,path,body,timeout||(i<bases.length?3500:9000)).then(function(r){PCBASE=b;PCVIA=viaOf(b);ok(r);},next);})();});}
+function viaOf(b){return b===''?'Wi-Fi':(PC&&PC.ts||[]).some(function(t){return hostOf(t)==b;})||/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(b)?'Tailscale':'Wi-Fi';}
+function pcJson(method,path,body,timeout){return pcReq(method,path,body,timeout).then(function(r){return r.json().catch(function(){return{};}).then(function(j){if(!r.ok)throw new Error(j.error||('the computer answered '+r.status));return j;});});}
+function pcPair(base,code){var hd={'Content-Type':'application/json'};PC=null;
+ return rawReq(base,'POST','/api/pair',JSON.stringify({code:String(code).replace(/\D/g,''),phone:phoneName()}),9000).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'pairing failed');return j;});})
+  .then(function(j){PC={name:j.name,key:j.key,addrs:base===''?[]:[base],ts:[]};PCBASE=base;pcSave();return pcHello();});}
+function pcHello(){return pcJson('GET','/api/hello').then(function(h){if(PC&&!LOCALPC){var port=h.port||8770,w=(h.wifi||[]).map(function(a){return a+':'+port;}),t=(h.tailscale||[]).map(function(a){return a+':'+port;});
+  var keep=(PC.addrs||[]).filter(function(a){return w.indexOf(a)<0&&t.indexOf(a)<0&&(PC.ts||[]).indexOf(a)<0;});PC.addrs=keep.concat(w).concat(t);PC.ts=t;PC.name=h.name;pcSave();}return h;});}
+function pcOver(html){var o=$('pcOver');$('pcIn').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><button class="ib" id="pcBack">←</button><div class="big" style="margin:0">'+(PC?esc(PC.name):'My computer')+'</div></div>'+html;o.style.display='block';$('pcBack').onclick=function(){o.style.display='none';};o.scrollTop=0;}
+// ---- the card on Home
+function pcCard(){if(!HOSTED&&!LOCALPC)return'';
+ if(!PC)return'<div class="k">My computer</div><div class="card"><b>Use Topside on your computer from here</b><div class="mut">Copy its caves onto this phone, run Check and Reckon there, send it files and notes, and see and use its screen - at home on the Wi-Fi, or anywhere with Tailscale.</div><button class="btn" id="pcGo">Connect to my computer</button><button class="btn alt" id="pcTs">Away from home (Tailscale)</button></div>';
+ return'<div class="k">My computer</div><div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>💻 '+esc(PC.name)+'</b><span class="chip" id="pcState" style="background:#3a4756;color:#e6ecf2">checking…</span></div>'+
+  '<div id="pcInbox"></div><button class="btn" id="pcCaves">Caves on the computer</button><button class="btn alt" id="pcScreen">Use its screen</button><button class="btn alt" id="pcSend">Send files or a note</button><button class="btn alt" id="pcMore">⋯</button></div>';}
+function pcHookCard(){var e;if(e=$('pcGo'))e.onclick=pcConnect;if(e=$('pcTs'))e.onclick=pcTailscale;if(e=$('pcCaves'))e.onclick=pcCaves;if(e=$('pcScreen'))e.onclick=pcScreen;if(e=$('pcSend'))e.onclick=pcSend;if(e=$('pcMore'))e.onclick=pcSettings;
+ if(PC&&$('pcState'))pcHello().then(function(h){pcInbox();var s=$('pcState');if(s){s.textContent='Connected · '+PCVIA+(h&&h.in?' · '+h.in:'');s.style.background='#1A9850';s.style.color='#fff';}},function(){var s=$('pcState');if(s){s.textContent='Not reachable';s.style.background='#b7791f';s.style.color='#fff';}});}
+// ---- things sent from the computer (CartoTable > Phone), waiting there until taken
+var INBOX=[],inboxSeen='';
+function pcInbox(){if(!PC||!(pcCanReach()))return Promise.resolve([]);return pcJson('GET','/api/inbox',null,6000).then(function(l){INBOX=l||[];var b=$('pcInbox');if(b)b.innerHTML=inboxHtml();hookInbox();
+  var sig=INBOX.map(function(i){return i.id;}).join(',');if(INBOX.length&&sig!=inboxSeen&&$('home').style.display!='block')toast('💻 '+esc(PC.name)+' sent '+(INBOX.length==1?esc(INBOX[0].title):INBOX.length+' things')+' - <a href="#" id="tInbox" style="color:var(--accent)">take '+(INBOX.length==1?'it':'them')+'</a>',9000);inboxSeen=sig;var t=$('tInbox');if(t)t.onclick=function(e){e.preventDefault();homeShow();};return INBOX;},function(){return[];});}
+function inboxHtml(){if(!INBOX.length)return'';return'<div class="card" style="border-color:var(--accent);margin:8px 0"><b>Sent from '+esc(PC.name)+'</b>'+INBOX.map(function(i){return'<div class="row" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><div class="t">'+(i.cave?'🗺 ':'📄 ')+esc(i.title)+'</div><div class="s">'+(i.bytes/1048576).toFixed(1)+' MB · '+esc(i.when)+'</div></div><button class="btn" data-take="'+esc(i.id)+'" style="margin:0">Take it</button></div>';}).join('')+'</div>';}
+function hookInbox(){[].forEach.call(document.querySelectorAll('[data-take]'),function(b){b.onclick=function(){var it=INBOX.filter(function(x){return x.id==b.dataset.take;})[0];if(!it)return;b.disabled=true;b.textContent='Bringing it over…';
+  pcReq('GET','/api/inboxfile?id='+encodeURIComponent(it.id),null,180000).then(function(r){if(!r.ok)throw new Error('it\'s no longer waiting on the computer');return it.cave?r.text():r.blob();}).then(function(d){
+   pcReq('POST','/api/inboxdone?id='+encodeURIComponent(it.id),'').catch(function(){});INBOX=INBOX.filter(function(x){return x.id!=it.id;});
+   if(it.cave){$('home').style.display='none';openCaveText(d);toast(esc(it.title)+' is on this phone - it opens with no signal');}else{save(it.name,d,it.type);var bb=$('pcInbox');if(bb)bb.innerHTML=inboxHtml();hookInbox();}}).catch(function(x){b.disabled=false;b.textContent='Take it';toast(esc(x.message),6000);});};});}
+setInterval(function(){if(PC&&document.visibilityState=='visible')pcInbox();},30000);
+document.addEventListener('visibilitychange',function(){if(PC&&document.visibilityState=='visible')pcInbox();});
+// ---- connecting
+function pcConnect(){var h='<p>On the computer: open <b>Topside</b> → <b>CartoTable</b> → <b>File</b> → <b>Phone link</b> and tick <b>Phone link is on</b>. It shows a QR code and a 6-digit code.</p>';
+ if(LOCALPC)h+='<div class="k">Code from the computer</div><input type="text" id="pcCode" inputmode="numeric" placeholder="123 456" style="width:100%;font-size:20px;padding:12px;letter-spacing:.1em"><button class="btn" id="pcOk">Connect</button>';
+ else{h+='<p class="mut">Easiest: scan the QR code with this phone\'s camera. Or:</p>';
+  if(BRIDGE)h+='<button class="btn alt" id="pcFind">🔎 Find it on this Wi-Fi</button><div id="pcFound"></div>';
+  h+='<div class="k">The computer\'s address</div><input type="text" id="pcAddr" placeholder="192.168.1.20 or desktop-name" autocapitalize="none" style="width:100%;font-size:16px;padding:11px" value="'+esc(store('ct-pc-last')||'')+'"><div class="mut" style="font-size:12.5px">Topside shows it under Addresses in Phone link.</div>'+
+   '<div class="k">Code from the computer</div><input type="text" id="pcCode" inputmode="numeric" placeholder="123 456" style="width:100%;font-size:20px;padding:11px;letter-spacing:.1em"><button class="btn" id="pcOk">Connect</button>';
+  if(!pcCanReach())h+='<div class="card mut" style="font-size:13px">This browser can\'t talk to a computer on your home network from this website, so Connect opens Topside\'s own copy of this app, served by the computer. '+(ANDROID?'The <b>Topside app</b> (Download Topside for Android, on Home) connects straight from here.':IOS?'On iPhone it opens in Safari - tap Share → <b>Add to Home Screen</b> there to keep a button for it.':'')+'</div>';}
+ h+='<div class="k">Away from home</div><p class="mut">With Tailscale on the computer and this phone, the same connection works anywhere with signal. <a href="#" id="pcTs2">How to set it up</a></p><div id="pcMsg" class="mut"></div>';
+ pcOver(h);var e;if(e=$('pcTs2'))e.onclick=function(ev){ev.preventDefault();pcTailscale();};
+ if(e=$('pcFind'))e.onclick=function(){$('pcFound').innerHTML='<p class="mut">Looking…</p>';window.CTfound=function(list){var f=$('pcFound');if(!f)return;f.innerHTML=list.length?list.map(function(c){return'<div class="row" data-a="'+esc(c.addr+':'+c.port)+'"><div class="t">💻 '+esc(c.name)+'</div><div class="s">'+esc(c.addr)+'</div></div>';}).join(''):'<p class="mut">No Topside answered on this Wi-Fi. Is Phone link on, and is the phone on the same Wi-Fi? Type the address instead.</p>';
+   [].forEach.call(f.querySelectorAll('[data-a]'),function(r){r.onclick=function(){$('pcAddr').value=r.dataset.a;$('pcCode').focus();};});};TopsideAndroid.discover();};
+ $('pcOk').onclick=function(){var code=($('pcCode').value||'').replace(/\D/g,''),addr=LOCALPC?'':hostOf($('pcAddr')&&$('pcAddr').value);if(code.length!=6){$('pcMsg').textContent='The code is 6 digits.';return;}if(!LOCALPC&&!addr){$('pcMsg').textContent='Type the computer\'s address.';return;}
+  if(!LOCALPC)store('ct-pc-last',addr);
+  if(!pcCanReach()){location.href='http://'+addr+'/?p='+code;return;}
+  $('pcMsg').textContent='Connecting…';pcPair(addr,code).then(function(){$('pcOver').style.display='none';toast('Connected to '+esc(PC.name));homeShow();},function(x){$('pcMsg').textContent=(x.name=='AbortError'||/fetch|network|Failed/i.test(x.message))?'No answer from '+addr+'. Is the computer on with Phone link on, and this phone on the same Wi-Fi (or Tailscale on)?':x.message;});};}
+// a QR code from Topside opens this page with ?link=address&p=code&n=name
+function pcFromUrl(){var q=new URLSearchParams(location.search),p=q.get('p'),l=q.get('link'),n=q.get('n')||'your computer';if(!p)return;history.replaceState(null,'',location.pathname);
+ if(LOCALPC){pcPair('',p).then(function(){toast('Connected to '+esc(PC.name));homeShow();},function(x){toast(esc(x.message),6000);});return;}
+ if(!l)return;
+ if(pcCanReach()){toast('Connecting to '+esc(n)+'…',20000);pcPair(hostOf(l),p).then(function(){toast('Connected to '+esc(PC.name));homeShow();},function(x){toast('Couldn\'t connect: '+esc(x.message),8000);});return;}
+ var direct='http://'+hostOf(l)+'/?p='+encodeURIComponent(p);
+ var h='<p>Topside on <b>'+esc(n)+'</b> asked this phone to connect.</p>';
+ if(ANDROID)h+='<div class="k">1 · Get the Topside app</div><a class="btn" style="text-decoration:none" href="Topside.apk" download>⬇ Download Topside for Android</a><p class="mut" style="font-size:13px">Open the download and tap <b>Install</b>. The first time, Android asks to let this browser install apps - allow it. If Play Protect says it doesn\'t know the app: <b>More details → Install anyway</b>. Already have it? Skip to 2.</p>'+
+  '<div class="k">2 · Connect</div><a class="btn" style="text-decoration:none" href="intent://link?h='+encodeURIComponent(hostOf(l))+'&p='+encodeURIComponent(p)+'&n='+encodeURIComponent(n)+'#Intent;scheme=topside;package=org.tacheo.topside;end">Open in the Topside app</a><p class="mut" style="font-size:13px">Or scan the code on the computer again - it opens the app straight away now.</p>'+
+  '<a class="btn alt" style="text-decoration:none" href="'+esc(direct)+'">Use it in this browser instead</a>';
+ else h+='<a class="btn" style="text-decoration:none" href="'+esc(direct)+'">Continue</a><p class="mut" style="font-size:13px">That opens Topside from your computer (this phone has to be on the same Wi-Fi, or on Tailscale).'+(IOS?' Then tap <b>Share</b> → <b>Add to Home Screen</b> there - that button is your Topside app for this computer.':'')+'</p>';
+ pcOver(h);}
+// ---- caves on the computer
+function pcCaves(){pcOver('<p class="mut">Asking the computer…</p>');pcHello().then(function(h){savedCaves().then(function(here){
+  var c=h.caves||[];if(!c.length){pcOver('<p class="mut">Topside on the computer hasn\'t opened any caves yet.</p>');return;}
+  pcOver('<p class="mut" style="margin-top:0">Connected over '+esc(PCVIA)+'. '+(h.cloud?'Kept-up-to-date caves go to '+esc(h.cloud)+'.':'')+'</p>'+c.map(function(v,i){var on=here.indexOf(v.name)>=0;
+   return'<div class="card"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(v.name)+'</b>'+(v.open?'<span class="chip" style="background:#2f80ed;color:#fff">open on the computer</span>':'')+'</div><div class="mut" style="font-size:12.5px">'+esc(v.file)+' · changed '+esc(v.when)+(v.headline?' · '+esc(v.headline):'')+(on?' · <b style="color:var(--ink)">on this phone</b>':'')+'</div>'+
+    '<button class="btn" data-copy="'+i+'">'+(on?'Copy again (newer)':'Copy to this phone')+'</button><button class="btn alt" data-check="'+i+'">Check</button><button class="btn alt" data-reckon="'+i+'">Reckon</button>'+
+    '<details style="margin-top:6px"><summary class="mut" style="cursor:pointer">Options</summary><label class="lab"><input type="checkbox" id="pcC'+i+'"> With the true coordinates (GPS, GPX, live maps) - only on your own phone</label><label class="lab"><input type="checkbox" id="pcI'+i+'"> With aerial imagery and the topo map (bigger, slower)</label>'+
+    '<label class="lab"><input type="checkbox" id="pcS'+i+'"'+(v.sync?' checked':'')+'> Keep it up to date in the cloud drive'+(h.cloud?' ('+esc(h.cloud)+')':'')+' - for when the computer is off</label></details></div>';}).join(''));
+  [].forEach.call(document.querySelectorAll('#pcIn [data-copy]'),function(b){b.onclick=function(){var v=c[b.dataset.copy],i=b.dataset.copy;pcJob('cave',v,'&coords='+($('pcC'+i).checked?1:0)+'&imagery='+($('pcI'+i).checked?1:0));};});
+  [].forEach.call(document.querySelectorAll('#pcIn [data-check]'),function(b){b.onclick=function(){pcJob('check',c[b.dataset.check],'');};});
+  [].forEach.call(document.querySelectorAll('#pcIn [data-reckon]'),function(b){b.onclick=function(){pcJob('reckon',c[b.dataset.reckon],'');};});
+  c.forEach(function(v,i){var s=$('pcS'+i);if(s)s.onchange=function(){pcJson('POST','/api/sync?id='+encodeURIComponent(v.id)+'&on='+(s.checked?1:0)+'&coords='+($('pcC'+i).checked?1:0)).then(function(r){toast(s.checked?'The computer keeps '+esc(v.name)+' up to date in '+esc(r.folder||'the cloud drive'):'No longer kept up to date');},function(x){s.checked=!s.checked;toast(esc(x.message),6000);});};});});},
+  function(x){pcOver('<p>Can\'t reach <b>'+esc(PC.name)+'</b>.</p><p class="mut">'+esc(x.message)+'</p><p class="mut">Is the computer on and awake, with Topside open and Phone link on? Away from home, Tailscale has to be on here and on the computer.</p><button class="btn" id="pcRetry">Try again</button><button class="btn alt" id="pcTs3">Tailscale help</button>');$('pcRetry').onclick=pcCaves;$('pcTs3').onclick=pcTailscale;});}
+function pcJob(kind,v,extra){pcOver('<div class="big">'+esc(v.name)+'</div><div id="jbT" class="mut">Asking the computer…</div><div style="height:8px;background:var(--line);border-radius:4px;margin:10px 0;overflow:hidden"><div id="jbB" style="height:100%;width:2%;background:var(--accent);transition:width .3s"></div></div><div id="jbR"></div>');
+ pcJson('POST','/api/run?kind='+kind+'&id='+encodeURIComponent(v.id)+extra).then(function(j){var id=j.id;(function poll(){pcJson('GET','/api/job?id='+id,null,15000).then(function(j){if(!$('jbT'))return;$('jbT').textContent=j.text+(j.seconds>5?' ('+j.seconds+' s)':'');$('jbB').style.width=Math.round(100*j.progress)+'%';
+   if(j.state=='running')return setTimeout(poll,900);if(j.state=='error')throw new Error(j.error);
+   if(kind=='cave'){$('jbT').textContent='Bringing it over ('+(j.bytes/1048576).toFixed(1)+' MB)…';return pcReq('GET','/api/jobfile?id='+id,null,120000).then(function(r){return r.text();}).then(function(t){$('pcOver').style.display='none';$('home').style.display='none';openCaveText(t);toast(esc(v.name)+' is on this phone - it opens with no signal');});}
+   $('jbR').innerHTML=kind=='check'?checkHtml(j.result):reckonHtml(j.result);}).catch(function(x){if($('jbT'))$('jbT').innerHTML='<b>'+esc(x.message)+'</b>';});})();},function(x){$('jbT').innerHTML='<b>'+esc(x.message)+'</b>';});}
+function checkHtml(r){var h='<div class="card"><b>'+esc(r.headline)+'</b><div class="mut">'+ft(r.metres)+' in '+r.shots+' shots · '+r.stations+' stations</div></div>';
+ h+='<div class="k">'+(r.problemCount?r.problemCount+' thing'+(r.problemCount==1?'':'s')+' to look at':'Nothing to look at')+'</div>'+r.problems.map(function(f){return'<details class="row"><summary class="t">'+esc(f.title)+'</summary><div class="s" style="white-space:pre-wrap">'+esc((f.where?f.where+'\n':'')+f.detail)+'</div></details>';}).join('');
+ if(r.noteCount)h+='<div class="k">'+r.noteCount+' note'+(r.noteCount==1?'':'s')+'</div>'+r.notes.map(function(f){return'<details class="row"><summary class="t" style="font-weight:400">'+esc(f.title)+'</summary><div class="s" style="white-space:pre-wrap">'+esc((f.where?f.where+'\n':'')+f.detail)+'</div></details>';}).join('');
+ if(r.pending)h+='<p class="mut">The slowest checks are still running on the computer - look again in a few minutes.</p>';return h;}
+function reckonHtml(r){if(r.skipped)return'<div class="card">'+esc(r.skipped)+'</div>';var h='<div class="card"><b>'+esc(r.summary||'')+'</b>'+(r.quality?'<div class="mut">'+esc(r.quality)+'</div>':'')+'</div><div class="k">'+r.serious+' to fix or check · '+r.count+' in all</div>';
+ return h+r.items.map(function(i){var c=i.sev=='error'?'#d64545':i.sev=='check'?'#d69e2e':'#6b7785';return'<details class="row"><summary class="t"><span class="dot" style="background:'+c+'"></span>'+esc(i.title)+'</summary><div class="s" style="white-space:pre-wrap">'+esc((i.file?i.file+(i.line?':'+i.line:'')+'\n':'')+(i.detail||''))+'</div></details>';}).join('');}
+// ---- send files and notes
+function pcSend(){pcOver('<p class="mut" style="margin-top:0">They go to the computer\'s <b>Documents\\Topside\\From phone</b> folder, a folder for each day.</p><div class="k">Files</div><p class="mut" style="font-size:13px">Survey files, photos of book pages, sketches, exports - anything.</p><button class="btn" id="psPick">Choose files…</button><input type="file" id="psFiles" multiple style="display:none"><div id="psList"></div>'+
+  '<div class="k">A note</div><textarea id="psNote" rows="5" style="width:100%;background:var(--bar);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px;font:inherit;font-size:16px" placeholder="'+(D&&D.name?'About '+esc(D.name)+': ':'')+'leads pushed, what to fix, what to bring next time…"></textarea><button class="btn" id="psSendNote">Send the note</button><div id="psMsg" class="mut"></div>');
+ $('psPick').onclick=function(){$('psFiles').click();};
+ $('psFiles').onchange=function(){var fs=[].slice.call($('psFiles').files),L=$('psList');L.innerHTML=fs.map(function(f,i){return'<div class="row"><div class="t">'+esc(f.name)+'</div><div class="s" id="psS'+i+'">'+(f.size/1048576).toFixed(1)+' MB · waiting</div></div>';}).join('');
+  (function next(i){if(i>=fs.length){toast('Sent to '+esc(PC.name));return;}var s=$('psS'+i);s.textContent='sending…';pcJson('POST','/api/upload?name='+encodeURIComponent(fs[i].name),fs[i],180000).then(function(r){s.textContent='✓ saved on the computer';next(i+1);},function(x){s.textContent='✗ '+x.message;next(i+1);});})(0);};
+ $('psSendNote').onclick=function(){var t=$('psNote').value.trim();if(!t)return;$('psMsg').textContent='Sending…';pcJson('POST','/api/note'+(D&&D.name?'?cave='+encodeURIComponent(D.name):''),t).then(function(){$('psNote').value='';$('psMsg').textContent='✓ Saved on the computer';},function(x){$('psMsg').textContent=x.message;});};}
+function pcSettings(){pcOver('<p class="mut" style="margin-top:0">Addresses this phone tries, in turn:</p>'+(PC.addrs||[]).map(function(a){return'<div class="row"><div class="t">'+esc(a)+'</div><div class="s">'+((PC.ts||[]).indexOf(a)>=0?'Tailscale - away from home':'home network')+'</div></div>';}).join('')+
+  '<div class="k">Add an address</div><input type="text" id="psAddr" placeholder="desktop-name or 100.x.y.z" autocapitalize="none" style="width:100%;font-size:16px;padding:10px"><button class="btn alt" id="psAdd">Add</button>'+
+  '<div class="k">Away from home</div><button class="btn alt" id="psTs">Set up Tailscale</button><div class="k">This phone</div><button class="btn alt" id="psForget">Forget this computer</button><p class="mut" style="font-size:13px">To stop it from the computer: Topside → File → Phone link → Forget beside this phone.</p>');
+ $('psAdd').onclick=function(){var a=hostOf($('psAddr').value);if(!a)return;PC.addrs=(PC.addrs||[]).concat([a]);pcSave();pcSettings();};$('psTs').onclick=pcTailscale;
+ $('psForget').onclick=function(){if(!confirm('Forget '+PC.name+' on this phone?'))return;PC=null;PCBASE=null;pcSave();$('pcOver').style.display='none';homeShow();};}
+// ---- the computer's screen, here: taps are clicks, a long press is a right click, two fingers zoom the picture
+function pcScreen(){var o=$('scr'),img=$('scrImg'),wrap=$('scrWrap'),st={on:true,hash:'',w:0,h:0,s:1,tx:0,ty:0,fit:true,drag:false,last:null,timer:0,busy:false,fails:0},want=Math.min(1800,Math.round(Math.max(screen.width,screen.height)*Math.min(2,dpr)));
+ o.style.display='block';$('scrMsg').textContent='Connecting…';
+ function layout(){var W=wrap.clientWidth,H=wrap.clientHeight;if(!st.w)return;if(st.fit){st.s=Math.min(W/st.w,H/st.h);st.tx=(W-st.w*st.s)/2;st.ty=(H-st.h*st.s)/2;}img.style.width=st.w+'px';img.style.height=st.h+'px';img.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+st.s+')';}
+ function at(cx,cy){var r=wrap.getBoundingClientRect();return{x:(cx-r.left-st.tx)/st.s,y:(cy-r.top-st.ty)/st.s};}
+ function send(o2){o2.w=st.w;return pcJson('POST','/api/input',JSON.stringify(o2)).then(function(){soon(120);},function(x){toast(esc(x.message));});}
+ function soon(ms){clearTimeout(st.timer);st.timer=setTimeout(frame,ms);}
+ function frame(){if(!st.on)return;if(st.busy){soon(100);return;}st.busy=true;
+  pcReq('GET','/api/screen?w='+want+'&q='+(PCVIA=='Tailscale'?55:70)+'&last='+st.hash,null,12000).then(function(r){
+   if(r.status==204){st.busy=false;soon(st.fails?600:300);return;}
+   if(!r.ok)return r.json().then(function(j){throw new Error(j.error||'no picture');});
+   var fr=(r.headers.get('X-Frame')||'').split(',')[1]||'';st.hash=r.headers.get('X-Hash')||'';
+   return r.blob().then(function(b){var u=URL.createObjectURL(b);img.onload=function(){URL.revokeObjectURL(u);var p=fr.split('x');var nw=+p[0]||img.naturalWidth,nh=+p[1]||img.naturalHeight;if(nw!=st.w||nh!=st.h){st.w=nw;st.h=nh;st.fit=true;}layout();};img.src=u;$('scrMsg').textContent='';st.fails=0;st.busy=false;soon(250);});})
+  .catch(function(x){st.busy=false;st.fails++;$('scrMsg').textContent=st.fails>2?'No picture: '+x.message:'';soon(Math.min(5000,600*st.fails));});}
+ var P={},pin=null,down=null,lp=0,moved=false,lastTap=0;
+ wrap.onpointerdown=function(e){wrap.setPointerCapture(e.pointerId);P[e.pointerId]=[e.clientX,e.clientY];var k=Object.keys(P);
+  if(k.length==1){down={x:e.clientX,y:e.clientY,t:Date.now(),sent:false};moved=false;clearTimeout(lp);lp=setTimeout(function(){if(down&&!moved){var p=at(down.x,down.y);send({t:'rclick',x:p.x,y:p.y});down=null;if(navigator.vibrate)navigator.vibrate(20);}},550);}
+  else if(k.length==2){clearTimeout(lp);if(down&&down.sent){var q=at(e.clientX,e.clientY);send({t:'up',x:q.x,y:q.y});}down=null;var a=P[k[0]],b=P[k[1]];pin={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:st.s,mx:(a[0]+b[0])/2,my:(a[1]+b[1])/2,tx:st.tx,ty:st.ty};}};
+ wrap.onpointermove=function(e){if(!P[e.pointerId])return;P[e.pointerId]=[e.clientX,e.clientY];var k=Object.keys(P);
+  if(pin&&k.length==2){var a=P[k[0]],b=P[k[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,r=wrap.getBoundingClientRect(),ns=Math.max(0.1,Math.min(6,pin.s*d/pin.d));
+   st.fit=false;st.tx=mx-r.left-(pin.mx-r.left-pin.tx)*ns/pin.s;st.ty=my-r.top-(pin.my-r.top-pin.ty)*ns/pin.s;st.s=ns;layout();return;}
+  if(!down)return;var dx=e.clientX-down.x,dy=e.clientY-down.y;if(!moved&&Math.hypot(dx,dy)<9)return;moved=true;clearTimeout(lp);
+  if(st.drag){var p=at(e.clientX,e.clientY);if(!down.sent){var p0=at(down.x,down.y);down.sent=true;send({t:'down',x:p0.x,y:p0.y});}if(!down.mt||Date.now()-down.mt>60){down.mt=Date.now();send({t:'move',x:p.x,y:p.y});}}
+  else{st.fit=false;st.tx+=e.clientX-(down.lx||down.x);st.ty+=e.clientY-(down.ly||down.y);down.lx=e.clientX;down.ly=e.clientY;layout();}};
+ wrap.onpointerup=function(e){delete P[e.pointerId];clearTimeout(lp);if(Object.keys(P).length<2)pin=null;if(!down)return;var p=at(e.clientX,e.clientY);
+  if(down.sent)send({t:'up',x:p.x,y:p.y});else if(!moved){var now=Date.now(),dbl=st.last&&now-lastTap<350&&Math.hypot(p.x-st.last.x,p.y-st.last.y)<20/st.s;send({t:dbl?'dbl':'click',x:p.x,y:p.y});st.last=p;lastTap=now;}down=null;};
+ wrap.onpointercancel=function(e){delete P[e.pointerId];pin=null;down=null;clearTimeout(lp);};
+ var kb=$('scrKb'),SENT='​​';kb.value=SENT;
+ function flush(){var v=kb.value;if(v.length<SENT.length)send({t:'key',key:'Backspace'});else{var t=v.replace(/​/g,'');if(t)send({t:'text',text:t});}kb.value=SENT;}
+ kb.oninput=function(e){if(e.isComposing)return;flush();};kb.oncompositionend=function(){flush();};
+ kb.onkeydown=function(e){var k={Enter:1,Escape:1,Tab:1,ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1,Delete:1}[e.key];if(k){e.preventDefault();send({t:'key',key:e.key});}};
+ var pt=function(){return st.last||{x:st.w/2,y:st.h/2};},B=function(id,fn){$(id).onclick=fn;};
+ B('scrClose',function(){st.on=false;clearTimeout(st.timer);o.style.display='none';kb.blur();});
+ B('scrFit',function(){st.fit=true;layout();});
+ B('scrDrag',function(){st.drag=!st.drag;$('scrDrag').classList.toggle('on',st.drag);toast(st.drag?'One finger drags on the computer (pans the plot, moves things)':'One finger moves the picture');});
+ B('scrKbB',function(){kb.focus();});
+ B('scrUp',function(){var p=pt();send({t:'wheel',x:p.x,y:p.y,d:360});});B('scrDn',function(){var p=pt();send({t:'wheel',x:p.x,y:p.y,d:-360});});
+ B('scrEsc',function(){send({t:'key',key:'Escape'});});B('scrEnt',function(){send({t:'key',key:'Enter'});});
+ B('scrFind',function(){send({t:'find'});setTimeout(function(){kb.focus();},200);});B('scrX',function(){send({t:'close'});});
+ window.addEventListener('resize',layout);frame();}
+// ---- Tailscale, step by step (the same steps are in Topside: File > Phone link)
+function pcTailscale(){var S=function(t,l){return'<div class="k">'+t+'</div><ol style="padding-left:20px;margin:4px 0">'+l.map(function(x){return'<li style="margin:5px 0">'+x+'</li>';}).join('')+'</ol>';};
+ pcOver('<div class="big">Away from home: Tailscale</div><p>Tailscale is a free app that joins your computer and this phone into a small private network of their own, encrypted end to end. With it running on both, this app reaches Topside on your computer from anywhere with signal, the same as on your home Wi-Fi. Nothing on the computer is opened to the internet, and there\'s nothing to set up on your router. The free Personal plan covers personal use (up to 6 people, any number of devices).</p>'+
+  S('On the computer (Windows 10 or 11)',['Go to <b>tailscale.com/download</b> and download Tailscale for Windows. Run the installer and say <b>Yes</b> when Windows asks for permission.',
+   'Tailscale\'s icon appears in the system tray by the clock (maybe under the <b>^</b> arrow). Click it and choose <b>Log in</b>. Your browser opens: sign in with a Google, Microsoft, GitHub or Apple account. Remember which one - the phone has to use the same account.',
+   'The tray menu now shows the computer as connected, with its name (for example <i>desktop-abc123</i>) and an address starting with <b>100.</b>',
+   'Right-click the tray icon → <b>Preferences</b> → tick <b>Run unattended</b> (say Yes). Tailscale then stays connected after a restart and while you\'re signed out. <b>Allow incoming connections</b> should be ticked too (it is unless someone turned it off).',
+   'Worth doing: at <b>login.tailscale.com</b> → <b>Machines</b>, open the computer\'s <b>⋯</b> menu → <b>Disable key expiry</b>. Otherwise the computer has to sign in to Tailscale again every 180 days - and you\'d find out from here, away from home.',
+   'In Topside: <b>CartoTable</b> → <b>File</b> → <b>Phone link</b>. Tick <b>Phone link is on</b>, <b>Keep this computer from sleeping</b> and <b>Start Topside when I sign in to Windows</b>. Under Addresses it now shows the Tailscale name and address.',
+   'The first time Phone link turns on, Windows asks whether Tacheo Topside may use the network: tick <b>Private networks</b> and <b>Public networks</b>, then <b>Allow</b>.'])+
+  S('On this phone',['Install <b>Tailscale</b> from the '+(IOS?'<b>App Store</b>':ANDROID?'<b>Play Store</b>':'Play Store (Android) or App Store (iPhone)')+'.','Open it and sign in with the <b>same account</b> as the computer.','When it asks to add a VPN configuration, allow it - that\'s how it reaches your computer. It only carries the traffic between your own devices; everything else goes out as normal.','Turn it on (the switch at the top). Your computer shows in its list.'])+
+  S('Connect Topside',['Pair this phone once, at home on the Wi-Fi: Topside\'s Phone link shows a QR code and a 6-digit code. Scan the QR code with the camera, or here: <b>☰</b> → <b>Connect to my computer</b>.','That\'s all. When it pairs, this app learns the computer\'s Tailscale name and address too. Away from home it tries the home address, gets no answer, and uses Tailscale by itself.','Test it: turn this phone\'s Wi-Fi off (mobile data only), leave Tailscale on, and open <b>☰</b> → My computer. It should say <b>Connected · Tailscale</b>.'])+
+  '<div class="k">If it doesn\'t connect</div><ul style="padding-left:20px;margin:4px 0"><li>Is the computer on and awake, with Topside open and Phone link on?</li><li>Does Tailscale show Connected on both, with the same account?</li><li>Works at home but not away: Windows\' firewall. On the computer: Windows Security → Firewall &amp; network protection → Allow an app through firewall → Change settings → <b>Tacheo Topside</b>: tick Private and Public → OK.</li><li>The name doesn\'t work but the 100.x address does: MagicDNS is off. Turn it on at login.tailscale.com → DNS, or add the 100.x address here (☰ → My computer → ⋯).</li><li>The screen view is slow on a weak signal: it sends pictures. Caves, Check, Reckon and Send send very little and work on one bar.</li></ul>'+
+  '<a class="btn" style="text-decoration:none" href="https://tailscale.com/download" target="_blank" rel="noopener">Get Tailscale</a>');}
 // ======================================================================= start
 setTabs();
+setTimeout(pcFromUrl,300);setTimeout(function(){if(PC)pcInbox();},1500);
 if(D&&D.st)load(D).catch(function(e){toast('Couldn\'t load: '+esc(e.message),8000);});
 else{D=null;var last=store('ct-last');   // the app opens on the cave used last, kept on the device
  (last?dbDo('readonly',function(s){return s.get(last);}).catch(function(){return null;}):Promise.resolve(null)).then(function(d){if(d&&d.st)load(d);else{homeShow();if(store('ct-mode')==null)pickMode();}});}
