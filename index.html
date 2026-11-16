@@ -74,6 +74,25 @@ input[type=range]{width:100%}
 #attr{position:absolute;right:10px;bottom:42px;font-size:10px;color:#aab6c2;background:rgba(14,20,27,.7);padding:2px 6px;border-radius:5px;pointer-events:none;max-width:60%}
 .over{position:absolute;inset:0;background:var(--bg);z-index:20;overflow:auto;padding:calc(24px + env(safe-area-inset-top)) 18px 30px;display:none}
 .over .in{max-width:640px;margin:0 auto}
+/* Home tiles (Sully, 16 Nov 2026: "Add tiles to the phone app for a home screen, just organizing it better. Add a tile for uploading pictures of data.") */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+@media(min-width:560px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.tile{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 12px 12px;min-height:112px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;color:var(--ink);font:inherit;-webkit-tap-highlight-color:transparent}
+.tile:active{transform:scale(.98);border-color:var(--accent)}
+.tile .ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;flex:none}
+.tile .tt{font-weight:700;font-size:15px;line-height:1.2}
+.tile .ts{color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tile .badge{position:absolute;top:9px;right:9px;background:var(--amber);color:#111;border-radius:11px;font-size:12px;font-weight:700;padding:1px 8px}
+.tile.wide{grid-column:1/-1;flex-direction:row;align-items:center;min-height:0;gap:12px}
+body.cave .tile{min-height:124px}
+body.cave .tile.wide{min-height:0}
+body.cave .tile .tt{font-size:16px}
+.thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0}
+.thumbs .th{position:relative;aspect-ratio:3/4;border-radius:8px;overflow:hidden;background:#000;border:1px solid var(--line)}
+.thumbs .th img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs .th .x{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:12px;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:14px;line-height:24px;padding:0;cursor:pointer}
+.thumbs .th .st{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:2px 4px;text-align:center}
+.fld{width:100%;font-size:16px;padding:10px;background:var(--bar);color:var(--ink);border:1px solid var(--line);border-radius:8px;font-family:inherit}
 .choice{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:10px 0;cursor:pointer}
 .choice b{font-size:20px;display:block;margin-bottom:4px}
 #scrBar{position:absolute;left:0;right:0;top:0;height:calc(46px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 6px 0 6px;display:flex;align-items:center;gap:5px;background:var(--bar);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;scrollbar-width:none}
@@ -109,6 +128,7 @@ input[type=range]{width:100%}
 <div id="pcOver" class="over" style="z-index:22"><div class="in" id="pcIn"></div></div>
 <div id="scr" class="over" style="padding:0;background:#000;z-index:25;overflow:hidden"><div id="scrBar"><button class="ib" id="scrClose" title="Back">✕</button><button class="ib" id="scrFit" title="Fit the screen">⤢</button><button class="ib" id="scrDrag" title="One finger drags on the computer">🖱 Drag</button><button class="ib" id="scrKbB" title="Keyboard">⌨</button><button class="ib" id="scrUp" title="Scroll up / zoom in">▲</button><button class="ib" id="scrDn" title="Scroll down / zoom out">▼</button><button class="ib" id="scrEsc">Esc</button><button class="ib" id="scrEnt">Enter</button><button class="ib" id="scrFind" title="Find (Ctrl+K)">🔍</button><button class="ib" id="scrX" title="Close the dialog on top">Close dialog</button><span id="scrMsg" class="mut" style="font-size:12px"></span></div><div id="scrWrap"><img id="scrImg" alt=""></div><input id="scrKb" type="text" autocomplete="off" autocapitalize="off" style="position:absolute;left:-2000px;top:0;width:40px;opacity:0"></div>
 <div id="scan" class="over" style="padding:0;background:#000;z-index:26;overflow:hidden"><video id="scanV" muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video><div style="position:absolute;left:50%;top:45%;width:62vmin;height:62vmin;transform:translate(-50%,-50%);border:3px solid rgba(255,255,255,.9);border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.35)"></div><div id="scanMsg" style="position:absolute;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom));color:#fff;text-align:center;font-size:15px;text-shadow:0 1px 3px #000"></div><button class="btn alt" id="scanX" style="position:absolute;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%);width:auto;padding:10px 26px">Cancel</button></div>
+<div id="cam" class="over" style="padding:0;background:#000;z-index:26;overflow:hidden"><video id="camV" muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video><div id="camFlash" style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s"></div><div id="camMsg" style="position:absolute;left:16px;right:16px;top:calc(18px + env(safe-area-inset-top));color:#fff;text-align:center;font-size:15px;text-shadow:0 1px 3px #000"></div><div style="position:absolute;left:0;right:0;bottom:calc(22px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-around"><button class="btn alt" id="camDone" style="margin:0;padding:10px 18px">Done</button><button id="camShot" title="Take the photo" style="width:76px;height:76px;border-radius:38px;border:5px solid #fff;background:rgba(255,255,255,.25);cursor:pointer;padding:0"></button><button class="btn alt" id="camTorch" style="margin:0;padding:10px 14px;visibility:hidden">🔦 Light</button></div></div>
 <div id="toast"></div>
 <input type="file" id="pick" style="display:none">
 <script>
@@ -801,19 +821,110 @@ function pickMode(){$('modeIn').innerHTML=installHtml('mInstall')+'<div class="b
  '<button class="choice" id="mCave"><b>🔦 In the cave</b><span class="mut">Where am I, the way out, how far between two stations, leads nearest you. Big buttons, a dark screen, nothing that needs a signal.</span></button>';
  $('modePick').style.display='block';hookInstall('mInstall');$('mTop').onclick=function(){$('modePick').style.display='none';setCave(false);};$('mCave').onclick=function(){$('modePick').style.display='none';setCave(true);};}
 // ======================================================================= home: the caves on this device
-function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
- if(D&&D.st)h+='<div class="k">Open now</div><div class="book" id="hCur"><div class="cover"><div class="f">CAVE</div><div class="n" style="font-size:11px;text-align:center;padding:0 3px">'+esc((D.name||'').slice(0,10))+'</div></div><div><div style="font-weight:600">'+esc(D.name)+'</div><div class="mut">'+ft(D.len)+' · published '+esc(D.when)+'</div></div></div>';
- h+='<div class="k">Caves on this device</div><div id="hList" class="mut">…</div>';
- h+='<div class="k">Add a cave</div><button class="btn" id="hOpen">Open a cave file (.ctcave)</button><div class="mut" style="margin-top:6px;font-size:13px">Easiest: on the computer, Topside\'s first screen has <b>Connect a phone</b> - pair this phone once, then your caves come straight over (My computer, below). Or open a .ctcave file from Drive, Files or a message. The app keeps every cave - they open with no signal.</div>';
- h+=pcCard();
- h+='<div class="k">Mode</div><button class="btn alt" id="hMode">'+(CAVE?'🔦 In the cave - switch to Topside':'☀ Topside - switch to In the cave')+'</button>';
+// ---- Home: tiles (Sully, 16 Nov 2026, 10:44: "Add tiles to the phone app for a home screen, just organizing it better. Add a tile for
+// uploading pictures of data."). Each tile opens one thing; the details are on the page it opens.
+function tileHtml(id,ic,bg,title,sub,badge,wide){return'<button class="tile'+(wide?' wide':'')+'" id="'+id+'"><span class="ic" style="background:'+bg+'">'+ic+'</span><span style="min-width:0"><span class="tt" style="display:block">'+title+'</span><span class="ts" id="'+id+'S">'+(sub||'')+'</span></span>'+(badge?'<span class="badge" id="'+id+'B">'+badge+'</span>':'<span class="badge" id="'+id+'B" style="display:none"></span>')+'</button>';}
+function setBadge(id,n){var b=$(id+'B');if(!b)return;b.textContent=n;b.style.display=n?'':'none';}
+function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
+ h+='<div class="tiles">';
+ if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
+ h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
+ h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
+ h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages and sketches, to your computer');
+ if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer');
+ h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!!(HOSTED||LOCALPC));   // wide when it would sit alone
+ h+='</div>';
  $('homeIn').innerHTML=h;$('home').style.display='block';
- var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';resize();};if(e=$('hOpen'))e.onclick=function(){$('pick').click();};hookInstall('hInstallTop');
- if(e=$('hMode'))e.onclick=function(){setCave(!CAVE);homeShow();};pcHookCard();
- savedCaves().then(function(keys){var L=$('hList');if(!L)return;if(!keys||!keys.length){L.textContent='None yet.';return;}
-  L.innerHTML=keys.map(function(k){return'<div class="row" data-k="'+esc(k)+'" style="display:flex;justify-content:space-between;align-items:center"><span class="t">'+esc(k)+'</span><button class="btn alt" data-del="'+esc(k)+'" style="margin:0;padding:4px 9px">Remove</button></div>';}).join('');
-  [].forEach.call(L.querySelectorAll('[data-k]'),function(r){r.onclick=function(ev){if(ev.target.dataset.del)return;dbDo('readonly',function(s){return s.get(r.dataset.k);}).then(function(d){if(d)load(d);});};});
-  [].forEach.call(L.querySelectorAll('[data-del]'),function(b){b.onclick=function(){dbDo('readwrite',function(s){return s.delete(b.dataset.del);}).then(homeShow);};});});}
+ var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';resize();};hookInstall('hInstallTop');
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tPc'))e.onclick=pcSheet;
+ $('hMode').onclick=function(){setCave(!CAVE);homeShow();};
+ savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
+ photoAll().then(function(l){var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
+ if(PC&&$('tPc'))pcHello().then(function(hh){var s=$('tPcS');if(s)s.textContent='Connected · '+PCVIA;return pcInbox().then(function(l){setBadge('tPc',(l||[]).length);if(l&&l.length&&s)s.textContent=l.length+(l.length==1?' thing':' things')+' sent to this phone';});},function(){var s=$('tPcS');if(s)s.textContent='Not reachable right now';});}
+// a page over Home with a back arrow; Home's counts are refreshed on the way back
+function sheet(title,html){var o=$('pcOver');$('pcIn').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><button class="ib" id="pcBack">←</button><div class="big" style="margin:0">'+title+'</div></div>'+html;o.style.display='block';o.scrollTop=0;
+ $('pcBack').onclick=function(){o.style.display='none';if($('home').style.display=='block')homeShow();};}
+function cavesSheet(){sheet('My caves','<div id="hList" class="mut">…</div><button class="btn alt" id="csAdd">＋ Add a cave</button>');$('csAdd').onclick=addSheet;
+ savedCaves().then(function(keys){var L=$('hList');if(!L)return;if(!keys||!keys.length){L.innerHTML='None yet. Add one: a .ctcave file, or straight from your computer.';return;}
+  L.innerHTML=keys.map(function(k){return'<div class="row" data-k="'+esc(k)+'" style="display:flex;justify-content:space-between;align-items:center"><span class="t">'+(D&&D.name==k?'▶ ':'')+esc(k)+'</span><button class="btn alt" data-del="'+esc(k)+'" style="margin:0;padding:4px 9px">Remove</button></div>';}).join('');
+  [].forEach.call(L.querySelectorAll('[data-k]'),function(r){r.onclick=function(ev){if(ev.target.dataset.del)return;dbDo('readonly',function(s){return s.get(r.dataset.k);}).then(function(d){if(d){$('pcOver').style.display='none';load(d);}});};});
+  [].forEach.call(L.querySelectorAll('[data-del]'),function(b){b.onclick=function(){if(!confirm('Remove '+b.dataset.del+' from this phone? (It stays on your computer.)'))return;dbDo('readwrite',function(s){return s.delete(b.dataset.del);}).then(cavesSheet);};});});}
+function addSheet(){sheet('Add a cave','<div class="card"><b>From a file</b><div class="mut">A .ctcave file from Drive, Files, a message or a download.</div><button class="btn" id="asFile">Open a cave file (.ctcave)</button></div>'+
+  ((HOSTED||LOCALPC)?'<div class="card"><b>From your computer</b><div class="mut">'+(PC?'Copy any cave Topside has on '+esc(PC.name)+'.':'Pair this phone with Topside once (Topside\'s first screen > <b>Connect a phone</b>), then your caves come straight over.')+'</div><button class="btn'+(PC?'':' alt')+'" id="asPc">'+(PC?'Caves on '+esc(PC.name):'Connect to my computer')+'</button></div>':'')+
+  '<p class="mut" style="font-size:13px">The app keeps every cave you open - they work with no signal.</p>');
+ $('asFile').onclick=function(){$('pick').click();};var e;if(e=$('asPc'))e.onclick=function(){if(PC)pcCaves();else pcSheet();};}
+function pcSheet(){sheet(PC?esc(PC.name):'My computer',pcCard().replace('<div class="k">My computer</div>',''));pcHookCard();}
+// ---- Data photos (Sully, 16 Nov 2026: "Add a tile for uploading pictures of data."): photos of book pages, sketches and anything else,
+// taken here (the app's own camera, back lens, the light on if wanted) or picked from the phone. Each is named for the cave, the trip
+// and what it is ("Fisher Ridge - 2026-11-16 - book page 03.jpg"), shrunk to 3,000 px on its long side (plenty for reading the numbers,
+// a few MB at most), and kept on the phone until it reaches the computer - photos taken in the cave wait for signal. Sent ones go to
+// Topside's Documents\Topside\From phone\<day>\<cave> - <trip>\ (a folder per trip, the way CartoTable's book sorter reads them;
+// a Topside before 1.6.104 puts them in the day's folder, names unchanged). Nothing is removed from the phone until the computer has it.
+var PDB=null;
+function pdb(){return new Promise(function(ok,no){if(PDB)return ok(PDB);try{var r=indexedDB.open('ct-photos',1);r.onupgradeneeded=function(){r.result.createObjectStore('p',{keyPath:'id',autoIncrement:true});};r.onsuccess=function(){PDB=r.result;ok(PDB);};r.onerror=function(){no(r.error);};}catch(e){no(e);}});}
+function pdo(mode,fn){return pdb().then(function(d){return new Promise(function(ok,no){var t=d.transaction('p',mode),s=t.objectStore('p'),r=fn(s);t.oncomplete=function(){ok(r&&r.result);};t.onerror=function(){no(t.error);};});});}
+function photoAll(){return pdo('readonly',function(s){return s.getAll();}).then(function(l){return l||[];},function(){return[];});}
+var PKIND={page:['📖','Book pages','book page'],sketch:['✏','Sketches','sketch'],other:['🖼','Other','photo']};
+function photoMeta(){var m=load2('ct-photo-meta')||{};if(!m.cave)m.cave=D&&D.name||'';if(!m.trip||m.day!=today())m.trip=today();m.day=today();if(!PKIND[m.kind])m.kind='page';return m;}
+function load2(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function clean(t){return String(t||'').replace(/[\\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim().slice(0,60);}
+// shrinks to 3,000 px on the long side (photos already smaller are kept as they are)
+function shrink(blob){var MAX=3000;if(!window.createImageBitmap)return Promise.resolve(blob);
+ return createImageBitmap(blob).then(function(bm){var k=Math.min(1,MAX/Math.max(bm.width,bm.height));if(k>=1&&blob.type=='image/jpeg'){bm.close&&bm.close();return blob;}
+  var c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);bm.close&&bm.close();
+  return new Promise(function(ok){c.toBlob(function(b){ok(b||blob);},'image/jpeg',0.88);});},function(){return blob;});}
+function photoAdd(blob,m){var base=clean(m.cave)||'Cave',trip=clean(m.trip)||today(),kind=PKIND[m.kind]||PKIND.page,key='ct-photo-n:'+base+'|'+trip+'|'+m.kind,n=(+localStorage.getItem(key)||0)+1;
+ try{localStorage.setItem(key,n);}catch(e){}
+ return shrink(blob).then(function(b){var rec={cave:base,trip:trip,kind:m.kind,n:n,when:Date.now(),blob:b,sent:false,name:base+' - '+trip+' - '+kind[2]+' '+String(n).padStart(2,'0')+'.jpg',folder:base+' - '+trip};
+  return pdo('readwrite',function(s){return s.add(rec);});});}
+function photosShow(){var m=photoMeta();
+ photoAll().then(function(all){var wait=all.filter(function(p){return!p.sent;}).sort(function(a,b){return a.when-b.when;});
+  savedCaves().then(function(keys){keys=keys||[];if(m.cave&&keys.indexOf(m.cave)<0)keys=[m.cave].concat(keys);
+   var opts=keys.map(function(k){return'<option'+(k==m.cave?' selected':'')+'>'+esc(k)+'</option>';}).join('')+'<option value="__new">Another cave…</option>';
+   var h='<p class="mut" style="margin-top:0">Photos of book pages and sketches. They\'re named for the cave and trip, kept on this phone, and go to your computer when you send them'+(PC?' - into Topside\'s <b>From phone</b> folder on '+esc(PC.name):'')+'.</p>'+
+    '<div class="k">Cave</div><select id="phCave" class="fld">'+(keys.length?'':'<option value="" selected>Choose…</option>')+opts+'</select><input id="phCaveNew" class="fld" placeholder="Cave name" style="display:none;margin-top:6px">'+
+    '<div class="k">Trip</div><input id="phTrip" class="fld" value="'+esc(m.trip)+'" placeholder="Trip, or the date">'+
+    '<div class="k">What they are</div><div class="seg" id="phKind" style="display:flex">'+Object.keys(PKIND).map(function(k){return'<button data-k="'+k+'"'+(k==m.kind?' class="on"':'')+' style="flex:1">'+PKIND[k][0]+' '+PKIND[k][1]+'</button>';}).join('')+'</div>'+
+    '<div style="margin-top:8px">'+(canScan()?'<button class="btn" id="phCam">📷 Take photos</button>':'')+'<button class="btn'+(canScan()?' alt':'')+'" id="phPick">🖼 Choose from the phone</button><input type="file" id="phFiles" accept="image/*" multiple style="display:none"></div>'+
+    '<div class="k">Waiting to send ('+wait.length+')</div>'+(wait.length?'<div class="thumbs" id="phThumbs">'+wait.map(function(p){return'<div class="th" data-id="'+p.id+'"><img alt=""><button class="x" data-x="'+p.id+'" title="Remove">✕</button><div class="st" id="phS'+p.id+'">'+esc(PKIND[p.kind]?PKIND[p.kind][2]:'photo')+' '+p.n+'</div></div>';}).join('')+'</div>':'<div class="mut">None - take some, or choose them from the phone.</div>')+
+    (wait.length?(PC?'<button class="btn" id="phSend">Send '+wait.length+' to '+esc(PC.name)+'</button>':'<div class="card"><b>Connect your computer to send them</b><div class="mut">They stay on this phone until then.</div>'+((HOSTED||LOCALPC)?'<button class="btn alt" id="phConn">Connect to my computer</button>':'')+'</div>')+'<button class="btn alt" id="phSave">Save copies on this phone</button>':'')+
+    '<div id="phMsg" class="mut" style="margin-top:6px"></div>';
+   sheet('📷 Data photos',h);
+   // thumbnails from the kept photos
+   wait.forEach(function(p){var th=document.querySelector('.th[data-id="'+p.id+'"] img');if(th){var u=URL.createObjectURL(p.blob);th.src=u;th.onload=function(){setTimeout(function(){URL.revokeObjectURL(u);},1000);};}});
+   function keep(){var c=$('phCave').value;m.cave=c=='__new'?$('phCaveNew').value.trim():c;m.trip=$('phTrip').value.trim()||today();try{localStorage.setItem('ct-photo-meta',JSON.stringify(m));}catch(e){}}
+   $('phCave').onchange=function(){$('phCaveNew').style.display=this.value=='__new'?'block':'none';if(this.value=='__new')$('phCaveNew').focus();keep();};
+   $('phCaveNew').oninput=keep;$('phTrip').oninput=keep;
+   [].forEach.call($('phKind').querySelectorAll('button'),function(b){b.onclick=function(){m.kind=b.dataset.k;[].forEach.call($('phKind').querySelectorAll('button'),function(x){x.classList.toggle('on',x==b);});keep();};});
+   function ready(){keep();if(!clean(m.cave)){toast('Which cave are they from? Choose it first.');$('phCave').focus();return false;}return true;}
+   var e;if(e=$('phCam'))e.onclick=function(){if(!ready())return;camShow(function(blob){return photoAdd(blob,m);},function(n){photosShow();if(n)toast(n+(n==1?' photo':' photos')+' kept on this phone');});};
+   $('phPick').onclick=function(){if(ready())$('phFiles').click();};
+   $('phFiles').onchange=function(){var fs=[].slice.call(this.files);this.value='';if(!fs.length)return;$('phMsg').textContent='Adding '+fs.length+'…';
+    fs.reduce(function(pr,f){return pr.then(function(){return photoAdd(f,m);});},Promise.resolve()).then(function(){photosShow();toast(fs.length+(fs.length==1?' photo':' photos')+' added');},function(x){$('phMsg').textContent='Couldn\'t keep them: '+esc(x.message);});};
+   [].forEach.call(document.querySelectorAll('[data-x]'),function(b){b.onclick=function(ev){ev.stopPropagation();if(!confirm('Remove this photo from the phone? It hasn\'t been sent.'))return;pdo('readwrite',function(s){return s.delete(+b.dataset.x);}).then(photosShow);};});
+   if(e=$('phConn'))e.onclick=pcSheet;
+   if(e=$('phSave'))e.onclick=function(){wait.forEach(function(p,i){setTimeout(function(){save(p.name,p.blob,'image/jpeg');},i*400);});};
+   if(e=$('phSend'))e.onclick=function(){var btn=this;btn.disabled=true;var ok=0,bad=0;$('phMsg').textContent='Sending…';
+    (function next(i){if(i>=wait.length){btn.disabled=false;$('phMsg').innerHTML=ok?'✓ '+ok+' on '+esc(PC.name)+(bad?' · '+bad+' didn\'t go - try again':''):'None went: '+esc(lastErr);if(ok)setTimeout(photosShow,bad?2500:1200);return;}
+     var p=wait[i],st=$('phS'+p.id);if(st)st.textContent='sending…';
+     pcJson('POST','/api/upload?name='+encodeURIComponent(p.name)+'&folder='+encodeURIComponent(p.folder),p.blob,180000).then(function(){ok++;if(st)st.textContent='✓ sent';
+       return pdo('readwrite',function(s){return s.delete(p.id);});},function(x){bad++;lastErr=x.message;if(st)st.textContent='✗ not sent';}).then(function(){next(i+1);});})(0);};
+   var lastErr='';});});}
+// the app's own camera: the back lens, full-size photos where the phone allows (ImageCapture), the light if it has one
+function camShow(onShot,onDone){var o=$('cam'),v=$('camV'),msg=$('camMsg'),stream=null,cap=null,n=0,busy=false,torch=false;
+ o.style.display='block';msg.textContent='Starting the camera…';$('camTorch').style.visibility='hidden';
+ function stop(){if(stream)stream.getTracks().forEach(function(t){t.stop();});o.style.display='none';v.srcObject=null;onDone(n);}
+ $('camDone').onclick=stop;
+ navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:4096},height:{ideal:3072}},audio:false}).then(function(s){stream=s;v.srcObject=s;v.play();
+  var tr=s.getVideoTracks()[0];msg.textContent='Fill the frame with the page, hold still, tap the button.';
+  if(window.ImageCapture)try{cap=new ImageCapture(tr);}catch(e){cap=null;}
+  try{var c=tr.getCapabilities&&tr.getCapabilities();if(c&&c.torch){var tb=$('camTorch');tb.style.visibility='visible';tb.onclick=function(){torch=!torch;tr.applyConstraints({advanced:[{torch:torch}]}).catch(function(){});tb.classList.toggle('on',torch);};}}catch(e){}
+ },function(x){msg.innerHTML='The camera didn\'t start ('+esc(x.name||x.message)+').<br>Allow the camera for Topside in the phone\'s settings, or use <b>Choose from the phone</b>.';});
+ function grab(){if(cap&&cap.takePhoto)return cap.takePhoto().catch(function(){cap=null;return frame();});return frame();}
+ function frame(){var c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);return new Promise(function(ok,no){c.toBlob(function(b){b?ok(b):no(new Error('no picture'));},'image/jpeg',0.92);});}
+ $('camShot').onclick=function(){if(busy||!stream||v.readyState<2)return;busy=true;var f=$('camFlash');f.style.opacity='.8';setTimeout(function(){f.style.opacity='0';},120);if(navigator.vibrate)navigator.vibrate(20);
+  grab().then(onShot).then(function(){n++;msg.textContent=n+(n==1?' photo':' photos')+' kept - take the next, or Done';busy=false;},function(x){msg.textContent='That one didn\'t take ('+esc(x.message)+') - try again';busy=false;});};}
 $('homeBtn').onclick=homeShow;
 function openCaveText(t){try{var d=JSON.parse(t);if(!d.st)throw new Error('not a CartoTable cave file');
   dbDo('readwrite',function(s){return s.put(d,d.name);}).catch(function(){toast('Opened, but this browser won\'t keep it');}).then(function(){load(d);});}catch(x){toast('Couldn\'t open it: '+esc(x.message));}}
@@ -873,7 +984,7 @@ function pcPair(base,code){var hd={'Content-Type':'application/json'};PC=null;
   .then(function(j){PC={name:j.name,key:j.key,addrs:base===''?[]:[base],ts:[]};PCBASE=base;pcSave();return pcHello();});}
 function pcHello(){return pcJson('GET','/api/hello').then(function(h){if(PC&&!LOCALPC){var port=h.port||8770,w=(h.wifi||[]).map(function(a){return a+':'+port;}),t=(h.tailscale||[]).map(function(a){return a+':'+port;});
   var keep=(PC.addrs||[]).filter(function(a){return w.indexOf(a)<0&&t.indexOf(a)<0&&(PC.ts||[]).indexOf(a)<0;});PC.addrs=keep.concat(w).concat(t);PC.ts=t;PC.name=h.name;pcSave();}return h;});}
-function pcOver(html){var o=$('pcOver');$('pcIn').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><button class="ib" id="pcBack">←</button><div class="big" style="margin:0">'+(PC?esc(PC.name):'My computer')+'</div></div>'+html;o.style.display='block';$('pcBack').onclick=function(){o.style.display='none';};o.scrollTop=0;}
+function pcOver(html){sheet(PC?esc(PC.name):'My computer',html);}
 // ---- the card on Home
 function pcCard(){if(!HOSTED&&!LOCALPC)return'';
  if(!PC)return'<div class="k">My computer</div><div class="card"><b>Use Topside on your computer from here</b><div class="mut">Copy its caves onto this phone, run Check and Reckon there, send it files and notes, and see and use its screen - at home on the Wi-Fi, or anywhere with Tailscale.</div>'+(canScan()?'<button class="btn" id="pcScanH">📷 Scan the code on the computer</button><button class="btn alt" id="pcGo">Type the code instead</button>':'<button class="btn" id="pcGo">Connect to my computer</button>')+'<button class="btn alt" id="pcTs">Away from home (Tailscale)</button></div>';
