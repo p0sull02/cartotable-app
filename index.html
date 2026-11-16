@@ -423,7 +423,7 @@ function layersHtml(){var h='<div class="k">Base map</div>';
  return h;}
 // ---- export
 function exportHtml(){var h='<div class="k">Take it with you</div>';
- if(HOSTED&&!isInstalled())h+='<div class="card"><b>Install the app</b><div class="mut">It opens from the home screen like any app and works with no signal.</div><button class="btn" id="xInstall">⬇ Install Topside on this phone</button></div>'+
+ if(HOSTED&&!isInstalled())h+='<div class="card"><b>Install the app</b><div class="mut">It opens from the home screen like any app and works with no signal.</div>'+installHtml('xInstall')+'</div>'+
   '<div class="card"><b>Keep this cave on the phone</b><div class="mut">Opens with no signal'+(D.coords?', with the online imagery for the cave\'s area saved too':'')+'.</div><button class="btn" id="xOffline">Save for offline</button><span id="xOffMsg" class="mut"></span></div>';
  else if(SANDBOX)h+='<div class="card mut">This copy is running inside claude.ai, which blocks downloads and offline saving - the buttons below copy text instead. The CartoTable app (its own website, or installed on the phone) does both.</div>';
  var items=[['xCsv','Leads (CSV)','spreadsheet with travel times'],['xGeo','Cave lines (GeoJSON)','for GIS'+(D.coords?' - longitude/latitude':' - cave-relative metres')],['xPng','This view (PNG)','a picture of the map as it is']];
@@ -473,10 +473,16 @@ function fitTrip(){var xs=0,ys=0,zs=0,n=0,lo=[1e9,1e9],hi=[-1e9,-1e9],first=-1;f
 // ======================================================================= exports
 var installEvt=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;if($('home')&&$('home').style.display=='block')homeShow();if($('modePick')&&$('modePick').style.display=='block')pickMode();});
 window.addEventListener('appinstalled',function(){installEvt=null;toast('Installed - Topside is on your home screen.',6000);if($('home')&&$('home').style.display=='block')homeShow();});
-function isInstalled(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
+function isInstalled(){return /TopsideApp/.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
 // "click this to install" (Sully, 15 Nov 2026 20:14): one button - Chrome's own install box when the phone offers it, otherwise the
 // exact steps for this phone and browser
-function installHtml(id){return HOSTED&&!isInstalled()?'<button class="btn" id="'+id+'" style="width:100%;font-size:17px;padding:14px;margin:0 0 8px 0">⬇ Install Topside on this phone</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div>':'';}
+var UA=navigator.userAgent,IOS=/iPhone|iPad|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),ANDROID=/Android/.test(UA);
+function installHtml(id){if(!HOSTED||isInstalled())return'';
+ var big='width:100%;font-size:17px;padding:14px;margin:0 0 8px 0;justify-content:center;text-decoration:none';
+ // the app itself, downloaded from this site - no store, any browser (Sully, 15 Nov 2026 20:45)
+ if(ANDROID)return'<a class="btn" style="'+big+'" href="Topside.apk" download>⬇ Download Topside for Android</a><div class="mut" style="font-size:12.5px;margin:-2px 0 6px">Open the download and tap <b>Install</b>. The first time, Android asks to let your browser install apps - allow it. Play Protect may say it doesn\'t know the developer: tap <b>More details → Install anyway</b>.</div><button class="btn alt" id="'+id+'" style="margin:0 0 10px 0">Or install from Chrome instead</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div>';
+ if(IOS)return'<a class="btn" style="'+big+'" href="Topside.mobileconfig">⬇ Download Topside for iPhone / iPad</a><div class="mut" style="font-size:12.5px;margin:-2px 0 10px">Tap <b>Allow</b>, then open <b>Settings</b> → <b>Profile Downloaded</b> → <b>Install</b>. Topside appears on your home screen and opens full screen. (Or in Safari: Share → <b>Add to Home Screen</b>.)</div>';
+ return'<button class="btn" id="'+id+'" style="'+big+'">⬇ Install Topside on this device</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div><div class="mut" style="font-size:12.5px;margin:-2px 0 10px">Phones: <a href="Topside.apk" style="color:#7fb0ff">Android app</a> · <a href="Topside.mobileconfig" style="color:#7fb0ff">iPhone / iPad</a></div>';}
 function hookInstall(id){var e=$(id);if(e)e.onclick=function(){doInstall(id);};}
 function doInstall(id){id=id||'hInstallTop';if(installEvt){var ev=installEvt;ev.prompt();ev.userChoice.then(function(){installEvt=null;if($('home').style.display=='block')homeShow();});return;}
  var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua),inApp=/FBAN|FBAV|Instagram|Messenger|Line\/|GSA\/|; wv\)/.test(ua),samsung=/SamsungBrowser/.test(ua),steps;
@@ -485,7 +491,10 @@ function doInstall(id){id=id||'hInstallTop';if(installEvt){var ev=installEvt;ev.
  else if(samsung)steps='Tap the <b>☰</b> menu at the bottom, then <b>Add page to</b> → <b>Home screen</b>.';
  else steps='This installs from <b>Google Chrome</b> itself. Other browsers (Adblock Browser, Brave, Opera, DuckDuckGo…) can only make a bookmark, not an app. Open <b>p0sull02.github.io/cartotable-app</b> in Chrome and tap <b>Install Topside</b> there - Chrome\'s install box opens. If it doesn\'t, use Chrome\'s <b>⋮</b> menu → <b>Install app</b>.';
  var b=$(id+'Help');if(b){b.innerHTML=steps+'<div class="mut" style="margin-top:6px">It then opens from the home screen like any app, and works with no signal.</div>';b.style.display='block';}}
-function save(name,data,mime){if(SANDBOX){if(typeof data=='string'){copyText(data);toast('Downloads are blocked here - copied '+esc(name)+' to the clipboard instead');}else toast('Downloads are blocked inside claude.ai - use the app for files');return;}
+function save(name,data,mime){
+ if(window.TopsideAndroid){var bl=data instanceof Blob?data:new Blob([data],{type:mime||'text/plain'}),fr=new FileReader();   // the Android app saves to Downloads/Topside
+  fr.onload=function(){var r=String(fr.result),b=r.slice(r.indexOf(',')+1);toast(window.TopsideAndroid.save(name,bl.type||'application/octet-stream',b));};fr.readAsDataURL(bl);return;}
+ if(SANDBOX){if(typeof data=='string'){copyText(data);toast('Downloads are blocked here - copied '+esc(name)+' to the clipboard instead');}else toast('Downloads are blocked inside claude.ai - use the app for files');return;}
  var blob=data instanceof Blob?data:new Blob([data],{type:mime||'text/plain'});
  if(navigator.canShare&&/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)){try{var f=new File([blob],name,{type:blob.type});if(navigator.canShare({files:[f]})){navigator.share({files:[f],title:name}).catch(function(){});return;}}catch(e){}}
  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},4000);toast('Saved '+esc(name));}
@@ -493,7 +502,7 @@ function copyText(t){try{navigator.clipboard.writeText(t).then(function(){toast(
  function fallback(){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copied');}catch(x){toast('Couldn\'t copy');}ta.remove();}}
 function safeName(){return(D.name||'cave').replace(/[^\w.-]+/g,'_');}
 function bindExport(){var e,nm=safeName();
- if(e=$('xInstall'))e.onclick=function(){if(installEvt)doInstall();else{homeShow();doInstall('hInstallTop');}};
+ hookInstall('xInstall');
  if(e=$('xOffline'))e.onclick=saveOffline;
  if(e=$('xCsv'))e.onclick=function(){var t='station,kind,size,note,travel_min,feet_in,depth_ft\n'+D.leads.map(function(l){var s=S[l.s];return[s[0],l.kind,l.size,l.text,s[4]>=0?Math.round(s[4]/60):'',Math.round(s[8]/FT),Math.round(s[7]/FT)].map(csv).join(',');}).join('\n');save(nm+'_leads.csv',t,'text/csv');};
  if(e=$('xGeo'))e.onclick=function(){var feats=[];for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];feats.push({type:'Feature',properties:{from:S[a][0],to:S[b][0],trip:D.trips[SH[4*k+3]].n},geometry:{type:'LineString',coordinates:[xyOut(a),xyOut(b)]}});}
@@ -764,8 +773,10 @@ function homeShow(){var h=installHtml('hInstallTop')+'<div style="display:flex;a
   [].forEach.call(L.querySelectorAll('[data-k]'),function(r){r.onclick=function(ev){if(ev.target.dataset.del)return;dbDo('readonly',function(s){return s.get(r.dataset.k);}).then(function(d){if(d)load(d);});};});
   [].forEach.call(L.querySelectorAll('[data-del]'),function(b){b.onclick=function(){dbDo('readwrite',function(s){return s.delete(b.dataset.del);}).then(homeShow);};});});}
 $('homeBtn').onclick=homeShow;
-$('pick').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d.st)throw new Error('not a CartoTable cave file');
-  dbDo('readwrite',function(s){return s.put(d,d.name);}).catch(function(){toast('Opened, but this browser won\'t keep it');}).then(function(){load(d);});}catch(x){toast('Couldn\'t open it: '+esc(x.message));}};r.readAsText(f);e.target.value='';};
+function openCaveText(t){try{var d=JSON.parse(t);if(!d.st)throw new Error('not a CartoTable cave file');
+  dbDo('readwrite',function(s){return s.put(d,d.name);}).catch(function(){toast('Opened, but this browser won\'t keep it');}).then(function(){load(d);});}catch(x){toast('Couldn\'t open it: '+esc(x.message));}}
+window.CTopenCaveB64=function(b){try{var bin=atob(b),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);openCaveText(new TextDecoder().decode(u));}catch(x){toast('Couldn\'t open it: '+esc(x.message));}};   // the Android app hands over a shared .ctcave
+$('pick').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){openCaveText(r.result);};r.readAsText(f);e.target.value='';};
 if(HOSTED&&'serviceWorker' in navigator&&location.protocol=='https:')navigator.serviceWorker.register('sw.js').catch(function(){});
 // ======================================================================= start
 setTabs();
