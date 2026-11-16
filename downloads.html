@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!-- Copyright (C) 2026 Phillip M. Sullivan. All rights reserved. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tacheo Topside - Downloads</title>
+<meta name="description" content="Every Tacheo Topside download in one place: Windows, Mac, Android and iPhone.">
+<link rel="icon" href="icon.svg">
+<style>
+:root{--ink:#e8edf3;--mut:#9aa8b6;--card:#1b2430;--rule:#2a3542;--blue:#2f80ed;--orange:#ff7a1a;--green:#1a9850}
+*{box-sizing:border-box}
+body{margin:0;background:#121820;color:var(--ink);font:16px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:860px;margin:0 auto;padding:26px 18px 60px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+header svg{flex:none}
+h1{font-size:28px;margin:0;line-height:1.1}
+.sub{color:var(--mut);margin:2px 0 0}
+h2{font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:30px 0 10px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:16px 16px 14px}
+.card.here{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+.card h3{margin:0 0 2px;font-size:19px}
+.ver{color:var(--mut);font-size:13.5px;margin:0 0 10px}
+.btn{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;padding:10px 14px;border-radius:10px;margin:2px 6px 6px 0}
+.btn.alt{background:#2a3542}
+.btn.off{background:#2a3542;color:var(--mut);pointer-events:none}
+.steps{color:var(--mut);font-size:13.5px;margin:6px 0 0;padding-left:18px}
+.steps li{margin:2px 0}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;padding:1px 7px;border-radius:99px;background:var(--blue);color:#fff;vertical-align:3px;margin-left:6px}
+a{color:#7fb0ff}
+p.note{color:var(--mut);font-size:14px}
+footer{margin-top:36px;color:var(--mut);font-size:13px;border-top:1px solid var(--rule);padding-top:14px}
+</style></head>
+<body><main>
+<header>
+<svg width="48" height="48" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="5" fill="#ff7a1a"/></svg>
+<div><h1>Tacheo Topside downloads</h1><p class="sub">Tacheo · CartoTable · every download in one place</p></div>
+</header>
+
+<h2>Computer</h2>
+<div class="grid">
+ <div class="card" id="win">
+  <h3>Windows</h3>
+  <p class="ver" id="winVer">Tacheo Topside for Windows 10 and 11</p>
+  <a class="btn" id="winBtn" href="https://github.com/p0sull02/tacheo-topside-releases/releases/latest">⬇ Download for Windows</a>
+  <ol class="steps">
+   <li>Unzip it somewhere you can write to, for example Documents.</li>
+   <li>Run <b>Tacheo Topside.exe</b>. If Windows says it protected your PC: <b>More info → Run anyway</b>.</li>
+   <li>After that Topside finds and installs its own updates.</li>
+  </ol>
+  <p class="note" style="margin:8px 0 0">Microsoft Store version: coming soon.</p>
+ </div>
+ <div class="card" id="mac">
+  <h3>Mac</h3>
+  <p class="ver">Tacheo Topside for macOS (Tacheo pages; CartoTable is Windows-only for now)</p>
+  <a class="btn" href="https://drive.google.com/file/d/1OW5zL2aPHQJ2cS-1p1hs4XIv6Y50FkN8/view">⬇ Apple silicon (M1 and newer)</a>
+  <a class="btn alt" href="https://drive.google.com/file/d/1FHuMDNkUgoX-qhXPqwnjaMdKLzoXYPzj/view">⬇ Intel Mac</a>
+  <ol class="steps">
+   <li>Not sure which? Apple menu → <b>About This Mac</b>: "Chip: Apple" is Apple silicon.</li>
+   <li>Unzip, then the first time <b>right-click → Open</b>, and Open again.</li>
+  </ol>
+ </div>
+</div>
+
+<h2>Phone</h2>
+<div class="grid">
+ <div class="card" id="and">
+  <h3>Android</h3>
+  <p class="ver" id="andVer">Topside phone app</p>
+  <a class="btn" href="Topside.apk" download>⬇ Download for Android</a>
+  <ol class="steps">
+   <li>Open the download and tap <b>Install</b>. The first time, allow your browser to install apps.</li>
+   <li>If Play Protect warns about an unknown developer: <b>More details → Install anyway</b>.</li>
+   <li>Opened this from a message app? Use its menu → <b>Open in Chrome</b> first.</li>
+  </ol>
+ </div>
+ <div class="card" id="ios">
+  <h3>iPhone and iPad</h3>
+  <p class="ver">Topside phone app (home-screen app)</p>
+  <a class="btn" id="iosBtn" href="Topside.mobileconfig">⬇ Download for iPhone / iPad</a>
+  <ol class="steps">
+   <li>Open this page in <b>Safari</b>. Tap <b>Allow</b>.</li>
+   <li><b>Settings → Profile Downloaded → Install</b>. Topside appears on the home screen.</li>
+   <li>Or in Safari: <b>Share → Add to Home Screen</b>.</li>
+  </ol>
+ </div>
+</div>
+<p class="note">The phone app shows your caves' line plots with no signal, leads and notes, sends photos of book pages and sketches to your computer, and connects to Topside on your computer. Updating a Tacheo, calibration reports and diagnostics need Topside on a computer. <a href="./">Open the phone app in this browser</a>.</p>
+
+<h2>Tacheo firmware and manuals</h2>
+<div class="card">
+ <p style="margin:0 0 6px">Unit firmware and the instruction manuals come with Topside, so there's nothing separate to download:</p>
+ <ul class="steps" style="margin:0">
+  <li><b>Firmware:</b> plug the Tacheo in with Topside open, then <b>Updates and Upgrades → Tacheo</b>. Topside keeps the right firmware for each kind of unit.</li>
+  <li><b>Manuals:</b> Topside's <b>Manuals</b> page opens and prints them.</li>
+ </ul>
+</div>
+
+<footer>
+<a href="privacy.html">Privacy policy</a> · Windows downloads also listed at <a href="https://github.com/p0sull02/tacheo-topside-releases">github.com/p0sull02/tacheo-topside-releases</a><br>
+Copyright © 2026 Phillip M. Sullivan. All rights reserved. Please share a link to this page rather than the files themselves.
+</footer>
+</main>
+<script>
+(function(){
+ var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),and=/Android/.test(ua),
+     mac=!ios&&/Macintosh/.test(ua),win=/Windows/.test(ua),here=ios?'ios':and?'and':mac?'mac':win?'win':null;
+ if(here){var c=document.getElementById(here);c.classList.add('here');c.querySelector('h3').insertAdjacentHTML('beforeend','<span class="tag">THIS DEVICE</span>');
+  var g=c.parentNode,sec=g.previousElementSibling;g.insertBefore(c,g.firstChild);
+  if(here=='ios'||here=='and'){var m=document.querySelector('main'),hd=m.querySelector('header');var ph=sec,pg=g,pn=g.nextElementSibling;m.insertBefore(pn,hd.nextSibling);m.insertBefore(pg,hd.nextSibling);m.insertBefore(ph,hd.nextSibling);}}
+ // the newest Windows release, from the file Topside itself reads
+ fetch('https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/latest.txt',{cache:'no-store'}).then(function(r){return r.ok?r.text():null;}).then(function(t){if(!t)return;
+  var v=(t.match(/^version:\s*(\S+)/m)||[])[1],d=(t.match(/^date:\s*(\S+)/m)||[])[1],u=(t.match(/^url:\s*(\S+)/m)||[])[1],s=(t.match(/^size:\s*(\d+)/m)||[])[1];
+  if(v)document.getElementById('winVer').textContent='Tacheo Topside '+v+(d?' · '+d:'')+(s?' · '+Math.round(s/1048576)+' MB':'');
+  if(u&&/^https:\/\/github\.com\/p0sull02\/tacheo-topside-releases\//.test(u))document.getElementById('winBtn').href=u;}).catch(function(){});
+ fetch('version.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.android)document.getElementById('andVer').textContent='Topside phone app '+j.android.versionName;}).catch(function(){});
+ // iPhone: hand Safari the profile as a configuration profile (GitHub Pages labels it a plain download)
+ document.getElementById('iosBtn').onclick=function(ev){if(!ios)return;ev.preventDefault();fetch('Topside.mobileconfig').then(function(r){return r.blob();}).then(function(b){location.href=URL.createObjectURL(new Blob([b],{type:'application/x-apple-aspen-config'}));}).catch(function(){location.href='Topside.mobileconfig';});};
+})();
+</script>
+</body></html>

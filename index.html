@@ -525,7 +525,10 @@ function isInstalled(){return /TopsideApp/.test(navigator.userAgent)||(window.ma
 // "click this to install" (Sully, 15 Nov 2026 20:14): one button - Chrome's own install box when the phone offers it, otherwise the
 // exact steps for this phone and browser
 var UA=navigator.userAgent,IOS=/iPhone|iPad|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),ANDROID=/Android/.test(UA);
-function installHtml(id){if(!HOSTED||isInstalled()||window.TOPSIDE_PC)return'';
+function installHtml(id){if(!HOSTED||window.TOPSIDE_PC||/TopsideApp/.test(UA))return'';
+ // 16 Nov 2026 (Paul's phone: the page installed from Chrome, so no download showed - Sully: "Theres no download for paul"): on Android the
+ // installed web copy still offers the real app, which can also reach Topside on the computer
+ if(isInstalled()){if(!ANDROID)return'';return'<div class="card" style="margin-bottom:10px"><b>Get the Topside app for Android</b><div class="mut" style="font-size:13px;margin:2px 0 8px">You are using the web copy. The Android app does everything this does and also connects to Topside on your computer.</div><a class="btn" style="text-decoration:none" href="Topside.apk" download>⬇ Download Topside for Android</a></div>';}
  var big='width:100%;font-size:17px;padding:14px;margin:0 0 8px 0;justify-content:center;text-decoration:none';
  // the app itself, downloaded from this site - no store, any browser (Sully, 15 Nov 2026 20:45)
  if(ANDROID)return'<a class="btn" style="'+big+'" href="Topside.apk" download>⬇ Download Topside for Android</a><div class="mut" style="font-size:12.5px;margin:-2px 0 6px">Open the download and tap <b>Install</b>. The first time, Android asks to let your browser install apps - allow it. Play Protect may say it doesn\'t know the developer: tap <b>More details → Install anyway</b>.</div><button class="btn alt" id="'+id+'" style="margin:0 0 10px 0">Or install from Chrome instead</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div>';
@@ -834,6 +837,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer');
  h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!!(HOSTED||LOCALPC));   // wide when it would sit alone
  h+='</div>';
+ if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px"><a href="downloads.html" style="color:#7fb0ff">All Topside downloads - Windows, Mac, Android, iPhone →</a></p>';   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';resize();};hookInstall('hInstallTop');
  $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tPc'))e.onclick=pcSheet;
