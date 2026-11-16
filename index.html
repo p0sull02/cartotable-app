@@ -833,7 +833,9 @@ function rawReq(base,method,path,body,timeout){var url=(base===''?'':'http://'+b
   var b=body==null?'':typeof body=='string'?btoa(unescape(encodeURIComponent(body))):null;
   if(b===null&&body instanceof Blob){var fr=new FileReader();fr.onload=function(){TopsideAndroid.http(id,method,url,JSON.stringify(hd),fr.result.split(',')[1]||'',timeout||8000);};fr.readAsDataURL(body);}else TopsideAndroid.http(id,method,url,JSON.stringify(hd),b,timeout||8000);});};
  // the app: whichever way answers first time is kept (the WebView may refuse http from the https page; the app's own HTTP never does)
- if(HTTPWAY=='bridge')return viaBridge();
+ // anything that changes something on the computer (pairing, sending) goes by the app's own HTTP only: a WebView fetch can reach the
+ // computer and then lose the answer (16 Nov 2026: each pairing worked on the computer, the phone never heard, the retry was refused)
+ if(HTTPWAY=='bridge'||method!='GET')return viaBridge();
  return viaFetch().then(function(r){HTTPWAY='fetch';return r;},function(){return viaBridge().then(function(r){HTTPWAY='bridge';return r;});});}
 function pcBases(){if(LOCALPC)return[''];var l=[];if(PCBASE)l.push(PCBASE);(PC&&PC.addrs||[]).forEach(function(a){a=hostOf(a);if(l.indexOf(a)<0)l.push(a);});return l;}
 // tries the address that last worked, then the home addresses, then Tailscale's
