@@ -833,7 +833,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
  h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
  h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
- h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages and sketches, to your computer');
+ h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages read into data on your computer');   // 16 Nov 2026 (Sully: "a short description under it saying it automatically transcribes data from photos")
  if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer');
  h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!!(HOSTED||LOCALPC));   // wide when it would sit alone
  h+='</div>';
