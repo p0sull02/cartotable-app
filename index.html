@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>CartoTable</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="CartoTable"><meta name="theme-color" content="#0e141b">
+<title>Topside</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Topside"><meta name="theme-color" content="#0e141b">
 <style>
 :root{--bg:#121820;--panel:#1a222c;--line:#2a3542;--ink:#e6ecf2;--muted:#8a99a8;--accent:#2f80ed;--amber:#fbbf24;--card:#202a36;--bar:#0e141b}
 body.cave{--bg:#07090c;--panel:#0c1015;--line:#1c242e;--ink:#d8dee6;--muted:#7d8996;--accent:#b7791f;--card:#121820;--bar:#05070a}
@@ -118,7 +118,7 @@ function hm(s){if(s==null||s<0||!isFinite(s))return'-';if(s<60)return'under a mi
 function toast(t,ms){var e=$('toast');e.innerHTML=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.display='none';},ms||2600);}
 function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 var SANDBOX=(function(){try{return window.top!==window.self&&!window.top.location.href;}catch(e){return true;}})();
-var HOSTED=!!(D&&D.hosted)||(location.protocol=='https:'&&!SANDBOX);
+var HOSTED=!!(D&&D.hosted)||(location.protocol=='https:'&&!SANDBOX)||(!!document.querySelector('link[rel=manifest]')&&!SANDBOX);
 // ======================================================================= saved caves (the installed app keeps what it opened)
 var DB=null;
 function db(){return new Promise(function(ok,no){if(DB)return ok(DB);try{var r=indexedDB.open('cartotable',1);r.onupgradeneeded=function(){r.result.createObjectStore('caves');};r.onsuccess=function(){DB=r.result;ok(DB);};r.onerror=function(){no(r.error);};}catch(e){no(e);}});}
@@ -423,7 +423,7 @@ function layersHtml(){var h='<div class="k">Base map</div>';
  return h;}
 // ---- export
 function exportHtml(){var h='<div class="k">Take it with you</div>';
- if(HOSTED)h+='<div class="card"><b>Install the app</b><div class="mut">'+(installEvt?'':'iPhone: Safari → Share → Add to Home Screen. Android: Chrome menu → Install app.')+'</div>'+(installEvt?'<button class="btn" id="xInstall">Install on this phone</button>':'')+'</div>'+
+ if(HOSTED&&!isInstalled())h+='<div class="card"><b>Install the app</b><div class="mut">It opens from the home screen like any app and works with no signal.</div><button class="btn" id="xInstall">⬇ Install Topside on this phone</button></div>'+
   '<div class="card"><b>Keep this cave on the phone</b><div class="mut">Opens with no signal'+(D.coords?', with the online imagery for the cave\'s area saved too':'')+'.</div><button class="btn" id="xOffline">Save for offline</button><span id="xOffMsg" class="mut"></span></div>';
  else if(SANDBOX)h+='<div class="card mut">This copy is running inside claude.ai, which blocks downloads and offline saving - the buttons below copy text instead. The CartoTable app (its own website, or installed on the phone) does both.</div>';
  var items=[['xCsv','Leads (CSV)','spreadsheet with travel times'],['xGeo','Cave lines (GeoJSON)','for GIS'+(D.coords?' - longitude/latitude':' - cave-relative metres')],['xPng','This view (PNG)','a picture of the map as it is']];
@@ -471,7 +471,20 @@ function bind(){var q=function(s){return document.querySelectorAll('#pane '+s);}
 function fitTrip(){var xs=0,ys=0,zs=0,n=0,lo=[1e9,1e9],hi=[-1e9,-1e9],first=-1;for(var k=0;k<M;k++)if(SH[4*k+3]==trip){var a=SH[4*k];if(first<0)first=a;xs+=X[a];ys+=Y[a];zs+=Z[a];n++;lo[0]=Math.min(lo[0],X[a]);lo[1]=Math.min(lo[1],Y[a]);hi[0]=Math.max(hi[0],X[a]);hi[1]=Math.max(hi[1],Y[a]);}
  if(n){view.cx=xs/n;view.cy=ys/n;view.cz=zs/n;view.ppm=Math.min(view.ppm*4,Math.min(W/Math.max(20,hi[0]-lo[0]),H/Math.max(20,hi[1]-lo[1]))*0.7);if(mode=='3d'&&gl3)gl3.lookAt(first);}draw();if(window.innerWidth<=760)minSheet(true);}
 // ======================================================================= exports
-var installEvt=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;});
+var installEvt=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;if($('home')&&$('home').style.display=='block')homeShow();if($('modePick')&&$('modePick').style.display=='block')pickMode();});
+window.addEventListener('appinstalled',function(){installEvt=null;toast('Installed - Topside is on your home screen.',6000);if($('home')&&$('home').style.display=='block')homeShow();});
+function isInstalled(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
+// "click this to install" (Sully, 15 Nov 2026 20:14): one button - Chrome's own install box when the phone offers it, otherwise the
+// exact steps for this phone and browser
+function installHtml(id){return HOSTED&&!isInstalled()?'<button class="btn" id="'+id+'" style="width:100%;font-size:17px;padding:14px;margin:0 0 8px 0">⬇ Install Topside on this phone</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div>':'';}
+function hookInstall(id){var e=$(id);if(e)e.onclick=function(){doInstall(id);};}
+function doInstall(id){id=id||'hInstallTop';if(installEvt){var ev=installEvt;ev.prompt();ev.userChoice.then(function(){installEvt=null;if($('home').style.display=='block')homeShow();});return;}
+ var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua),inApp=/FBAN|FBAV|Instagram|Messenger|Line\/|GSA\/|; wv\)/.test(ua),samsung=/SamsungBrowser/.test(ua),steps;
+ if(inApp)steps='This page is open inside another app (a message or social app), which can\'t install it. Tap that app\'s <b>⋮</b> or <b>…</b> menu, choose <b>Open in Chrome</b>'+(ios?' (or Safari)':'')+', then tap <b>Install Topside</b> again.';
+ else if(ios)steps='On iPhone it installs from <b>Safari</b>: tap <b>Share</b> (the square with an arrow), scroll down, tap <b>Add to Home Screen</b>, then <b>Add</b>.';
+ else if(samsung)steps='Tap the <b>☰</b> menu at the bottom, then <b>Add page to</b> → <b>Home screen</b>.';
+ else steps='Tap Chrome\'s <b>⋮</b> menu (top right), then <b>Install app</b> (some phones say <b>Add to Home screen</b> → <b>Install</b>). If you don\'t see it, reload this page once and tap Install Topside again.';
+ var b=$(id+'Help');if(b){b.innerHTML=steps+'<div class="mut" style="margin-top:6px">It then opens from the home screen like any app, and works with no signal.</div>';b.style.display='block';}}
 function save(name,data,mime){if(SANDBOX){if(typeof data=='string'){copyText(data);toast('Downloads are blocked here - copied '+esc(name)+' to the clipboard instead');}else toast('Downloads are blocked inside claude.ai - use the app for files');return;}
  var blob=data instanceof Blob?data:new Blob([data],{type:mime||'text/plain'});
  if(navigator.canShare&&/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)){try{var f=new File([blob],name,{type:blob.type});if(navigator.canShare({files:[f]})){navigator.share({files:[f],title:name}).catch(function(){});return;}}catch(e){}}
@@ -480,7 +493,7 @@ function copyText(t){try{navigator.clipboard.writeText(t).then(function(){toast(
  function fallback(){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copied');}catch(x){toast('Couldn\'t copy');}ta.remove();}}
 function safeName(){return(D.name||'cave').replace(/[^\w.-]+/g,'_');}
 function bindExport(){var e,nm=safeName();
- if(e=$('xInstall'))e.onclick=function(){installEvt.prompt();installEvt=null;};
+ if(e=$('xInstall'))e.onclick=function(){if(installEvt)doInstall();else{homeShow();doInstall('hInstallTop');}};
  if(e=$('xOffline'))e.onclick=saveOffline;
  if(e=$('xCsv'))e.onclick=function(){var t='station,kind,size,note,travel_min,feet_in,depth_ft\n'+D.leads.map(function(l){var s=S[l.s];return[s[0],l.kind,l.size,l.text,s[4]>=0?Math.round(s[4]/60):'',Math.round(s[8]/FT),Math.round(s[7]/FT)].map(csv).join(',');}).join('\n');save(nm+'_leads.csv',t,'text/csv');};
  if(e=$('xGeo'))e.onclick=function(){var feats=[];for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];feats.push({type:'Feature',properties:{from:S[a][0],to:S[b][0],trip:D.trips[SH[4*k+3]].n},geometry:{type:'LineString',coordinates:[xyOut(a),xyOut(b)]}});}
@@ -733,19 +746,18 @@ $('grip').onclick=function(){minSheet(!side.classList.contains('min'));};
 window.addEventListener('resize',resize);
 function setCave(on){CAVE=on;store('ct-mode',on?'cave':'top');setTabs();if(on&&lay.base=='live')lay.base=D&&D.ground?'hillshade':null;if(D&&S){showTab(on?'here':'station');draw();}}
 $('modeBtn').onclick=function(){setCave(!CAVE);toast(CAVE?'In the cave: big buttons, dark screen, nothing online':'Topside: maps, layers, 3-D, exports');};
-function pickMode(){$('modeIn').innerHTML='<div class="big" style="font-size:24px">Where are you?</div><p class="mut">You can switch any time with the button at the top.</p>'+
+function pickMode(){$('modeIn').innerHTML=installHtml('mInstall')+'<div class="big" style="font-size:24px">Where are you?</div><p class="mut">You can switch any time with the button at the top.</p>'+
  '<button class="choice" id="mTop"><b>☀ Topside</b><span class="mut">Plan trips, look over the maps, imagery, 3-D and the books, save things for offline and export.</span></button>'+
  '<button class="choice" id="mCave"><b>🔦 In the cave</b><span class="mut">Where am I, the way out, how far between two stations, leads nearest you. Big buttons, a dark screen, nothing that needs a signal.</span></button>';
- $('modePick').style.display='block';$('mTop').onclick=function(){$('modePick').style.display='none';setCave(false);};$('mCave').onclick=function(){$('modePick').style.display='none';setCave(true);};}
+ $('modePick').style.display='block';hookInstall('mInstall');$('mTop').onclick=function(){$('modePick').style.display='none';setCave(false);};$('mCave').onclick=function(){$('modePick').style.display='none';setCave(true);};}
 // ======================================================================= home: the caves on this device
-function homeShow(){var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">CartoTable</div><div class="mut">Tacheo Topside · cave survey viewer</div></div></div>';
+function homeShow(){var h=installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
  if(D&&D.st)h+='<div class="k">Open now</div><div class="book" id="hCur"><div class="cover"><div class="f">CAVE</div><div class="n" style="font-size:11px;text-align:center;padding:0 3px">'+esc((D.name||'').slice(0,10))+'</div></div><div><div style="font-weight:600">'+esc(D.name)+'</div><div class="mut">'+ft(D.len)+' · published '+esc(D.when)+'</div></div></div>';
  h+='<div class="k">Caves on this device</div><div id="hList" class="mut">…</div>';
  h+='<div class="k">Add a cave</div><button class="btn" id="hOpen">Open a cave file (.ctcave)</button><div class="mut" style="margin-top:6px;font-size:13px">In Topside on the computer: <b>Send to phone</b> puts the cave in your Google Drive / OneDrive / iCloud. Here, tap Open a cave file and pick it from there. The app keeps it - it opens with no signal.</div>';
- h+='<div class="k">Install</div><div class="mut" style="font-size:13px">'+(installEvt?'<button class="btn" id="hInstall">Install on this phone</button>':'iPhone: Safari → Share → <b>Add to Home Screen</b>. Android: Chrome menu → <b>Install app</b>. It then opens from the home screen like any app, and works offline.')+'</div>';
  h+='<div class="k">Mode</div><button class="btn alt" id="hMode">'+(CAVE?'🔦 In the cave - switch to Topside':'☀ Topside - switch to In the cave')+'</button>';
  $('homeIn').innerHTML=h;$('home').style.display='block';
- var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';resize();};if(e=$('hOpen'))e.onclick=function(){$('pick').click();};if(e=$('hInstall'))e.onclick=function(){installEvt.prompt();installEvt=null;};
+ var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';resize();};if(e=$('hOpen'))e.onclick=function(){$('pick').click();};hookInstall('hInstallTop');
  if(e=$('hMode'))e.onclick=function(){setCave(!CAVE);homeShow();};
  savedCaves().then(function(keys){var L=$('hList');if(!L)return;if(!keys||!keys.length){L.textContent='None yet.';return;}
   L.innerHTML=keys.map(function(k){return'<div class="row" data-k="'+esc(k)+'" style="display:flex;justify-content:space-between;align-items:center"><span class="t">'+esc(k)+'</span><button class="btn alt" data-del="'+esc(k)+'" style="margin:0;padding:4px 9px">Remove</button></div>';}).join('');
