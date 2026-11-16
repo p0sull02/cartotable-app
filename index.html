@@ -777,10 +777,10 @@ function pickMode(){$('modeIn').innerHTML=installHtml('mInstall')+'<div class="b
  '<button class="choice" id="mCave"><b>🔦 In the cave</b><span class="mut">Where am I, the way out, how far between two stations, leads nearest you. Big buttons, a dark screen, nothing that needs a signal.</span></button>';
  $('modePick').style.display='block';hookInstall('mInstall');$('mTop').onclick=function(){$('modePick').style.display='none';setCave(false);};$('mCave').onclick=function(){$('modePick').style.display='none';setCave(true);};}
 // ======================================================================= home: the caves on this device
-function homeShow(){var h=installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
+function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
  if(D&&D.st)h+='<div class="k">Open now</div><div class="book" id="hCur"><div class="cover"><div class="f">CAVE</div><div class="n" style="font-size:11px;text-align:center;padding:0 3px">'+esc((D.name||'').slice(0,10))+'</div></div><div><div style="font-weight:600">'+esc(D.name)+'</div><div class="mut">'+ft(D.len)+' · published '+esc(D.when)+'</div></div></div>';
  h+='<div class="k">Caves on this device</div><div id="hList" class="mut">…</div>';
- h+='<div class="k">Add a cave</div><button class="btn" id="hOpen">Open a cave file (.ctcave)</button><div class="mut" style="margin-top:6px;font-size:13px">Easiest: on the computer, Topside's first screen has <b>Connect a phone</b> - pair this phone once, then your caves come straight over (My computer, below). Or open a .ctcave file from Drive, Files or a message. The app keeps every cave - they open with no signal.</div>';
+ h+='<div class="k">Add a cave</div><button class="btn" id="hOpen">Open a cave file (.ctcave)</button><div class="mut" style="margin-top:6px;font-size:13px">Easiest: on the computer, Topside\'s first screen has <b>Connect a phone</b> - pair this phone once, then your caves come straight over (My computer, below). Or open a .ctcave file from Drive, Files or a message. The app keeps every cave - they open with no signal.</div>';
  h+=pcCard();
  h+='<div class="k">Mode</div><button class="btn alt" id="hMode">'+(CAVE?'🔦 In the cave - switch to Topside':'☀ Topside - switch to In the cave')+'</button>';
  $('homeIn').innerHTML=h;$('home').style.display='block';
@@ -795,7 +795,22 @@ function openCaveText(t){try{var d=JSON.parse(t);if(!d.st)throw new Error('not a
   dbDo('readwrite',function(s){return s.put(d,d.name);}).catch(function(){toast('Opened, but this browser won\'t keep it');}).then(function(){load(d);});}catch(x){toast('Couldn\'t open it: '+esc(x.message));}}
 window.CTopenCaveB64=function(b){try{var bin=atob(b),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);openCaveText(new TextDecoder().decode(u));}catch(x){toast('Couldn\'t open it: '+esc(x.message));}};   // the Android app hands over a shared .ctcave
 $('pick').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){openCaveText(r.result);};r.readAsText(f);e.target.value='';};
-if(HOSTED&&'serviceWorker' in navigator&&location.protocol=='https:')navigator.serviceWorker.register('sw.js').catch(function(){});
+// updates (Sully, 16 Nov 2026: "Is there a way for the phone app to detect updates? Perhaps without it flagged as a trojan?"):
+// the page - the service worker fetches it fresh first; a new worker taking over in the first seconds reloads, later it offers to;
+// the Android app - version.json on the site names the newest app; an older app gets a card with a download link that opens in the phone's
+// browser, installed the same way as the first time (the app itself never installs anything - no install permission for Play Protect to flag)
+var T0=Date.now(),APPVER=(navigator.userAgent.match(/TopsideApp\/([\d.]+)/)||[])[1]||null,UPD=null;
+function verNewer(a,b){a=String(a).split('.').map(Number);b=String(b).split('.').map(Number);for(var i=0;i<Math.max(a.length,b.length);i++){var x=a[i]||0,y=b[i]||0;if(x!=y)return x>y;}return false;}
+if(HOSTED&&'serviceWorker' in navigator&&location.protocol=='https:'){
+ var hadSW=!!navigator.serviceWorker.controller;
+ navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState=='visible')reg.update().catch(function(){});});}).catch(function(){});
+ navigator.serviceWorker.addEventListener('controllerchange',function(){if(!hadSW){hadSW=true;return;}if(Date.now()-T0<12000&&!D)location.reload();else toast('Topside was updated - <a href="#" id="tUpd" style="color:var(--accent)">reload</a> to use the new version',15000),setTimeout(function(){var t=$('tUpd');if(t)t.onclick=function(e){e.preventDefault();location.reload();};},50);});}
+function checkAppUpdate(){if(!HOSTED||location.protocol!='https:')return;fetch('version.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(v){var a=v&&v.android;
+  if(!a||!APPVER||!verNewer(a.versionName,APPVER))return;UPD=a;if($('home').style.display=='block')homeShow();
+  if(store('ct-upd-told')!=a.versionName){store('ct-upd-told',a.versionName);toast('Topside app '+esc(a.versionName)+' is out - ☰ to update',9000);}}).catch(function(){});}
+function updHtml(){if(!UPD)return'';return'<div class="card" style="border-color:#2BB673"><b>Update the Topside app: '+esc(UPD.versionName)+' is out</b><div class="mut">You have '+esc(APPVER)+'. '+esc(UPD.notes||'')+'</div><a class="btn" style="text-decoration:none" href="'+esc(UPD.url)+'">⬇ Download the update</a><div class="mut" style="font-size:12.5px">It opens in your browser. Open the download and tap <b>Update</b> - your caves stay. If Play Protect asks: More details → Install anyway.</div></div>';}
+setTimeout(checkAppUpdate,2500);document.addEventListener('visibilitychange',function(){if(document.visibilityState=='visible')checkAppUpdate();});
 // ======================================================================= my computer: Phone link (Sully, 15 Nov 2026, 21:01)
 // Topside on the home computer, over the Wi-Fi or Tailscale: its caves copied here fresh, Check and Reckon run there, files and notes sent
 // there, and its screen here to use with taps and typing. Pairs once with the 6-digit code Topside shows (File > Phone link); the computer's
