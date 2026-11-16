@@ -483,7 +483,7 @@ function doInstall(id){id=id||'hInstallTop';if(installEvt){var ev=installEvt;ev.
  if(inApp)steps='This page is open inside another app (a message or social app), which can\'t install it. Tap that app\'s <b>⋮</b> or <b>…</b> menu, choose <b>Open in Chrome</b>'+(ios?' (or Safari)':'')+', then tap <b>Install Topside</b> again.';
  else if(ios)steps='On iPhone it installs from <b>Safari</b>: tap <b>Share</b> (the square with an arrow), scroll down, tap <b>Add to Home Screen</b>, then <b>Add</b>.';
  else if(samsung)steps='Tap the <b>☰</b> menu at the bottom, then <b>Add page to</b> → <b>Home screen</b>.';
- else steps='Tap Chrome\'s <b>⋮</b> menu (top right), then <b>Install app</b> (some phones say <b>Add to Home screen</b> → <b>Install</b>). If you don\'t see it, reload this page once and tap Install Topside again.';
+ else steps='This installs from <b>Google Chrome</b> itself. Other browsers (Adblock Browser, Brave, Opera, DuckDuckGo…) can only make a bookmark, not an app. Open <b>p0sull02.github.io/cartotable-app</b> in Chrome and tap <b>Install Topside</b> there - Chrome\'s install box opens. If it doesn\'t, use Chrome\'s <b>⋮</b> menu → <b>Install app</b>.';
  var b=$(id+'Help');if(b){b.innerHTML=steps+'<div class="mut" style="margin-top:6px">It then opens from the home screen like any app, and works with no signal.</div>';b.style.display='block';}}
 function save(name,data,mime){if(SANDBOX){if(typeof data=='string'){copyText(data);toast('Downloads are blocked here - copied '+esc(name)+' to the clipboard instead');}else toast('Downloads are blocked inside claude.ai - use the app for files');return;}
  var blob=data instanceof Blob?data:new Blob([data],{type:mime||'text/plain'});
