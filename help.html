@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<!-- Copyright (C) 2026 Phillip M. Sullivan. All rights reserved. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Topside phone app - Help</title>
+<meta name="description" content="How to use the Topside phone app: getting caves onto the phone, connecting to Topside on your computer, data photos, and using it in the cave.">
+<link rel="icon" href="icon.svg">
+<style>
+:root{--ink:#e8edf3;--mut:#9aa8b6;--card:#1b2430;--rule:#2a3542;--blue:#2f80ed}
+*{box-sizing:border-box}
+body{margin:0;background:#121820;color:var(--ink);font:16px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 18px 70px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+h1{font-size:27px;margin:0;line-height:1.1}
+.sub{color:var(--mut);margin:2px 0 0}
+nav{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:10px 14px;margin:18px 0 6px}
+nav ol{margin:0;padding-left:20px;columns:2;column-gap:24px}
+nav li{margin:2px 0;break-inside:avoid}
+@media(max-width:520px){nav ol{columns:1}}
+h2{font-size:21px;margin:34px 0 8px;padding-top:4px;border-top:1px solid var(--rule)}
+h3{font-size:16.5px;margin:18px 0 4px}
+p,li{color:#d5dde6}
+.mut{color:var(--mut)}
+ol.steps,ul{padding-left:22px;margin:6px 0 10px}
+ol.steps li,ul li{margin:4px 0}
+b{color:#fff}
+.tip{background:var(--card);border-left:3px solid var(--blue);border-radius:8px;padding:9px 12px;margin:10px 0;font-size:15px}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:6px 0 10px}
+td{border-bottom:1px solid var(--rule);padding:7px 6px;vertical-align:top}
+td:first-child{white-space:nowrap;font-weight:600;color:#fff;width:1%}
+a{color:#7fb0ff}
+.btn{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;padding:9px 13px;border-radius:10px;margin:4px 6px 4px 0}
+footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(--rule);padding-top:14px}
+</style></head>
+<body><main>
+<header>
+<svg width="46" height="46" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="5" fill="#ff7a1a"/></svg>
+<div><h1>Topside phone app - help</h1><p class="sub">Your caves on your phone, in the cave and out of it</p></div>
+</header>
+<a class="btn" href="./">Open the app</a><a class="btn" style="background:#2a3542" href="downloads.html">Downloads</a>
+
+<nav><ol>
+<li><a href="#what">What the app does</a></li>
+<li><a href="#install">Install it</a></li>
+<li><a href="#first">The first screen and Home</a></li>
+<li><a href="#caves">Get a cave onto the phone</a></li>
+<li><a href="#pc">Connect to your computer</a></li>
+<li><a href="#photos">Data photos</a></li>
+<li><a href="#view">Looking at a cave</a></li>
+<li><a href="#tabs">The tabs</a></li>
+<li><a href="#incave">In the cave mode</a></li>
+<li><a href="#offline">With no signal</a></li>
+<li><a href="#trouble">When something's wrong</a></li>
+</ol></nav>
+
+<h2 id="what">What the app does</h2>
+<p>The Topside phone app carries your caves from CartoTable (the cave survey and map side of Tacheo Topside) on your phone. It:</p>
+<ul>
+<li>shows the line plot in plan, profile and 3-D, over map imagery and the ground's shape, with no signal needed once a cave is on the phone;</li>
+<li>finds where you are by station, the quickest way out, and how far it is between two stations;</li>
+<li>lists leads nearest first, with their notes, and the trip books and trip reports;</li>
+<li>plans a trip by travel time;</li>
+<li>sends photos of survey book pages and sketches to your computer, where Topside reads the data pages into survey data;</li>
+<li>connects to Topside on your computer, over your Wi-Fi or from anywhere through Tailscale.</li>
+</ul>
+<div class="tip">The app doesn't connect to a Tacheo. Updating a unit's firmware, calibration reports and diagnostics need Topside on a computer.</div>
+
+<h2 id="install">Install it</h2>
+<h3>Android</h3>
+<ol class="steps">
+<li>Open <a href="downloads.html">the downloads page</a> in Chrome and tap <b>Download for Android</b>.</li>
+<li>Open the download and tap <b>Install</b>. The first time, Android asks to let your browser install apps: allow it.</li>
+<li>If Play Protect says it doesn't know the developer: <b>More details → Install anyway</b>.</li>
+</ol>
+<p class="mut">Opened the link inside Messenger or another message app? Use that app's <b>⋮</b> menu → <b>Open in Chrome</b> first. If you installed the web copy from Chrome earlier, it still works; the app from the download adds the link to your computer.</p>
+<h3>iPhone and iPad</h3>
+<ol class="steps">
+<li>Open <a href="downloads.html">the downloads page</a> in <b>Safari</b> and tap <b>Download for iPhone / iPad</b>, then <b>Allow</b>.</li>
+<li>Open <b>Settings → Profile Downloaded → Install</b>. Topside appears on the home screen.</li>
+</ol>
+<p class="mut">Or in Safari: <b>Share → Add to Home Screen</b>.</p>
+
+<h2 id="first">The first screen and Home</h2>
+<p>The first time, the app asks where you are: <b>Topside</b> (planning, maps, books and exports, normal colours) or <b>In the cave</b> (a dark screen, big buttons, only what you need underground). You can switch any time.</p>
+<p>Home has five tiles:</p>
+<table>
+<tr><td>My caves</td><td>Every cave on this phone. Tap one to open it.</td></tr>
+<tr><td>Add a cave</td><td>From a .ctcave file, or straight from Topside on your computer.</td></tr>
+<tr><td>Data photos</td><td>Photograph book pages and sketches and send them to your computer.</td></tr>
+<tr><td>My computer</td><td>Pair with Topside on your computer, see its caves and send it files.</td></tr>
+<tr><td>In the cave</td><td>Switch to the dark, big-button mode (or back to Topside mode).</td></tr>
+</table>
+
+<h2 id="caves">Get a cave onto the phone</h2>
+<h3>From your computer (easiest)</h3>
+<ol class="steps">
+<li>Pair the phone once - see <a href="#pc">Connect to your computer</a>.</li>
+<li><b>Add a cave → Caves on</b> <i>your computer</i>, and pick the cave. Topside makes a fresh copy with its map layers and sends it over.</li>
+</ol>
+<h3>From a file</h3>
+<ol class="steps">
+<li>On the computer, in CartoTable: <b>Send to phone</b> (File menu or the Exports page). It saves a <b>.ctcave</b> file to the CartoTable caves folder in your Google Drive, OneDrive, iCloud or Dropbox, and asks whether to include true coordinates.</li>
+<li>On the phone: <b>Add a cave → Open a cave file (.ctcave)</b> and pick it from Drive, Files, a message or your downloads. On Android you can also open or share a .ctcave straight to Topside.</li>
+</ol>
+<p class="mut">Every cave you open stays on the phone and works with no signal. Remove one from <b>My caves</b>.</p>
+
+<h2 id="pc">Connect to your computer</h2>
+<ol class="steps">
+<li>On the computer, open Tacheo Topside and pick <b>Connect a phone</b> on its first screen. It shows a QR code and a 6-digit code.</li>
+<li>On the phone: <b>My computer → Connect to my computer</b>, then <b>Scan</b> the QR code (or <b>Type the code instead</b>). The code works for 15 minutes and pairs one phone.</li>
+<li>The phone and computer need the same Wi-Fi the first time. Topside has to be open on the computer (it can start with Windows - tick that in Connect a phone).</li>
+</ol>
+<p>Once paired, <b>My computer</b> shows the caves Topside knows, runs <b>Check</b> and <b>Reckon</b> on the computer and shows the findings, takes <b>files or a note</b> from the phone, and <b>Use its screen</b> shows the computer's Topside window on the phone to use with taps and typing.</p>
+<div class="tip">Away from home: install Tailscale on the computer and the phone and sign in to the same account on both. The app then reaches your computer from anywhere. <b>My computer → Tailscale help</b> walks through it. <b>Forget this computer</b> unpairs.</div>
+
+<h2 id="photos">Data photos</h2>
+<ol class="steps">
+<li><b>Data photos</b> on Home. Pick the cave and the trip.</li>
+<li>Choose what you're photographing: <b>Book pages</b>, <b>Sketches</b> or <b>Other</b>.</li>
+<li>Take the photos with the app's camera (the light can be turned on), or choose them from the phone - several at once is fine.</li>
+<li>They're sent to your computer as soon as it can be reached, into <b>Documents\Topside\From phone\</b><i>day</i><b>\</b><i>cave - trip</i>. Photos taken in the cave wait on the phone until there's signal, and nothing is removed from the phone until the computer has it.</li>
+</ol>
+<p>On the computer, CartoTable reads the book pages into survey data (<b>Read this page</b>), sorts pages into trips and places the sketches. Uncertain numbers are marked for you to check against the photo.</p>
+<div class="tip">For the best reading: the page flat and filling the frame, even light, no shadow of the phone across it, and the photo sharp.</div>
+
+<h2 id="view">Looking at a cave</h2>
+<ul>
+<li><b>Move:</b> drag. <b>Zoom:</b> pinch. <b>Turn the plan:</b> twist with two fingers; it turns round the station you tapped.</li>
+<li><b>Plan / Profile / 3-D</b> at the top switches the view. In 3-D, drag to turn it.</li>
+<li><b>Tap a station</b> to see how far in it is (travel time and footage), its depth, elevation, how sure its position is (the 95 % circle), its notes and lead, and the trips that surveyed it.</li>
+<li><b>Colour</b> the line plot by travel time from the nearest entrance, by depth, by how precise the survey is, or by trip.</li>
+<li><b>Show the way in / out</b> draws the quickest route from the nearest entrance as amber dashes.</li>
+</ul>
+
+<h2 id="tabs">The tabs (Topside mode)</h2>
+<table>
+<tr><td>Station</td><td>The tapped station's details, and Plan a trip here.</td></tr>
+<tr><td>Leads</td><td>Leads nearest first, with their notes and how to get there. Show it on the plot.</td></tr>
+<tr><td>Trip plan</td><td>Pick a start and a destination: travel time by how you're moving (walking, stooping, crawling, belly crawl, breakdown, climbing, on rope), leads on the way, and a brief to share.</td></tr>
+<tr><td>Books</td><td>Every trip's book and trip report, sorted as filed, newest, longest or weakest.</td></tr>
+<tr><td>Layers</td><td>Map imagery, the ground's shading and contours, sinks, drafted maps, station names and prefixes. Save for offline keeps the imagery on the phone.</td></tr>
+<tr><td>Export</td><td>GPX, KML, GeoJSON, CSV, a picture of the map (with a world file), and the elevation.</td></tr>
+<tr><td>About</td><td>The cave's summary and this app's version.</td></tr>
+</table>
+
+<h2 id="incave">In the cave mode</h2>
+<p>A dark screen with big buttons that saves the battery. Its tabs:</p>
+<table>
+<tr><td>Here</td><td>Pick the station you're at: how far in you are, the depth, what's near.</td></tr>
+<tr><td>Way out</td><td>The quickest way to the nearest entrance, step by step, and the time it takes.</td></tr>
+<tr><td>Two stations</td><td>Distance and travel time between any two stations.</td></tr>
+<tr><td>Trip plan</td><td>The trip you planned, with its leads.</td></tr>
+<tr><td>Leads</td><td>Leads nearest to where you are.</td></tr>
+<tr><td>Books</td><td>Trip books and reports for checking an old survey on the spot.</td></tr>
+</table>
+
+<h2 id="offline">With no signal</h2>
+<p>Everything about a cave on the phone works underground: the plot, stations, the way out, leads, books, trip plans and exports. Map imagery shows where it was saved with <b>Save for offline</b> (Layers). Data photos wait on the phone and go to the computer later. Connecting to your computer needs Wi-Fi or Tailscale.</p>
+
+<h2 id="trouble">When something's wrong</h2>
+<h3>There's no download button</h3>
+<p>The app hides it once it's installed. Inside a message app's browser, use its menu → <b>Open in Chrome</b> (or Safari). The <a href="downloads.html">downloads page</a> always has every download.</p>
+<h3>It can't find my computer</h3>
+<ul>
+<li>Topside is open on the computer and <b>Connect a phone</b> has been set up once.</li>
+<li>The phone is on the same Wi-Fi - or Tailscale is running on both.</li>
+<li>Windows asked whether to allow Topside on networks: allow it on private networks.</li>
+<li>Still not: <b>My computer → Forget this computer</b>, then pair again with a new code.</li>
+</ul>
+<h3>Android won't install it</h3>
+<p>Allow the browser to install apps when asked (Settings → Apps → <i>your browser</i> → Install unknown apps), and choose <b>Install anyway</b> if Play Protect asks.</p>
+<h3>A cave doesn't open</h3>
+<p>Make a fresh copy on the computer (Send to phone, or Add a cave → Caves on your computer). Caves made by an older Topside open, but a new copy brings the newest layers.</p>
+<h3>A newer version is out</h3>
+<p>The app says so at the top of Home. On Android, download it from the <a href="downloads.html">downloads page</a> and install over the old one - your caves stay.</p>
+
+<footer>
+<a href="downloads.html">Downloads</a> · <a href="privacy.html">Privacy policy</a><br>
+Copyright © 2026 Phillip M. Sullivan. All rights reserved.
+</footer>
+</main></body></html>
