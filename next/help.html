@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<!-- Copyright (C) 2026 Phillip M. Sullivan. All rights reserved. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Topside phone app - Help</title>
+<meta name="description" content="How to use the Topside phone app: surveying and sketching with a Tacheo, getting caves onto the phone, connecting to Topside on your computer, data photos, and using it in the cave.">
+<link rel="icon" href="icon.svg">
+<style>
+:root{--ink:#e8edf3;--mut:#9aa8b6;--card:#1b2430;--rule:#2a3542;--blue:#2f80ed}
+*{box-sizing:border-box}
+body{margin:0;background:#121820;color:var(--ink);font:16px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 18px 70px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+h1{font-size:27px;margin:0;line-height:1.1}
+.sub{color:var(--mut);margin:2px 0 0}
+nav{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:10px 14px;margin:18px 0 6px}
+nav ol{margin:0;padding-left:20px;columns:2;column-gap:24px}
+nav li{margin:2px 0;break-inside:avoid}
+@media(max-width:520px){nav ol{columns:1}}
+h2{font-size:21px;margin:34px 0 8px;padding-top:4px;border-top:1px solid var(--rule)}
+h3{font-size:16.5px;margin:18px 0 4px}
+p,li{color:#d5dde6}
+.mut{color:var(--mut)}
+ol.steps,ul{padding-left:22px;margin:6px 0 10px}
+ol.steps li,ul li{margin:4px 0}
+b{color:#fff}
+.tip{background:var(--card);border-left:3px solid var(--blue);border-radius:8px;padding:9px 12px;margin:10px 0;font-size:15px}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:6px 0 10px}
+td{border-bottom:1px solid var(--rule);padding:7px 6px;vertical-align:top}
+td:first-child{white-space:nowrap;font-weight:600;color:#fff;width:1%}
+a{color:#7fb0ff}
+.svg-k{display:inline-block;width:64px;height:26px;vertical-align:middle;background:#f7f5ef;border-radius:5px;margin-right:6px}
+.tip.g{border-left-color:#1A9850}
+h2.g{border-top-color:#1A9850}
+.btn{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;padding:9px 13px;border-radius:10px;margin:4px 6px 4px 0}
+footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(--rule);padding-top:14px}
+</style></head>
+<body><main>
+<header>
+<svg width="46" height="46" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="5" fill="#ff7a1a"/></svg>
+<div><h1>Topside phone app - help</h1><p class="sub">Your caves on your phone, in the cave and out of it</p></div>
+</header>
+<a class="btn" href="./">Open the app</a><a class="btn" style="background:#2a3542" href="https://p0sull02.github.io/tacheo-site/download.html">Downloads</a>
+
+<nav><ol>
+<li><a href="#what">What the app does</a></li>
+<li><a href="#install">Install it</a></li>
+<li><a href="#first">The first screen and Home</a></li>
+<li><a href="#survey">Survey and sketch</a></li>
+<li><a href="#tacheo">The Tacheo and the phone</a></li>
+<li><a href="#caves">Get a cave onto the phone</a></li>
+<li><a href="#pc">Connect to your computer</a></li>
+<li><a href="#photos">Data photos</a></li>
+<li><a href="#view">Looking at a cave</a></li>
+<li><a href="#tabs">The tabs</a></li>
+<li><a href="#incave">In the cave mode</a></li>
+<li><a href="#offline">With no signal</a></li>
+<li><a href="#trouble">When something's wrong</a></li>
+</ol></nav>
+
+<h2 id="what">What the app does</h2>
+<p>The Topside phone app carries your caves from CartoTable (the cave survey and map side of Tacheo Topside) on your phone. It:</p>
+<ul>
+<li>shows the line plot in plan, profile and 3-D, over map imagery and the ground's shape, with no signal needed once a cave is on the phone;</li>
+<li>finds where you are by station, the quickest way out, and how far it is between two stations;</li>
+<li>lists leads nearest first, with their notes, and the trip books and trip reports;</li>
+<li>plans a trip by travel time;</li>
+<li>sends photos of survey book pages and sketches to your computer, where Topside reads the data pages into survey data;</li>
+<li>connects to Topside on your computer, over your Wi-Fi or from anywhere through Tailscale;</li>
+<li><b>surveys and sketches</b>: shots straight from a Tacheo or SAP6 over Bluetooth (Android app), legs and splays sorted as they come in, the plan and extended profile drawn as you go, and sketched over in NSS symbols.</li>
+</ul>
+<div class="tip">Updating a unit's firmware, calibrating it and its diagnostics still need Topside on a computer. The phone takes shots from the unit, reads its battery, calibration and trip, keeps its station names in step and fetches its cross sections.</div>
+
+<h2 id="install">Install it</h2>
+<h3>Android</h3>
+<ol class="steps">
+<li>Open <a href="https://p0sull02.github.io/tacheo-site/download.html">the downloads page</a> in Chrome and tap <b>Download for Android</b>.</li>
+<li>Open the download and tap <b>Install</b>. The first time, Android asks to let your browser install apps: allow it.</li>
+<li>If Play Protect says it doesn't know the developer: <b>More details → Install anyway</b>.</li>
+</ol>
+<p class="mut">Opened the link inside Messenger or another message app? Use that app's <b>⋮</b> menu → <b>Open in Chrome</b> first. If you installed the web copy from Chrome earlier, it still works; the app from the download adds the link to your computer.</p>
+<h3>iPhone and iPad</h3>
+<ol class="steps">
+<li>Open <a href="https://p0sull02.github.io/tacheo-site/download.html">the downloads page</a> in <b>Safari</b> and tap <b>Download for iPhone / iPad</b>, then <b>Allow</b>.</li>
+<li>Open <b>Settings → Profile Downloaded → Install</b>. Topside appears on the home screen.</li>
+</ol>
+<p class="mut">Or in Safari: <b>Share → Add to Home Screen</b>.</p>
+
+<h2 id="first">The first screen and Home</h2>
+<p>The first time, the app asks where you are: <b>Topside</b> (planning, maps, books and exports, normal colours) or <b>In the cave</b> (a dark screen, big buttons, only what you need underground). You can switch any time.</p>
+<p>Home has these tiles:</p>
+<table>
+<tr><td>My caves</td><td>Every cave on this phone. Tap one to open it.</td></tr>
+<tr><td>Add a cave</td><td>From a .ctcave file, or straight from Topside on your computer.</td></tr>
+<tr><td>Survey and sketch</td><td>Survey a trip with a Tacheo (or by typing the shots) and sketch it on the phone.</td></tr>
+<tr><td>Tacheo</td><td>Connect one or more units, see their batteries, fire them, and send them messages - without opening a survey (<a href="#tacheo">The Tacheo and the phone</a>).</td></tr>
+<tr><td>Data photos</td><td>Photograph book pages and sketches and send them to your computer.</td></tr>
+<tr><td>My computer</td><td>Pair with Topside on your computer, see its caves and send it files.</td></tr>
+<tr><td>In the cave</td><td>Switch to the dark, big-button mode (or back to Topside mode).</td></tr>
+</table>
+
+<h2 id="survey" class="g">Survey and sketch</h2>
+<p>A survey here is one trip. It keeps the shots, the plan and profile sketches and the cross sections together on the phone, works with no signal, and goes to Topside on your computer at the end.</p>
+<h3>Start a trip</h3>
+<ol class="steps">
+<li>Home → <b>Survey and sketch</b> → <b>＋ New survey</b>.</li>
+<li>Fill in the cave, the trip's name, the <b>station prefix</b> (A for A1, A2 …) and the first station's number, the date, the units you want to see, the team and the instrument. The phone remembers these for the next trip.</li>
+<li><b>Shots per leg</b>: 3 (the default) means three shots in a row that agree are one leg, as TopoDroid and the Tacheo's FSx3 do. Pick 1 if every shot you take is a leg (no splays).</li>
+<li><b>Declination</b>, east positive, if you know it. It can be changed later on the <b>Trip</b> page; the shots themselves are kept as read.</li>
+<li><b>Start the survey</b>.</li>
+</ol>
+<h3>Take shots</h3>
+<p><b>With a Tacheo or SAP6</b> (Android app): tap the 📡 chip at the top, pick the unit from the list (on the unit: <b>Bluetooth → Phone On</b>), and shoot as normal. Each shot comes in as you take it:</p>
+<ul>
+<li><b>Three shots that agree</b> (within 5 cm or 1 %, and 1.5°, both changeable on the Trip page) become one leg from the station you're at to the next new one. The phone buzzes twice for a leg, once for a splay.</li>
+<li><b>Anything else is a splay</b> from the station you're at - shoot the walls, floor and ceiling as much as you like; they're the guides for the sketch.</li>
+<li><b>A backsight</b> - three agreeing shots back along the leg just made, or shots the Tacheo labels as backsights - is kept with that leg (it shows as <b>backsight</b>). It doesn't move you on.</li>
+<li>The Tacheo's own labels are kept with each shot: <b>FSx3</b>, <b>BS</b>, <b>BS check</b>, and its <b>LRUD</b> shots with their letter (an amber <b>check</b> tag is one the unit marked Check).</li>
+</ul>
+<p><b>Typing them</b> (any phone, and for a Suunto-and-tape trip): <b>＋ Add a shot</b>. From and To are filled in for you; leave To empty for a splay. L, R, U/D (as <i>3/1.5</i>) are added as LRUD shots at the From station.</p>
+<p><b>The station you're at</b> is shown at the top of the Data page. <b>Change</b> it to go back to a station already surveyed (a side passage, the other side of a loop) or to start a new prefix.</p>
+<h3>Fix a shot</h3>
+<p>Tap any row on the <b>Data</b> page. A leg shows each of its shots with the time. You can rename From and To, set which way the leg goes in the extended profile (→ Right, ← Left, ↕ Vertical, Ignore), mark it <b>Surface</b>, <b>Duplicate</b> or <b>Commented out</b>, turn a leg's shots back into splays, give a splay a To station to make it a leg, or delete it.</p>
+<h3>Sketch</h3>
+<ol class="steps">
+<li><b>Plan</b> or <b>Profile</b> at the top. The legs (red), stations, splays (grey; LRUDs amber; splays marked <i>to wall</i> dark green) and a grid in your units are drawn for you, north up in the plan. The active station - where new shots go from - is the green dot with a ring.</li>
+<li>Pick a tool along the bottom. Tap it again to open its palette:
+<table>
+<tr><td>✋ Move</td><td>One finger moves the drawing; two fingers move and zoom with any tool. <b>Tap a station</b> for its menu; <b>tap a cross section</b> for its menu, or drag it somewhere else.</td></tr>
+<tr><td>〰 Lines</td><td>Wall, lower-level wall, unsurveyed wall, floor step / ledge, ceiling step, pit / drop, dome edge, drip line, water edge, stream (draw it downstream), rock / boulder, slope, rough passage outline. A wall is turned round by itself so the passage is on its left (the way Therion reads walls).</td></tr>
+<tr><td>▦ Areas</td><td>Water / pool, sump, sand, gravel, mud / clay, breakdown, bedrock pillar, flowstone, guano, ice. Draw round the area. An area drawn over another of the same kind joins it.</td></tr>
+<tr><td>✳ Symbols</td><td>Stalactites, stalagmites, column, soda straws, helictites, rimstone, cave pearls, popcorn, a water drip, a small pool, pit depth, dome height, ceiling height, climb, squeeze, lead (?), entrance, dig, hazard, bats, bones, boulder, breakdown block, and text. Air flow, water flow and slope arrows: touch and drag the way they point. Symbols are sized by the zoom you place them at: zoomed in, they're small.</td></tr>
+<tr><td>✎ Pen</td><td>Freehand in eight colours and three widths, for notes and anything the symbols don't cover.</td></tr>
+<tr><td>⬚ Select</td><td>Tap a line, area or symbol to pick it: drag it to move it, drag one of its points to reshape it. <b>Hold it</b> (or tap it again) for its menu: change its type or colour, flip it (a wall's yellow tick points into the passage), make a symbol bigger or smaller, edit its text, delete it. Holding a line with the line or area tool opens the same menu.</td></tr>
+<tr><td>⌫ Rub out</td><td><b>Tap</b> a line, area or symbol to remove it. <b>Rub across</b> the sketch to cut: lines are cut where you rub, and areas lose what's under it - rub a hole in one, or right across to split it in two.</td></tr>
+<tr><td>✚ Cross section</td><td>Tap a station for its cross section (below).</td></tr>
+<tr><td>↶ ↷ ⤢ ⌖</td><td>Undo and redo (the plan, the profile and each section separately), fit everything on the screen, centre on the active station.</td></tr>
+<tr><td>⚙ Quick settings</td><td>Splays, station names and grid on or off; <b>snap lines to the ends of lines</b> (a line started or ended near another's end joins it); <b>clip lines that overshoot a wall</b> (a floor step drawn past a wall is cut back to it); <b>bring a new station back to the middle</b>; <b>fade the sketch away from the active station</b>; symbols sized by zoom. Also the phone's compass, <b>a section at every station</b>, and <b>undo the last reading</b> (a leg it completed goes back to splays and you're back at the station before).</td></tr>
+</table></li>
+<li>Draw as the shots come in - the sketch and the shots are on the same page, so a splay to a wall is the guide for the wall line.</li>
+</ol>
+<div class="tip g">Each thing you draw is tied to the station nearest it. If a shot is fixed later and the station moves, the sketch near it moves with it.</div>
+<h3>A station's menu</h3>
+<p>With ✋, tap a station: <b>make it the active station</b> (new shots go from there - the Tacheo is told too), <b>centre here</b>, <b>cross section here</b>, and its splays, each with two switches: <b>to wall</b> (used for the station's cross section) and <b>off</b> (left out of the sketch, the sections and the exports).</p>
+<h3>Cross sections</h3>
+<p>Tap ✚ then a station. The section is made from that station's splays in the cut (the ones marked <i>to wall</i>, when there are three or more), or from its LRUDs, and drawn the way a finished map draws one:</p>
+<ul>
+<li>On the plan, the cut is square to the passage (the bisector of the legs in and out). The cut line is left out across the passage, a little wider than the section; one end has a corner mark pointing the way the section looks (up the survey), the other carries on as the leader, a short stub then straight across, down or at 45° to the section.</li>
+<li>The section has its walls in heavy line, the floor (anything facing down) in light line, a block of limestone bricks round it, a height bar on the right and the station's name above. Sections go alternately either side of the survey.</li>
+<li>Tap one for its menu: <b>open it to draw its walls</b>, <b>look the other way</b>, <b>leader to the other side</b>, put it back beside its station, delete it. Drag it with ✋ to move it; the leader stays straight, square or at 45°.</li>
+<li><b>Its editor</b> shows the splays in the cut (solid) and out of it (dashed), with the left wall on the left. Draw its walls with the line tool; the drawn walls then replace the outline from the splays, and the finished section in the corner updates as you go.</li>
+<li>In the profile, a section is cut upright through the station; at a station in a shaft (steep legs both ways) it's cut level and looked at from above.</li>
+<li>Sections taken on a Tacheo (Tools → Cross section) come in the same style from the unit's ✚ Sections.</li>
+</ul>
+<h3>The extended profile</h3>
+<p>The profile unrolls the passage. Each leg goes right or left by its direction compared with the first leg (more than 90° off it goes left; steeper than 80° is vertical). Change any leg's direction by tapping it on the Data page.</p>
+<h3>Finish and send</h3>
+<p>The <b>Trip</b> page has the totals, the trip's details and these:</p>
+<table>
+<tr><td>💻 Send to my computer</td><td>Sends the Walls .srv, the Therion .th and .th2, the plan and profile sketches (.svg) and the whole survey (.ctsurvey) to Topside on your computer, into <b>Documents\Topside\From phone\</b><i>day</i><b>\</b><i>cave - trip</i>. Needs the computer paired (<a href="#pc">Connect to your computer</a>).</td></tr>
+<tr><td>Walls .srv</td><td>Legs with their backsights on one line (TypeAB=N, as read), LRUDs, splays (to station "-"), in the units you chose.</td></tr>
+<tr><td>Survex .svx</td><td>In metres, with backcompass and backclino for backsights, and splays flagged.</td></tr>
+<tr><td>Therion .th + .th2</td><td>The survey as for Survex, and the sketch as a .th2: a plan scrap and an extended-profile scrap with every station as a station point (so Therion fits the drawing to the survey), walls and lines, areas with their border lines, symbols, and each cross section as its own scrap. The .th inputs the .th2.</td></tr>
+<tr><td>CSV</td><td>Every shot with its time, label, roll and flags.</td></tr>
+<tr><td>Plan / Profile .svg</td><td>The sketch, the line plot and the cross sections, 1 m = 20 px, for CartoTable's sketch tools or Illustrator.</td></tr>
+<tr><td>Everything (.ctsurvey)</td><td>The survey as the phone keeps it, to back it up or move it to another phone.</td></tr>
+</table>
+<p>Files saved on Android go to <b>Downloads/Topside</b>.</p>
+
+<h2 id="tacheo" class="g">The Tacheo and the phone</h2>
+<p>In the Android app, connect from the <b>Tacheo</b> tile on Home, or from the 📡 chip at the top of a survey. On the unit: <b>Bluetooth → Phone On</b>. <b>Two or more units can be connected at once</b> - the front sight and back sight Tacheos, a SAP6 - and each shot is tagged with the unit that took it.</p>
+<p>Each connected unit has a card:</p>
+<table>
+<tr><td>Battery and health</td><td>The unit's firmware, serial number, battery and shots left, calibration accuracy and this trip's legs on the unit. The chip at the top shows the battery (or how many units are connected).</td></tr>
+<tr><td>— FS BS</td><td>Say which unit is the front sight one and which the back sight one. A BS unit's three agreeing shots are always kept as the backsight of the leg just made; an FS unit's never are. Each unit's shots are sorted on their own, so two people shooting at once don't mix.</td></tr>
+<tr><td>Its station names follow this survey</td><td>The phone tells this unit the station you're at after every leg (firmware 1.13 or newer), so its screen and its own trip log name the same stations. On for the first unit.</td></tr>
+<tr><td>🎯 Shot, 🔴 Laser, ⚫ Off</td><td>Fire it from the phone (a 🎯 button for each unit on the Data page too).</td></tr>
+<tr><td>✨ Flash its laser</td><td>Blinks that unit's laser three times - which one is which, when two are in the same passage.</td></tr>
+<tr><td>💬 Message</td><td>Opens Messages with this unit picked.</td></tr>
+<tr><td>✚ Sections</td><td>The cross sections saved on the unit (Tools → Cross section; firmware 1.16.47 or newer). Tap one to add it to the plan beside its station.</td></tr>
+<tr><td>↻ ⏻ Disconnect</td><td>Ask the unit again, switch it off (asks first), drop the link.</td></tr>
+</table>
+<p>The link comes back by itself if a unit goes out of reach for a moment, and the phone reconnects to the units used last when you open a survey. A shot a unit sends twice (when the phone's answer was lost) is kept once.</p>
+<h3>Messages to a unit</h3>
+<p>💬 in a survey's top bar (or <b>💬 Messages</b> on the Tacheo page) opens a chat. It's one way: the phone sends, the unit shows it.</p>
+<ol class="steps">
+<li>Pick who gets it from the row of units at the top (a green dot = connected).</li>
+<li>Type it (up to 100 characters) and tap ➤ - or tap one of the quick messages: <i>Shoot a backsight, LRUDs here, Re-shoot that, Set a station here, Come back to me, Good shot, Wait, Hold the laser on the station, Moving on, Done for today</i>.</li>
+<li>It pops up on the unit over whatever page the surveyor is on, in a box in the middle with the rest of the screen dimmed, with a chime. Any button puts it away.</li>
+</ol>
+<p>Under each message: <b>✓ sent</b> (the unit has it), <b>✓✓ on screen</b>, <b>Read</b> (a button was pressed), or <b>Not read (10 min)</b>. A message that didn't go says why, with <b>try again</b>. Messages are kept with the trip (or on the phone, from the Tacheo page). On the unit, <b>Settings → Messages</b> lists the last ten with their times.</p>
+<div class="tip">Messages need firmware <b>1.17.8</b> on a Tacheo (T1, T2, SAP5X, SAP5XC) or <b>1.16.30.5</b> on a SAP6. An older unit gets a note in the chat saying so.</div>
+<div class="tip">iPhones and iPads don't let apps like this one use Bluetooth, so there shots are typed and messages can't be sent. Everything else - the sketch, the exports, sending to the computer - works the same.</div>
+
+<h2 id="caves">Get a cave onto the phone</h2>
+<h3>From your computer (easiest)</h3>
+<ol class="steps">
+<li>Pair the phone once - see <a href="#pc">Connect to your computer</a>.</li>
+<li><b>Add a cave → Caves on</b> <i>your computer</i>, and pick the cave. Topside makes a fresh copy with its map layers and sends it over.</li>
+</ol>
+<h3>From a file</h3>
+<ol class="steps">
+<li>On the computer, in CartoTable: <b>Send to phone</b> (File menu or the Exports page). It saves a <b>.ctcave</b> file to the CartoTable caves folder in your Google Drive, OneDrive, iCloud or Dropbox, and asks whether to include true coordinates.</li>
+<li>On the phone: <b>Add a cave → Open a cave file (.ctcave)</b> and pick it from Drive, Files, a message or your downloads. On Android you can also open or share a .ctcave straight to Topside.</li>
+</ol>
+<p class="mut">Every cave you open stays on the phone and works with no signal. Remove one from <b>My caves</b>.</p>
+
+<h2 id="pc">Connect to your computer</h2>
+<ol class="steps">
+<li>On the computer, open Tacheo Topside and pick <b>Connect a phone</b> on its first screen. It shows a QR code and a 6-digit code.</li>
+<li>On the phone: <b>My computer → Connect to my computer</b>, then <b>Scan</b> the QR code (or <b>Type the code instead</b>). The code works for 15 minutes and pairs one phone.</li>
+<li>The phone and computer need the same Wi-Fi the first time. Topside has to be open on the computer (it can start with Windows - tick that in Connect a phone).</li>
+</ol>
+<p>Once paired, <b>My computer</b> shows the caves Topside knows, runs <b>Check</b> and <b>Reckon</b> on the computer and shows the findings, takes <b>files or a note</b> from the phone, and <b>Use its screen</b> shows the computer's Topside window on the phone to use with taps and typing.</p>
+<div class="tip">Away from home: install Tailscale on the computer and the phone and sign in to the same account on both. The app then reaches your computer from anywhere. <b>My computer → Tailscale help</b> walks through it. <b>Forget this computer</b> unpairs.</div>
+
+<h2 id="photos">Data photos</h2>
+<ol class="steps">
+<li><b>Data photos</b> on Home. Pick the cave and the trip.</li>
+<li>Choose what you're photographing: <b>Book pages</b>, <b>Sketches</b> or <b>Other</b>.</li>
+<li>Take the photos with the app's camera (the light can be turned on), or choose them from the phone - several at once is fine.</li>
+<li>They're sent to your computer as soon as it can be reached, into <b>Documents\Topside\From phone\</b><i>day</i><b>\</b><i>cave - trip</i>. Photos taken in the cave wait on the phone until there's signal, and nothing is removed from the phone until the computer has it.</li>
+</ol>
+<p>On the computer, CartoTable reads the book pages into survey data (<b>Read this page</b>), sorts pages into trips and places the sketches. Uncertain numbers are marked for you to check against the photo.</p>
+<div class="tip">For the best reading: the page flat and filling the frame, even light, no shadow of the phone across it, and the photo sharp.</div>
+
+<h2 id="view">Looking at a cave</h2>
+<ul>
+<li><b>Move:</b> drag. <b>Zoom:</b> pinch. <b>Turn the plan:</b> twist with two fingers; it turns round the station you tapped.</li>
+<li><b>Plan / Profile / 3-D</b> at the top switches the view. In 3-D, drag to turn it.</li>
+<li><b>Tap a station</b> to see how far in it is (travel time and footage), its depth, elevation, how sure its position is (the 95 % circle), its notes and lead, and the trips that surveyed it.</li>
+<li><b>Colour</b> the line plot by travel time from the nearest entrance, by depth, by how precise the survey is, or by trip.</li>
+<li><b>Show the way in / out</b> draws the quickest route from the nearest entrance as amber dashes.</li>
+</ul>
+
+<h2 id="tabs">The tabs (Topside mode)</h2>
+<table>
+<tr><td>Station</td><td>The tapped station's details, and Plan a trip here.</td></tr>
+<tr><td>Leads</td><td>Leads nearest first, with their notes and how to get there. Show it on the plot.</td></tr>
+<tr><td>Trip plan</td><td>Pick a start and a destination: travel time by how you're moving (walking, stooping, crawling, belly crawl, breakdown, climbing, on rope), leads on the way, and a brief to share.</td></tr>
+<tr><td>Books</td><td>Every trip's book and trip report, sorted as filed, newest, longest or weakest.</td></tr>
+<tr><td>Layers</td><td>Map imagery, the ground's shading and contours, sinks, drafted maps, station names and prefixes. Save for offline keeps the imagery on the phone.</td></tr>
+<tr><td>Export</td><td>GPX, KML, GeoJSON, CSV, a picture of the map (with a world file), and the elevation.</td></tr>
+<tr><td>About</td><td>The cave's summary and this app's version.</td></tr>
+</table>
+
+<h2 id="incave">In the cave mode</h2>
+<p>A dark screen with big buttons that saves the battery. Its tabs:</p>
+<table>
+<tr><td>Here</td><td>Pick the station you're at: how far in you are, the depth, what's near.</td></tr>
+<tr><td>Way out</td><td>The quickest way to the nearest entrance, step by step, and the time it takes.</td></tr>
+<tr><td>Two stations</td><td>Distance and travel time between any two stations.</td></tr>
+<tr><td>Trip plan</td><td>The trip you planned, with its leads.</td></tr>
+<tr><td>Leads</td><td>Leads nearest to where you are.</td></tr>
+<tr><td>Books</td><td>Trip books and reports for checking an old survey on the spot.</td></tr>
+</table>
+
+<h2 id="offline">With no signal</h2>
+<p>Everything about a cave on the phone works underground: the plot, stations, the way out, leads, books, trip plans and exports, and every part of Survey and sketch (Bluetooth to the Tacheo needs no signal). Map imagery shows where it was saved with <b>Save for offline</b> (Layers). Data photos wait on the phone and go to the computer later. Connecting to your computer needs Wi-Fi or Tailscale.</p>
+
+<h2 id="trouble">When something's wrong</h2>
+<h3>There's no download button</h3>
+<p>The app hides it once it's installed. Inside a message app's browser, use its menu → <b>Open in Chrome</b> (or Safari). The <a href="https://p0sull02.github.io/tacheo-site/download.html">downloads page</a> always has every download.</p>
+<h3>It can't find my computer</h3>
+<ul>
+<li>Topside is open on the computer and <b>Connect a phone</b> has been set up once.</li>
+<li>The phone is on the same Wi-Fi - or Tailscale is running on both.</li>
+<li>Windows asked whether to allow Topside on networks: allow it on private networks.</li>
+<li>Still not: <b>My computer → Forget this computer</b>, then pair again with a new code.</li>
+</ul>
+<h3>Android won't install it</h3>
+<p>Allow the browser to install apps when asked (Settings → Apps → <i>your browser</i> → Install unknown apps), and choose <b>Install anyway</b> if Play Protect asks.</p>
+<h3>The Tacheo isn't in the list</h3>
+<ul>
+<li>On the unit: <b>Bluetooth → Phone On</b>. It shows the Bluetooth sign when the phone has it.</li>
+<li>The phone's Bluetooth is on, and the app was allowed <b>Nearby devices</b> when it asked (Settings → Apps → Topside → Permissions). Android 11 and older ask for location instead - Bluetooth scanning needed it then; the app doesn't use where you are.</li>
+<li>Only one phone can have the unit at a time: disconnect it in SexyTopo, TopoDroid or another phone first.</li>
+</ul>
+<h3>Shots come in as splays, not legs</h3>
+<p>The leg's shots didn't agree closely enough, or there were fewer than <b>Shots per leg</b>. Tap one of them → give it a <b>To</b> station, or loosen <b>Agree within</b> on the Trip page.</p>
+<h3>A cave doesn't open</h3>
+<p>Make a fresh copy on the computer (Send to phone, or Add a cave → Caves on your computer). Caves made by an older Topside open, but a new copy brings the newest layers.</p>
+<h3>A newer version is out</h3>
+<p>The app says so at the top of Home. On Android, download it from the <a href="https://p0sull02.github.io/tacheo-site/download.html">downloads page</a> and install over the old one - your caves stay.</p>
+
+<footer>
+<a href="https://p0sull02.github.io/tacheo-site/download.html">Downloads</a> · <a href="privacy.html">Privacy policy</a><br>
+Copyright © 2026 Phillip M. Sullivan. All rights reserved.
+</footer>
+</main></body></html>
