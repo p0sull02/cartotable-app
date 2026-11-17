@@ -835,6 +835,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
  h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
  h+=tileHtml('tSurvey','📐','#1A9850','Survey and sketch','Shots from the Tacheo, sketch as you go');   // 16 Nov 2026 (Sully: "Can you build in a digital sketching/survey suite too? Like sexytopo or Topodroid?")
+ h+=tileHtml('tTacheo','📡','#0f766e','Tacheo',window.svTacheoSub?svTacheoSub():'Connect, battery, laser, messages');   // 16 Nov 2026 (Sully: "I don't see a tile regarding connecting to a Tacheo. Idk where the message function would be")
  h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages read into data on your computer');   // 16 Nov 2026 (Sully: "a short description under it saying it automatically transcribes data from photos")
  if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer');
  h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!!(HOSTED||LOCALPC));   // wide when it would sit alone
@@ -842,7 +843,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';resize();};hookInstall('hInstallTop');
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tTacheo'))e.onclick=function(){window.svUnitsShow&&window.svUnitsShow();};if(e=$('tPc'))e.onclick=pcSheet;
  $('hMode').onclick=function(){setCave(!CAVE);homeShow();};
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
@@ -1186,20 +1187,21 @@ function svAddShot(s){s.id='h'+Date.now().toString(36)+Math.random().toString(36
  if(svLrudChar(s.lbl)){s.kind='lrud';s.lrud=s.lbl.toUpperCase();s.check=s.lbl!=s.lbl.toUpperCase()&&s.lbl!='?';SV.shots.push(s);svAfter(s);return s;}
  var prev=SV.shots.filter(function(x){return x.kind!='lrud';}),last=prev[prev.length-1];
  // one more shot agreeing with the leg or backsight just made: part of it
- if(last&&last.grp&&(last.kind=='leg'||last.kind=='back')&&!s.typed){var g=svGroup(last.grp),mm=svMean(g);if(svAgree(s,{d:mm.d,az:mm.az,cl:mm.cl})){s.kind=last.kind;s.grp=last.grp;s.from=last.from;s.to=last.to;SV.shots.push(s);svAfter(s);return s;}}
+ if(last&&last.grp&&(last.kind=='leg'||last.kind=='back')&&!s.typed&&(last.dev||'')==(s.dev||'')){var g=svGroup(last.grp),mm=svMean(g);if(svAgree(s,{d:mm.d,az:mm.az,cl:mm.cl})){s.kind=last.kind;s.grp=last.grp;s.from=last.from;s.to=last.to;SV.shots.push(s);svAfter(s);return s;}}
  SV.shots.push(s);
  if(s.typed&&s.to0){s.kind='leg';s.grp='g'+s.id;s.from=s.from0||SV.cur;s.to=s.to0;svLegMade(s.grp,s.to);svAfter(s);return s;}
  // the run of splays at this station that agree with this one
- var run=[s];for(var i=SV.shots.length-2;i>=0;i--){var x=SV.shots[i];if(x.kind=='lrud')continue;if(x.kind!='splay'||x.from!=SV.cur||x.grp||!svAgree(x,s))break;run.unshift(x);if(run.length>=SV.legShots)break;}
+ var run=[s];for(var i=SV.shots.length-2;i>=0;i--){var x=SV.shots[i];if(x.kind=='lrud')continue;if((x.dev||'')!=(s.dev||''))continue;if(x.kind!='splay'||x.from!=SV.cur||x.grp||!svAgree(x,s))break;run.unshift(x);if(run.length>=SV.legShots)break;}
  if(run.length>=SV.legShots){var g='g'+s.id,ll=svLastLeg(),back=ll&&ll.to==SV.cur&&svAgree(s,{d:ll.d,az:ll.az,cl:ll.cl},true)&&(s.lbl!='F');
-  if(s.lbl=='B'||s.lbl=='b')back=!!(ll&&ll.to==SV.cur);
+  // two units (app 1.7): the one set as BS always gives backsights, the FS one never does - each unit's shots are sorted on their own
+  if(s.lbl=='B'||s.lbl=='b'||s.role=='BS')back=!!(ll&&ll.to==SV.cur);else if(s.role=='FS')back=false;
   run.forEach(function(x){x.grp=g;x.kind=back?'back':'leg';});
   if(back){run.forEach(function(x){x.from=ll.to;x.to=ll.from;});}
   else{var to=svNextName();run.forEach(function(x){x.to=to;});svLegMade(g,to);}}
  svAfter(s);return s;}
 function svLegMade(g,to){var ll=svLegs(),first=ll.filter(function(x){return x.kind=='leg';})[0],me=ll.filter(function(x){return x.grp==g;})[0];
  if(me&&!SV.ext[g]){var ref=first?first.az:me.az,dd=Math.abs(((me.az-ref)%360+540)%360-180);SV.ext[g]=Math.abs(me.cl)>80?'V':dd<=90?'R':'L';}
- SV.cur=to;var nn=svNum(to);if(nn&&nn.p==(SV.prefix||'')&&nn.n>=SV.next)SV.next=nn.n+1;svTellStation();}
+ SV.cur=to;var nn=svNum(to);if(nn&&nn.p==(SV.prefix||'')&&nn.n>=SV.next)SV.next=nn.n+1;if(svQ('recentre',true))SVK.recentre=true;svTellStation();}
 function svAfter(s){svSaveSoon();svRefresh(s);}
 // ---- positions: stations from the legs (backsights averaged in, reversed), plan and extended profile
 function svReduce(){var legs=svLegs(),pairs={},adj={};
@@ -1231,13 +1233,31 @@ function svCss(){if($('svCss'))return;var st=document.createElement('style');st.
  '.svr .tg.g{background:'+SVA+';color:#fff}.svr .tg.w{background:#b7791f;color:#fff}.svr.cmt{opacity:.45;text-decoration:line-through}#svy .card{border-color:#24533a}#svy .k{color:'+SVA2+'}'+
  '#svDlg{position:absolute;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:5}#svDlg .in{background:var(--panel);border-top:2px solid var(--sa);border-radius:14px 14px 0 0;width:100%;max-width:640px;max-height:86vh;overflow:auto;padding:12px 14px calc(16px + env(safe-area-inset-bottom))}'+
  '#svDlg label{display:block;margin:8px 0 2px;color:var(--muted);font-size:12px}#svDlg input,#svDlg select,#svDlg textarea{width:100%;font-size:16px;padding:9px;background:var(--bar);color:var(--ink);border:1px solid var(--line);border-radius:8px;font-family:inherit}'+
- '#svDlg .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}#svDlg .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}';
+ '#svDlg input[type=checkbox]{width:auto;padding:0;margin:0}#svDlg .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}#svDlg .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}'+
+ '#svXsBar{position:absolute;left:8px;right:8px;top:8px;display:flex;align-items:center;gap:6px;background:rgba(14,20,27,.94);border:1px solid var(--sa);border-radius:10px;padding:5px 8px;color:#e6ecf2;font-size:13px;z-index:2}#svXsBar .ib{height:34px}'+
+ '.chip.on .uSig.g i,#svDevC .uSig.g i{background:rgba(255,255,255,.3)!important}.chip.on .uSig.g i.l,#svDevC .uSig.g i.l{background:#fff!important}.chip.on .uSig i:not(.l),#svDevC .uSig i:not(.l){background:rgba(0,0,0,.25)!important}.uSig{display:inline-flex;align-items:flex-end;gap:2px;height:12px;vertical-align:-1px;margin-left:3px}.uSig i{display:block;width:3px;border-radius:1px}.uSig.big{height:18px;gap:3px}.uSig.big i{width:5px}.ucard .uSigW{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-top:6px}#svUnitsPg .ucard,#svDlgIn .ucard{padding:14px}.ucard .uHead{display:flex;align-items:center;gap:9px}.ucard .uDot{width:11px;height:11px;border-radius:50%;flex:none}.ucard .uName{font-size:20px;flex:1}.ucard .uBatt{display:flex;align-items:center;gap:6px;font-weight:700;font-size:15px}.ucard .uBattBar{width:34px;height:14px;border:2px solid #8a97a4;border-radius:3px;padding:1px;display:inline-block}.ucard .uBattBar i{display:block;height:100%;border-radius:1px}.ucard .uMeta{color:var(--muted);font-size:13px;margin:5px 0 12px;line-height:1.4}.ucard .uMsg{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--sa);color:#fff;border:0;border-radius:14px;padding:16px;font-size:18px;cursor:pointer;box-shadow:0 2px 10px rgba(48,164,108,.35)}.ucard .uMsg small{display:block;font-size:13px;opacity:.85;font-weight:400;margin-top:2px}.ucard .uMsg .uI{font-size:30px}.ucard .uSec{color:'+SVA2+';font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:16px 0 7px}.ucard .uGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ucard .uB{display:flex;align-items:center;gap:9px;min-height:56px;background:#24303c;color:#e6ecf2;border:1px solid #33414f;border-radius:12px;padding:10px 12px;font-size:16px;font-weight:600;cursor:pointer;text-align:left}.ucard .uB:active,.ucard .uMsg:active{filter:brightness(1.25)}.ucard .uI{font-size:22px;line-height:1;flex:none}.ucard .uRow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:15px;margin:0 0 9px}.ucard .uChk{justify-content:flex-start;flex-wrap:nowrap;gap:10px;cursor:pointer}.ucard .uChk input{width:22px;height:22px;flex:none}.ucard .uSeg button{padding:9px 11px;font-size:14px}.ucard .uFoot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}.ucard .uDim{justify-content:center;background:none}.ucard .uRed{justify-content:center;background:none;border-color:#7a2d30;color:#ff8a8d}'+
+ '#svChat{position:absolute;inset:0;z-index:4;display:none;flex-direction:column;background:#0d1319}#svChat .chHead{display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 8px 6px;background:var(--bar);border-bottom:2px solid var(--sa)}'+
+ '#svChat .chTo{display:flex;gap:6px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--line);flex:none}#svChat .chip{cursor:pointer;border:1px solid var(--line);background:#1b2530;color:#e6ecf2;padding:6px 11px;font-size:13px;border-radius:16px}#svChat .chTo .chip.on{background:var(--sa);border-color:var(--sa);color:#fff}'+
+ '#svChat .chList{flex:1;overflow-y:auto;padding:10px 10px 4px;display:flex;flex-direction:column;gap:6px}#svChat .chB{align-self:flex-end;max-width:78%;background:var(--sa);color:#fff;border-radius:16px 16px 4px 16px;padding:7px 11px;font-size:15px;line-height:1.3;word-wrap:break-word}#svChat .chB.bad{background:#5a2a2a}'+
+ '#svChat .chMeta{font-size:11px;opacity:.8;text-align:right;margin-top:2px}#svChat .chMeta .rd{font-weight:700}#svChat .chMeta a{color:#fff}#svChat .chDay{align-self:center;font-size:11.5px;color:var(--muted);margin:6px 0 2px}#svChat .chNote{align-self:center;text-align:center;font-size:12.5px;color:var(--muted);max-width:86%;margin:8px 0}'+
+ '#svChat .chQuick{display:flex;gap:6px;overflow-x:auto;padding:6px 8px;flex:none;scrollbar-width:none}#svChat .chQuick::-webkit-scrollbar{display:none}#svChat .chQuick .chip{white-space:nowrap;font-weight:500}'+
+ '#svChat .chIn{display:flex;align-items:flex-end;gap:6px;padding:6px 8px calc(8px + env(safe-area-inset-bottom));background:var(--bar);border-top:1px solid var(--line);flex:none}#svChat textarea{flex:1;resize:none;font-size:16px;padding:9px 12px;border-radius:18px;background:#0d1319;color:var(--ink);border:1px solid var(--line);font-family:inherit;max-height:110px}#svChat #chN{font-size:11px;align-self:center}';
  document.head.appendChild(st);}
 function svOpenUi(){svCss();var o=$('svy');o.style.display='block';
  o.innerHTML='<div id="svBar"></div><div id="svBody"></div><div id="svDlg"><div class="in" id="svDlgIn"></div></div>';}
 function svClose(){$('svy').style.display='none';SV=null;homeShow();}
 // ---- the list of surveys
-function svListShow(){svOpenUi();SV=null;
+// the Tacheo page from the home screen (Sully, 16 Nov 2026: "I don't see a tile regarding connecting to a Tacheo. Idk where the message
+// function would be"): the units, their batteries and controls, and the messages, without opening a survey
+function svUnitsShow(){svOpenUi();SV=null;SVVIEW='units';
+ $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>Tacheo</h1><span class="chip" id="svDevC" style="cursor:pointer"></span><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 Messages</button>';
+ $('svBk').onclick=function(){SVVIEW='';svClose();};$('svDevC').onclick=function(){svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};
+ $('svBody').innerHTML='<div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots taken here aren\'t kept - open a survey in <b>Survey and sketch</b> to keep them.':'Bluetooth to the Tacheo is in the <b>Topside app for Android</b>.')+'</p><div id="svUnitsPg"></div></div>';
+ svDevChip();svAutoConnect();svDevSheet();}
+function svUnitsRefresh(){svDevChip();var c=$('tTacheoS');if(c)c.textContent=svTacheoSub();}
+function svTacheoSub(){var on=svOnUnits();return on.length?on.map(function(u){return svShort(u)+(u.info&&u.info.batt!=null?' '+u.info.batt+'%':'');}).join(' · '):'Connect, battery, laser, messages';}
+window.svUnitsShow=svUnitsShow;window.svTacheoSub=svTacheoSub;
+function svListShow(){svOpenUi();SV=null;SVVIEW='list';
  $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>Survey and sketch</h1><span style="flex:1"></span><button class="ib on" id="svNewB" style="background:'+SVA+';border-color:'+SVA+'">＋ New survey</button>';
  $('svBk').onclick=svClose;$('svNewB').onclick=svNewDlg;
  $('svBody').innerHTML='<div id="svList"><p class="mut">Loading…</p></div>';
@@ -1264,14 +1284,14 @@ function svNewDlg(){var last=load2('ct-sv-last')||{};
   try{localStorage.setItem('ct-sv-last',JSON.stringify(o));}catch(e){}var s=svNew(o);svPut(s).then(function(){svDlgClose();svOpen(s);});};}
 // ---- one survey
 function svOpen(s){SV=s;['plan','prof','xs','shots'].forEach(function(k){if(!SV[k])SV[k]=[];});if(!SV.ext)SV.ext={};SVUNDO={plan:[],prof:[]};SVREDO={plan:[],prof:[]};svOpenUi();
- $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1 id="svTtl">'+esc(SV.name)+'</h1><span class="chip" id="svDevC" style="cursor:pointer"></span>'+
+ $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1 id="svTtl">'+esc(SV.name)+'</h1><span class="chip" id="svDevC" style="cursor:pointer"></span><button class="ib" id="svMsgB" title="Messages to a unit">💬</button>'+
   '<div class="seg" id="svViews"><button data-v="data">Data</button><button data-v="plan">Plan</button><button data-v="prof">Profile</button><button data-v="trip">Trip</button></div>';
- $('svBk').onclick=function(){svPut(SV).then(svListShow);};$('svDevC').onclick=svDevSheet;
+ $('svBk').onclick=function(){svPut(SV).then(svListShow);};$('svDevC').onclick=svDevSheet;$('svMsgB').onclick=function(){svChatShow();};
  Array.prototype.forEach.call(document.querySelectorAll('#svViews button'),function(b){b.onclick=function(){svView(b.getAttribute('data-v'));};});
  svDevChip();svAutoConnect();svView(SV.shots.length?SVVIEW:'data');}
 function svView(v){SVVIEW=v;Array.prototype.forEach.call(document.querySelectorAll('#svViews button'),function(b){b.classList.toggle('on',b.getAttribute('data-v')==v);});
  if(v=='data')svDataShow();else if(v=='trip')svTripShow();else svSketchShow(v);}
-function svRefresh(s){if(!SV)return;if(SVVIEW=='data')svDataShow(s&&s.id);else if(SVVIEW=='plan'||SVVIEW=='prof'){svDraw();svLive(s);}if(s&&!s.typed&&SVVIEW!='data')svLive(s);}
+function svRefresh(s){if(!SV)return;if(SVVIEW=='data')svDataShow(s&&s.id);else if(SVVIEW=='plan'||SVVIEW=='prof'||SVVIEW=='xs'){svDraw();svLive(s);}if(s&&!s.typed&&SVVIEW!='data')svLive(s);}
 // ---- Data: the shots, newest at the bottom (TopoDroid's data list)
 function svTag(s){var l=s.lbl;if(!l)return'';if(l=='3')return'<span class="tg g">FSx3</span>';if(l=='B')return s.kind=='back'?'':'<span class="tg">BS</span>';if(l=='b')return'<span class="tg w">BS check</span>';if(l=='F')return'<span class="tg">FS</span>';
  if(svLrudChar(l))return'<span class="tg'+(s.check?' w':'')+'">'+(l=='?'?'LRUD':l.toUpperCase())+(s.check?' check':'')+'</span>';return'';}
@@ -1282,12 +1302,12 @@ function svDataShow(hl){var b=$('svBody');var top=$('svList')?$('svList').scroll
  if(!SV.shots.length)h+='<p class="mut">No shots yet. '+(svBleOk()?'Connect the Tacheo (the chip at the top), then take shots: '+SV.legShots+' that agree make a leg, the rest are splays.':'Type them with <b>Add a shot</b>.')+'</p>';
  var shown={};SV.shots.forEach(function(s){
   if(s.grp&&(s.kind=='leg'||s.kind=='back')){if(shown[s.grp])return;shown[s.grp]=1;var g=svGroup(s.grp),mm=svMean(g),lb=g.map(function(x){return x.lbl;}).filter(Boolean),sp=svSpread(g);
-   h+='<div class="svr leg'+(s.cmt?' cmt':'')+(hl&&g.some(function(x){return x.id==hl;})?' new':'')+'" data-g="'+s.grp+'"><span class="st">'+esc(s.from)+' → '+esc(s.to)+'</span><span>'+(s.kind=='back'?'<span class="tg">backsight</span> ':'')+(g.length>1?'<span class="mut" style="font-size:11.5px">×'+g.length+(sp?' ±'+sp:'')+'</span> ':'')+svTag(g[g.length-1])+(s.surf?' <span class="tg">surface</span>':'')+(s.dup?' <span class="tg">dup</span>':'')+'</span><span>'+svL(mm.d)+'</span><span>'+n1(mm.az)+'°</span><span>'+n1(mm.cl)+'°</span></div>';return;}
+   h+='<div class="svr leg'+(s.cmt?' cmt':'')+(hl&&g.some(function(x){return x.id==hl;})?' new':'')+'" data-g="'+s.grp+'"><span class="st">'+esc(s.from)+' → '+esc(s.to)+'</span><span>'+(s.kind=='back'?'<span class="tg">backsight</span> ':'')+(g.length>1?'<span class="mut" style="font-size:11.5px">×'+g.length+(sp?' ±'+sp:'')+'</span> ':'')+svTag(g[g.length-1])+(s.dev&&SV.shots.some(function(x){return x.dev&&x.dev!=s.dev;})?' <span class="tg">'+esc(s.dev)+'</span>':'')+(s.surf?' <span class="tg">surface</span>':'')+(s.dup?' <span class="tg">dup</span>':'')+'</span><span>'+svL(mm.d)+'</span><span>'+n1(mm.az)+'°</span><span>'+n1(mm.cl)+'°</span></div>';return;}
   h+='<div class="svr sp'+(s.cmt?' cmt':'')+(hl==s.id?' new':'')+'" data-s="'+s.id+'"><span>'+esc(s.from)+'</span><span>'+(s.kind=='lrud'?'':'splay ')+svTag(s)+'</span><span>'+svL(s.d)+'</span><span>'+n1(s.az)+'°</span><span>'+n1(s.cl)+'°</span></div>';});
- h+='<div style="margin:12px 0"><button class="btn" id="svAddB">＋ Add a shot</button>'+(SVDEV.state=='on'?'<button class="btn alt" id="svShotB">🎯 Shot</button><button class="btn alt" id="svLasB">🔴 Laser</button>':'')+'</div>';
+ h+='<div style="margin:12px 0"><button class="btn" id="svAddB">＋ Add a shot</button>'+svOnUnits().map(function(u,i){return'<button class="btn alt" data-shot="'+esc(u.addr)+'">🎯 '+(svOnUnits().length>1?esc(svShort(u)):'Shot')+'</button>';}).join('')+(svOnUnits().length==1?'<button class="btn alt" id="svLasB">🔴 Laser</button>':'')+'</div>';
  h+='<p class="mut" style="font-size:12px">Units: '+(SV.units=='m'?'metres':'feet')+', degrees. Tap a row to edit it.</p></div>';
  b.innerHTML=h;var L=$('svList');if(atEnd||top<0)L.scrollTop=L.scrollHeight;else L.scrollTop=top;
- $('svAddB').onclick=svAddDlg;$('svCurB').onclick=svCurDlg;var e;if(e=$('svShotB'))e.onclick=function(){svCmd(0x38);};if(e=$('svLasB'))e.onclick=function(){svCmd(0x36);};
+ $('svAddB').onclick=svAddDlg;$('svCurB').onclick=svCurDlg;var e;Array.prototype.forEach.call(document.querySelectorAll('[data-shot]'),function(b){b.onclick=function(){svCmd(0x38,SVDEV.units[b.getAttribute('data-shot')]);};});if(e=$('svLasB'))e.onclick=function(){svCmd(0x36);};
  Array.prototype.forEach.call(L.querySelectorAll('.svr'),function(r){r.onclick=function(){var g=r.getAttribute('data-g'),id=r.getAttribute('data-s');svEditDlg(g?svGroup(g):SV.shots.filter(function(x){return x.id==id;}));};});}
 function svSpread(g){if(g.length<2)return'';var mm=svMean(g),m=0;g.forEach(function(x){m=Math.max(m,Math.abs(x.d-mm.d));});return svL(m,2);}
 function svCurDlg(){var st=svStations();svDlg('<div class="big">The station you\'re at</div><p class="mut">New shots start here. Pick one surveyed already (to start a side passage) or type a name.</p><label>Station</label><input id="cuN" value="'+esc(SV.cur)+'" list="cuL" autocapitalize="characters"><datalist id="cuL">'+st.map(function(n){return'<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
@@ -1329,7 +1349,7 @@ function svTripShow(){var legs=svLegs().filter(function(l){return l.kind=='leg';
  var h='<div id="svList"><div class="card"><div class="stat"><b>'+legs.length+'</b> legs</div><div class="stat"><b>'+svL(len,0)+'</b> '+svUn()+'</div><div class="stat"><b>'+SV.shots.filter(function(x){return x.kind=='splay'||x.kind=='lrud';}).length+'</b> splays</div><div class="stat"><b>'+(SV.plan.length+SV.prof.length)+'</b> sketch items</div><div class="stat"><b>'+SV.xs.length+'</b> cross sections</div></div>';
  h+='<div class="k">Send and save</div>';
  h+=(PC?'<button class="btn" id="tPcB">💻 Send to '+esc(PC.name)+'</button>':'<button class="btn alt" id="tPcB">💻 Send to my computer</button>');
- h+='<button class="btn alt" id="tSrv">Walls .srv</button><button class="btn alt" id="tSvx">Survex .svx</button><button class="btn alt" id="tTh">Therion .th</button><button class="btn alt" id="tCsv">CSV</button><button class="btn alt" id="tSvgP">Plan sketch .svg</button><button class="btn alt" id="tSvgE">Profile sketch .svg</button><button class="btn alt" id="tJson">Everything (.ctsurvey)</button>';
+ h+='<button class="btn alt" id="tSrv">Walls .srv</button><button class="btn alt" id="tSvx">Survex .svx</button><button class="btn alt" id="tTh">Therion .th + .th2</button><button class="btn alt" id="tCsv">CSV</button><button class="btn alt" id="tSvgP">Plan sketch .svg</button><button class="btn alt" id="tSvgE">Profile sketch .svg</button><button class="btn alt" id="tJson">Everything (.ctsurvey)</button>';
  h+='<div class="k">The trip</div><label class="mut" style="font-size:12px">Name</label><input class="fld" id="tName" value="'+esc(SV.name)+'"><label class="mut" style="font-size:12px">Cave</label><input class="fld" id="tCave" value="'+esc(SV.cave)+'">'+
   '<label class="mut" style="font-size:12px">Team</label><input class="fld" id="tTeam" value="'+esc(SV.team)+'"><label class="mut" style="font-size:12px">Notes</label><textarea class="fld" id="tNote" rows="3">'+esc(SV.comment)+'</textarea>';
  h+='<div class="k">How shots are sorted</div><div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="mut" style="font-size:12px">Shots per leg</label><select class="fld" id="tLeg"><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></div>'+
@@ -1341,12 +1361,12 @@ function svTripShow(){var legs=svLegs().filter(function(l){return l.kind=='leg';
   SV.units=$('tUnits').value;SV.tolD=Math.max(0.005,(+$('tTolD').value||0.05)*svU());SV.tolA=Math.max(0.1,+$('tTolA').value||1.5);$('svTtl').textContent=SV.name;svPut(SV).then(function(){toast('Saved');svTripShow();});};
  $('tDel').onclick=function(){if(!confirm('Delete "'+SV.name+'" and its sketch from this phone? This can\'t be undone.'))return;svDo('readwrite',function(s){return s.delete(SV.id);}).then(svListShow);};
  var base=clean(SV.cave?SV.cave+' - '+SV.name:SV.name)||'survey';
- $('tSrv').onclick=function(){save(base+'.srv',svWalls(),'text/plain');};$('tSvx').onclick=function(){save(base+'.svx',svSurvex(),'text/plain');};$('tTh').onclick=function(){save(base+'.th',svTherion(),'text/plain');};
+ $('tSrv').onclick=function(){save(base+'.srv',svWalls(),'text/plain');};$('tSvx').onclick=function(){save(base+'.svx',svSurvex(),'text/plain');};$('tTh').onclick=function(){save(base+'.th',svTherion(base+'.th2'),'text/plain');setTimeout(function(){save(base+'.th2',svTh2(),'text/plain');},700);};
  $('tCsv').onclick=function(){save(base+'.csv',svCsv(),'text/csv');};$('tSvgP').onclick=function(){save(base+' plan.svg',svSvg('plan'),'image/svg+xml');};$('tSvgE').onclick=function(){save(base+' profile.svg',svSvg('prof'),'image/svg+xml');};
  $('tJson').onclick=function(){save(base+'.ctsurvey',JSON.stringify(SV),'application/json');};
  $('tPcB').onclick=svSendPc;}
 function svSendPc(){if(!PC){pcSheet();return;}var base=clean(SV.cave?SV.cave+' - '+SV.name:SV.name)||'survey',folder=clean((SV.cave||'Survey')+' - '+SV.name),day=today();
- var files=[[base+'.srv',svWalls(),'text/plain'],[base+' plan.svg',svSvg('plan'),'image/svg+xml'],[base+' profile.svg',svSvg('prof'),'image/svg+xml'],[base+'.ctsurvey',JSON.stringify(SV),'application/json']];
+ var files=[[base+'.srv',svWalls(),'text/plain'],[base+'.th',svTherion(base+'.th2'),'text/plain'],[base+'.th2',svTh2(),'text/plain'],[base+' plan.svg',svSvg('plan'),'image/svg+xml'],[base+' profile.svg',svSvg('prof'),'image/svg+xml'],[base+'.ctsurvey',JSON.stringify(SV),'application/json']];
  toast('Sending to '+esc(PC.name)+'…',8000);var i=0;(function next(){if(i>=files.length){toast('Sent to '+esc(PC.name)+': From phone\\'+esc(day)+'\\'+esc(folder),6000);return;}var f=files[i++];
   pcJson('POST','/api/upload?name='+encodeURIComponent(f[0])+'&folder='+encodeURIComponent(folder),new Blob([f[1]],{type:f[2]}),60000).then(next,function(e){toast('Couldn\'t send: '+esc(e&&e.message||e)+' - '+esc(pcWhyShort()),7000);});})();}
 // ---- exports
@@ -1377,12 +1397,12 @@ function svSurvex(){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0
  pr.forEach(function(x){L.push((x.cmt?';':'')+x.from+' '+x.to+' '+x.d.toFixed(3)+' '+f1(x.az)+(anyB?' '+f1(x.baz):'')+' '+f1(x.cl)+(anyB?' '+f1(x.bcl):''));});
  if(o.splays.length){if(anyB)L.push('*data normal from to tape compass clino');L.push('*flags splay');o.splays.forEach(function(s){L.push((s.cmt?';':'')+s.from+' . '+s.d.toFixed(3)+' '+s.az.toFixed(1)+' '+s.cl.toFixed(1));});L.push('*flags not splay');}
  L.push('*end '+nm);return L.join('\n')+'\n';}
-function svTherion(){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('encoding utf-8');L.push('survey '+nm+' -title "'+(SV.name||'').replace(/"/g,"'")+'"');L.push('  centreline');L.push('    date '+SV.date.replace(/-/g,'.'));
+function svTherion(th2){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('encoding utf-8');L.push('survey '+nm+' -title "'+(SV.name||'').replace(/"/g,"'")+'"');L.push('  centreline');L.push('    date '+SV.date.replace(/-/g,'.'));
  (SV.team||'').split(/[,;]+/).map(function(x){return x.trim();}).filter(Boolean).forEach(function(t){L.push('    team "'+t.replace(/"/g,"'")+'"');});if(SV.decl)L.push('    declination '+SV.decl+' degrees');
  L.push('    units length meters');var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'    data normal from to length compass backcompass clino backclino':'    data normal from to length compass clino');
  pr.forEach(function(x){L.push('    '+(x.cmt?'# ':'')+x.from+' '+x.to+' '+x.d.toFixed(3)+' '+f1(x.az)+(anyB?' '+f1(x.baz):'')+' '+f1(x.cl)+(anyB?' '+f1(x.bcl):''));});
  if(o.splays.length){if(anyB)L.push('    data normal from to length compass clino');L.push('    flags splay');o.splays.forEach(function(s){L.push('    '+(s.cmt?'# ':'')+s.from+' - '+s.d.toFixed(3)+' '+s.az.toFixed(1)+' '+s.cl.toFixed(1));});L.push('    flags not splay');}
- L.push('  endcentreline');L.push('endsurvey');return L.join('\n')+'\n';}
+ L.push('  endcentreline');if(th2&&((SV.plan||[]).length||(SV.prof||[]).length||SV.xs.length))L.push('  input "'+th2.replace(/"/g,'')+'"   # the sketch: plan and extended-profile scraps');L.push('endsurvey');return L.join('\n')+'\n';}
 function svCsv(){var L=['time,from,to,kind,distance_m,azimuth,clino,roll,label,group,flags'];SV.shots.forEach(function(s){L.push([new Date(s.t).toISOString(),s.from,s.to||'',s.kind,s.d.toFixed(3),s.az.toFixed(2),s.cl.toFixed(2),s.roll==null?'':s.roll.toFixed(1),s.lbl||'',s.grp||'',[s.surf?'surface':'',s.dup?'dup':'',s.cmt?'commented':''].filter(Boolean).join(' ')].map(function(v){v=String(v);return /[,"]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(','));});return L.join('\n')+'\n';}
 // ---- the sketch: plan and extended profile, NSS symbols (green accent)
 var SVK={tool:'move',type:'wall',view:'plan',sc:20,ox:0,oy:0,fit:true,splays:true,names:true,grid:true,cv:null,ctx:null,ptr:{},draw:null,pinch:null};
@@ -1393,52 +1413,12 @@ var SVPOINTS=[['stal','Stalactites'],['stag','Stalagmites'],['column','Column'],
  ['airflow','Air flow (drag)'],['waterflow','Water flow (drag)'],['slope_arrow','Slope (drag)'],['drip_pt','Water drip'],['pool_pt','Small pool'],['pit_pt','Pit (depth)'],['dome_pt','Dome (height)'],['ch','Ceiling height'],
  ['climb','Climb'],['squeeze','Squeeze'],['lead','Lead (?)'],['entrance','Entrance'],['dig','Dig'],['hazard','Hazard'],['bats','Bats'],['bones','Bones'],['boulder','Boulder'],['break_pt','Breakdown block'],['label','Text']];
 var SVDIR={airflow:1,waterflow:1,slope_arrow:1};
-function svSketchShow(v){if(SVK.view!=v||!SVK.cv)SVK.fit=true;SVK.view=v;var b=$('svBody');
- b.innerHTML='<canvas id="svCv"></canvas><div id="svLive"></div><div id="svPal"></div><div id="svTools">'+
-  '<button class="ib" data-t="move" title="Move and zoom">✋</button><button class="ib" data-t="line" title="Lines">〰 <span id="svTL"></span></button><button class="ib" data-t="area" title="Areas">▦</button><button class="ib" data-t="point" title="Symbols">✳</button>'+
-  '<button class="ib" data-t="erase" title="Rub out">⌫</button><button class="ib" id="svUn" title="Undo">↶</button><button class="ib" id="svRe" title="Redo">↷</button><button class="ib" id="svFit" title="Fit">⤢</button><button class="ib" id="svLay" title="Show">👁</button>'+
-  (SVDEV.state=='on'?'<button class="ib" id="svShot2" title="Take a shot">🎯</button>':'')+'<button class="ib" id="svAt" title="The station you\'re at">📍 '+esc(SV.cur)+'</button></div>';
- SVK.cv=$('svCv');SVK.ctx=SVK.cv.getContext('2d');svSizeCv();if(SVK.fit)svFitView();
- Array.prototype.forEach.call(document.querySelectorAll('#svTools [data-t]'),function(btn){btn.onclick=function(){var t=btn.getAttribute('data-t');if(SVK.tool==t&&(t=='line'||t=='area'||t=='point'))svPal(t);else{SVK.tool=t;$('svPal').style.display='none';if(t=='line'||t=='area'||t=='point')svPal(t);}svToolsOn();};});
- $('svUn').onclick=function(){svUndo(1);};$('svRe').onclick=function(){svUndo(-1);};$('svFit').onclick=function(){SVK.fit=true;svFitView();svDraw();};$('svLay').onclick=svLayers;$('svAt').onclick=svCurDlg;var e;if(e=$('svShot2'))e.onclick=function(){svCmd(0x38);};
- svToolsOn();svHook();svDraw();}
-function svToolsOn(){Array.prototype.forEach.call(document.querySelectorAll('#svTools [data-t]'),function(b){b.classList.toggle('on',b.getAttribute('data-t')==SVK.tool);});var l=$('svTL');if(l)l.textContent='';}
 function svSizeCv(){var c=SVK.cv,r=c.getBoundingClientRect();c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);}
-function svPts(){var R=svReduce();return{R:R,pos:function(st){if(SVK.view=='plan'){var p=R.P[st];return p?[p[0],p[1]]:null;}var x=R.X[st];return x?[x[0],x[1]]:null;}};}
-function svXsBox(R,pts){SV.xs.forEach(function(x){var p=R.P[x.at];if(!p)return;var o=x.off||[3,3];(x.pts||[]).forEach(function(q){pts.push([p[0]+o[0]+q[0],p[1]+o[1]+q[1]]);});});}
-function svFitView(){var r=svReduce(),pts=[];if(SVK.view=='plan')svXsBox(r,pts);var src=SVK.view=='plan'?r.P:r.X;Object.keys(src).forEach(function(k){var p=src[k];pts.push([p[0],p[1]]);});(SV[SVK.view]||[]).forEach(function(it){(it.pts||[[it.x,it.y]]).forEach(function(p){pts.push(p);});});
- var W=SVK.cv.width/dpr,H=SVK.cv.height/dpr-60;if(!pts.length){SVK.sc=20;SVK.ox=W/2;SVK.oy=H/2;return;}
- var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(function(p){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);});
- var w=Math.max(4,x1-x0),h=Math.max(4,y1-y0);SVK.sc=Math.min(W/w,H/h)*0.8;SVK.sc=Math.max(2,Math.min(400,SVK.sc));SVK.ox=W/2-(x0+x1)/2*SVK.sc;SVK.oy=H/2+(y0+y1)/2*SVK.sc;}
 function w2s(p){return[SVK.ox+p[0]*SVK.sc,SVK.oy-p[1]*SVK.sc];}
 function s2w(x,y){return[(x-SVK.ox)/SVK.sc,(SVK.oy-y)/SVK.sc];}
-function svDraw(){if(!SVK.cv||!$('svCv'))return;var c=SVK.ctx,W=SVK.cv.width/dpr,H=SVK.cv.height/dpr;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#f7f5ef';c.fillRect(0,0,W,H);
- var Pp=svPts(),R=Pp.R;
- if(SVK.grid){var step=svU()*(SV.units=='m'?1:5),px=step*SVK.sc;while(px<14){step*=2;px*=2;}var w0=s2w(0,H),w1=s2w(W,0);c.strokeStyle='rgba(26,152,80,.13)';c.lineWidth=1;c.beginPath();
-  for(var gx=Math.floor(w0[0]/step)*step;gx<=w1[0];gx+=step){var sx=w2s([gx,0])[0];c.moveTo(sx,0);c.lineTo(sx,H);}for(var gy=Math.floor(w0[1]/step)*step;gy<=w1[1];gy+=step){var sy=w2s([0,gy])[1];c.moveTo(0,sy);c.lineTo(W,sy);}c.stroke();}
- // splays (TopoDroid draws them light, as guides for the walls)
- if(SVK.splays)SV.shots.forEach(function(s){if(s.cmt||(s.grp&&(s.kind=='leg'||s.kind=='back')))return;var p=Pp.pos(s.from);if(!p)return;var v=svVec(s),q;
-  if(SVK.view=='plan')q=[p[0]+v[0],p[1]+v[1]];else{var dir=svProfDir(s.from,R),h=Math.hypot(v[0],v[1]),ca=dir?(v[0]*dir[0]+v[1]*dir[1])/Math.max(1e-9,h):0;q=[p[0]+h*ca*(dir?dir[2]:1),p[1]+v[2]];}
-  var a=w2s(p),b=w2s(q);c.strokeStyle=s.kind=='lrud'?'rgba(183,121,31,.75)':'rgba(70,90,110,.45)';c.lineWidth=1;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();c.fillStyle=c.strokeStyle;c.fillRect(b[0]-1.5,b[1]-1.5,3,3);});
- // cross sections from the Tacheo (plan: beside their station)
- if(SVK.view=='plan')SV.xs.forEach(function(x){svDrawXs(c,x,Pp);});
- // the sketch
- (SV[SVK.view]||[]).forEach(function(it){svDrawItem(c,it,Pp);});
- // legs and stations
- R.edges.forEach(function(e){var a=Pp.pos(e.a),b=Pp.pos(e.b);if(!a||!b)return;a=w2s(a);b=w2s(b);c.strokeStyle='#c0392b';c.lineWidth=2;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();});
- var src=SVK.view=='plan'?R.P:R.X;Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st));c.fillStyle=st==SV.cur?SVA:'#c0392b';c.beginPath();c.arc(p[0],p[1],st==SV.cur?5:3,0,7);c.fill();
-  if(SVK.names){c.font='600 11px system-ui,sans-serif';c.fillStyle='#1d2a22';c.fillText(st,p[0]+6,p[1]-6);}});
- if(SVK.draw&&SVK.draw.pts.length>1){svDrawItem(c,{k:SVK.draw.k,type:SVK.draw.type,pts:SVK.draw.pts},Pp,true);}
- // scale bar
- var sb=svU()*(SV.units=='m'?1:10);while(sb*SVK.sc<60)sb*=2;while(sb*SVK.sc>160)sb/=2;c.fillStyle='rgba(247,245,239,.9)';c.fillRect(8,H-92,sb*SVK.sc+60,24);c.strokeStyle='#1d2a22';c.lineWidth=2;c.beginPath();c.moveTo(14,H-74);c.lineTo(14+sb*SVK.sc,H-74);c.moveTo(14,H-79);c.lineTo(14,H-69);c.moveTo(14+sb*SVK.sc,H-79);c.lineTo(14+sb*SVK.sc,H-69);c.stroke();
- c.fillStyle='#1d2a22';c.font='11px system-ui,sans-serif';c.fillText(svL(sb,0)+' '+svUn(),20+sb*SVK.sc,H-71);
- if(SVK.view=='plan'){c.fillStyle='#1d2a22';c.font='700 13px system-ui';c.fillText('N ↑',W-36,22);}else{c.fillStyle='#1d2a22';c.font='600 12px system-ui';c.fillText('Extended profile',W-110,20);}}
 function svProfDir(st,R){var e=R.edges.filter(function(x){return x.a==st||x.b==st;})[0];if(!e)return null;var h=Math.hypot(e.v[0],e.v[1])||1;var s=e.ext=='L'?-1:1;return[e.v[0]/h,e.v[1]/h,s];}
 // item anchored to the station nearest where it was drawn: if that station moves (a shot fixed), the item moves with it
-function svAnchor(pts){var R=svPts(),best=null,bd=1e18,src=SVK.view=='plan'?R.R.P:R.R.X;Object.keys(src).forEach(function(st){var p=R.pos(st),d=Math.hypot(p[0]-pts[0][0],p[1]-pts[0][1]);if(d<bd){bd=d;best=st;}});return best?{st:best,at:R.pos(best)}:null;}
 function svShift(it,Pp){if(!it.st||!it.at)return[0,0];var p=Pp.pos(it.st);if(!p)return[0,0];return[p[0]-it.at[0],p[1]-it.at[1]];}
-function svDrawItem(c,it,Pp,live){var sh=live?[0,0]:svShift(it,Pp),pts=(it.pts||[]).map(function(p){return w2s([p[0]+sh[0],p[1]+sh[1]]);});
- if(it.k=='line')svDrawLine(c,it.type,pts);else if(it.k=='area')svDrawArea(c,it.type,pts);else if(it.k=='point'){var p=w2s([it.x+sh[0],it.y+sh[1]]);svDrawPoint(c,it.type,p[0],p[1],it.rot||0,it.text||'');}}
 function svPath(c,pts,close){c.beginPath();pts.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});if(close)c.closePath();}
 function svTicks(c,pts,every,len,side,dash){var acc=0;for(var i=1;i<pts.length;i++){var a=pts[i-1],b=pts[i],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);if(!L)continue;var nx=-dy/L*side,ny=dx/L*side,t=(every-acc);
   while(t<=L){var x=a[0]+dx*t/L,y=a[1]+dy*t/L;c.moveTo(x,y);c.lineTo(x+nx*len,y+ny*len);t+=every;}acc=(acc+L)%every;}}
@@ -1469,11 +1449,6 @@ function svPattern(c,t){if(SVPAT[t])return SVPAT[t];var p=document.createElement
  else if(t=='guano'){[[2,2],[3,4],[8,7],[9,9],[5,10]].forEach(function(d){x.fillRect(d[0],d[1],1.6,1.6);});}
  else if(t=='ice'){x.beginPath();x.moveTo(5,1);x.lineTo(5,9);x.moveTo(1,5);x.lineTo(9,5);x.stroke();}
  SVPAT[t]=c.createPattern(p,'repeat');return SVPAT[t];}
-function svDrawArea(c,t,pts){if(pts.length<3){svDrawLine(c,'rock',pts);return;}c.save();svPath(c,pts,true);
- if(t=='water'){c.fillStyle='rgba(30,111,217,.22)';c.fill();c.strokeStyle='#1e6fd9';c.lineWidth=1.2;c.stroke();}
- else if(t=='pillar'){c.fillStyle='#1d2a22';c.fill();}
- else{if(t=='sump'){c.fillStyle='rgba(30,111,217,.18)';c.fill();}c.fillStyle=svPattern(c,t);c.fill();c.strokeStyle='rgba(29,42,34,.35)';c.lineWidth=.8;c.setLineDash([3,3]);c.stroke();}
- c.restore();}
 function svDrawPoint(c,t,x,y,rot,text){c.save();c.translate(x,y);var ink='#1d2a22',blue='#1e6fd9';c.strokeStyle=c.fillStyle=ink;c.lineWidth=1.4;c.lineCap='round';c.font='600 12px system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';
  function L(a,b,d,e){c.moveTo(a,b);c.lineTo(d,e);}
  if(SVDIR[t])c.rotate(rot);
@@ -1506,50 +1481,11 @@ function svDrawPoint(c,t,x,y,rot,text){c.save();c.translate(x,y);var ink='#1d2a2
  else if(t=='label'){c.textAlign='left';c.font='600 13px system-ui';c.fillText(text||'',0,0);}
  else{c.beginPath();c.arc(0,0,3,0,7);c.fill();}
  c.restore();}
-function svDrawXs(c,x,Pp){var p=Pp.pos(x.at);if(!p)return;var o=x.off||[3,3],sc=SVK.sc,base=w2s([p[0]+o[0],p[1]+o[1]]),st=w2s(p);
- c.save();c.strokeStyle='rgba(26,152,80,.6)';c.setLineDash([3,3]);c.lineWidth=1;c.beginPath();c.moveTo(st[0],st[1]);c.lineTo(base[0],base[1]);c.stroke();c.setLineDash([]);
- var pts=(x.pts||[]).filter(function(q){return q[2];});if(!pts.length)pts=x.pts||[];c.strokeStyle='#1d2a22';c.lineWidth=1.8;c.beginPath();pts.forEach(function(q,i){var X=base[0]+q[0]*sc,Y=base[1]-q[1]*sc;if(i)c.lineTo(X,Y);else c.moveTo(X,Y);});if(x.closed)c.closePath();c.stroke();
- c.fillStyle='#c0392b';c.beginPath();c.arc(base[0],base[1],2.5,0,7);c.fill();c.fillStyle=SVA;c.font='600 10px system-ui';c.fillText('XS '+x.at,base[0]+4,base[1]+12);c.restore();}
 // palettes
-function svPal(kind){var list=kind=='line'?SVLINES:kind=='area'?SVAREAS:SVPOINTS,pal=$('svPal'),cur=SVK.type;var h='<div class="mut" style="font-size:12px;margin:0 0 4px 4px">'+(kind=='line'?'Lines':kind=='area'?'Areas':'Symbols')+' - NSS standard</div>';
- list.forEach(function(o){h+='<button class="pi'+(cur==o[0]?' on':'')+'" data-y="'+o[0]+'"><canvas width="128" height="60"></canvas>'+esc(o[1])+'</button>';});pal.innerHTML=h;pal.style.display='block';
- Array.prototype.forEach.call(pal.querySelectorAll('.pi'),function(b){var cv=b.querySelector('canvas'),c=cv.getContext('2d'),t=b.getAttribute('data-y');c.scale(2,2);c.fillStyle='#f7f5ef';c.fillRect(0,0,64,30);
-  if(kind=='line')svDrawLine(c,t,[[6,20],[22,12],[40,18],[58,9]]);else if(kind=='area')svDrawArea(c,t,[[6,4],[58,5],[55,26],[8,25]]);else svDrawPoint(c,t,32,15,0,t=='pit_pt'?'20':t=='dome_pt'?'15':t=='ch'?'4':t=='label'?'Abc':'');
-  b.onclick=function(){SVK.type=t;SVK.tool=kind;pal.style.display='none';svToolsOn();toast((kind=='point'&&SVDIR[t]?'Touch and drag the way it points: ':'')+b.textContent,1600);};});}
-function svLayers(){svDlg('<div class="big">Show</div>'+[['splays','Splays (guides for the walls)'],['names','Station names'],['grid','Grid']].map(function(o){return'<label class="lab" style="display:flex;color:var(--ink)"><input type="checkbox" id="ly_'+o[0]+'"'+(SVK[o[0]]?' checked':'')+'> '+o[1]+'</label>';}).join('')+
- '<button class="btn" id="lyGo">Done</button>');$('lyGo').onclick=function(){['splays','names','grid'].forEach(function(k){SVK[k]=$('ly_'+k).checked;});svDlgClose();svDraw();};}
 // touch: one finger draws with the tool (✋ moves), two fingers always move and zoom
-function svHook(){var cv=SVK.cv,P=SVK.ptr;
- cv.onpointerdown=function(e){cv.setPointerCapture(e.pointerId);P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);SVK.fit=false;
-  if(ids.length==2){if(SVK.draw){SVK.draw=null;}var a=P[ids[0]],b=P[ids[1]];SVK.pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),m:[(a[0]+b[0])/2,(a[1]+b[1])/2],sc:SVK.sc,ox:SVK.ox,oy:SVK.oy};return;}
-  var w=s2w(e.offsetX,e.offsetY);
-  if(SVK.tool=='move'){SVK.pan={x:e.offsetX,y:e.offsetY,ox:SVK.ox,oy:SVK.oy};}
-  else if(SVK.tool=='line'||SVK.tool=='area'){SVK.draw={k:SVK.tool,type:SVK.type||(SVK.tool=='line'?'wall':'water'),pts:[w]};}
-  else if(SVK.tool=='point'){SVK.draw={k:'point',type:SVK.type,pts:[w],x0:e.offsetX,y0:e.offsetY};}
-  else if(SVK.tool=='erase'){svErase(e.offsetX,e.offsetY);}};
- cv.onpointermove=function(e){if(!P[e.pointerId])return;P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);
-  if(SVK.pinch&&ids.length>=2){var a=P[ids[0]],b=P[ids[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),m=[(a[0]+b[0])/2,(a[1]+b[1])/2],k=d/Math.max(10,SVK.pinch.d),pi=SVK.pinch;
-   var ns=Math.max(1,Math.min(800,pi.sc*k));var wx=(pi.m[0]-pi.ox)/pi.sc,wy=(pi.oy-pi.m[1])/pi.sc;SVK.sc=ns;SVK.ox=m[0]-wx*ns;SVK.oy=m[1]+wy*ns;svDraw();return;}
-  if(SVK.pan){SVK.ox=SVK.pan.ox+e.offsetX-SVK.pan.x;SVK.oy=SVK.pan.oy+e.offsetY-SVK.pan.y;svDraw();return;}
-  if(SVK.draw&&SVK.draw.k!='point'){var w=s2w(e.offsetX,e.offsetY),l=SVK.draw.pts[SVK.draw.pts.length-1];if(Math.hypot((w[0]-l[0])*SVK.sc,(w[1]-l[1])*SVK.sc)>2.5){SVK.draw.pts.push(w);svDraw();}}
-  else if(SVK.draw&&SVK.draw.k=='point'){SVK.draw.x1=e.offsetX;SVK.draw.y1=e.offsetY;}};
- cv.onpointerup=cv.onpointercancel=function(e){delete P[e.pointerId];if(Object.keys(P).length<2)SVK.pinch=null;if(Object.keys(P).length)return;SVK.pan=null;
-  var d=SVK.draw;SVK.draw=null;if(!d){svDraw();return;}
-  if(d.k=='point'){var it={k:'point',type:d.type,x:d.pts[0][0],y:d.pts[0][1],rot:0};if(SVDIR[d.type]&&d.x1!=null&&Math.hypot(d.x1-d.x0,d.y1-d.y0)>8)it.rot=Math.atan2(d.y1-d.y0,d.x1-d.x0);
-   if(d.type=='pit_pt'||d.type=='dome_pt'||d.type=='ch'||d.type=='climb'||d.type=='label'){svAsk(d.type=='label'?'Text':d.type=='pit_pt'?'Pit depth ('+svUn()+')':d.type=='dome_pt'?'Dome height ('+svUn()+')':d.type=='ch'?'Ceiling height ('+svUn()+')':'Climb height ('+svUn()+', optional)','',function(v){if(v==null)return;it.text=v;svAddItem(it);});return;}
-   svAddItem(it);return;}
-  var pts=svSimplify(d.pts,1.6/SVK.sc);if(pts.length<2){svDraw();return;}svAddItem({k:d.k,type:d.type,pts:pts});};
- cv.onwheel=function(e){e.preventDefault();var k=Math.exp(-e.deltaY*0.0015),ns=Math.max(1,Math.min(800,SVK.sc*k)),wx=(e.offsetX-SVK.ox)/SVK.sc,wy=(SVK.oy-e.offsetY)/SVK.sc;SVK.sc=ns;SVK.ox=e.offsetX-wx*ns;SVK.oy=e.offsetY+wy*ns;SVK.fit=false;svDraw();};}
 function svAsk(label,val,cb){svDlg('<div class="big">'+esc(label)+'</div><input id="askV" value="'+esc(val)+'"><button class="btn" id="askGo">OK</button><button class="btn alt" id="askNo">Cancel</button>');var i=$('askV');i.focus();
  $('askGo').onclick=function(){svDlgClose();cb(i.value.trim());};$('askNo').onclick=function(){svDlgClose();cb(null);};i.onkeydown=function(e){if(e.key=='Enter')$('askGo').click();};}
-function svAddItem(it){var an=svAnchor(it.pts||[[it.x,it.y]]);if(an){it.st=an.st;it.at=an.at;}SV[SVK.view].push(it);SVUNDO[SVK.view].push({add:it});SVREDO[SVK.view]=[];svSaveSoon();svDraw();}
-function svErase(x,y){var Pp=svPts(),best=-1,bd=14,list=SV[SVK.view];list.forEach(function(it,i){var sh=svShift(it,Pp),pts=(it.pts||[[it.x,it.y]]).map(function(p){return w2s([p[0]+sh[0],p[1]+sh[1]]);});
-  for(var j=0;j<pts.length;j++){var d=j?svSegD(x,y,pts[j-1],pts[j]):Math.hypot(x-pts[0][0],y-pts[0][1]);if(d<bd){bd=d;best=i;}}});
- if(best>=0){var it=list.splice(best,1)[0];SVUNDO[SVK.view].push({del:it,at:best});SVREDO[SVK.view]=[];svSaveSoon();svDraw();}}
 function svSegD(x,y,a,b){var dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy,t=L?Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/L)):0;return Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy);}
-function svUndo(dir){var v=SVK.view,from=dir>0?SVUNDO[v]:SVREDO[v],to=dir>0?SVREDO[v]:SVUNDO[v],op=from.pop();if(!op)return;var list=SV[v];
- if(op.add){if(dir>0){var i=list.indexOf(op.add);if(i>=0)list.splice(i,1);}else list.push(op.add);}else if(op.del){if(dir>0)list.splice(op.at,0,op.del);else{var j=list.indexOf(op.del);if(j>=0)list.splice(j,1);}}
- to.push(op);svSaveSoon();svDraw();}
 function svSimplify(pts,eps){if(pts.length<3)return pts;var keep=new Array(pts.length).fill(false);keep[0]=keep[pts.length-1]=true;(function rdp(a,b){var m=-1,md=0;for(var i=a+1;i<b;i++){var d=svSegD(pts[i][0],pts[i][1],pts[a],pts[b]);if(d>md){md=d;m=i;}}if(md>eps){keep[m]=true;rdp(a,m);rdp(m,b);}})(0,pts.length-1);
  return pts.filter(function(p,i){return keep[i];}).map(function(p){return[Math.round(p[0]*1000)/1000,Math.round(p[1]*1000)/1000];});}
 function svLive(s){var e=$('svLive');if(!e||!s)return;e.innerHTML=(s.kind=='leg'?'<b style="color:'+SVA2+'">Leg '+esc(s.from)+' → '+esc(s.to)+'</b>':s.kind=='back'?'<b>Backsight '+esc(s.from)+' → '+esc(s.to)+'</b>':s.kind=='lrud'?'<b>LRUD '+esc(s.lrud)+' at '+esc(s.from)+'</b>':'Splay at <b>'+esc(s.from)+'</b>')+
@@ -1560,7 +1496,7 @@ function svSvg(view){var keep=SVK.view,ks=[SVK.sc,SVK.ox,SVK.oy];SVK.view=view;v
  var S=20,W=Math.ceil((x1-x0)*S),H=Math.ceil((y1-y0)*S);SVK.sc=S;SVK.ox=-x0*S;SVK.oy=y1*S;
  // drawn with the same canvas code into a recording context, written out as SVG paths
  var rec=svSvgCtx(W,H);var Pp={R:R,pos:function(st){if(view=='plan'){var p=R.P[st];return p?[p[0],p[1]]:null;}var x=R.X[st];return x?[x[0],x[1]]:null;}};
- if(view=='plan')SV.xs.forEach(function(x){svDrawXs(rec,x,Pp);});(SV[view]||[]).forEach(function(it){svDrawItem(rec,it,Pp);});
+ SV.xs.forEach(function(x){if((x.view||'plan')==view)svDrawXs(rec,x,Pp);});(SV[view]||[]).forEach(function(it){svDrawItem(rec,it,Pp);});
  R.edges.forEach(function(e){var a=Pp.pos(e.a),b=Pp.pos(e.b);if(!a||!b)return;a=w2s(a);b=w2s(b);rec.strokeStyle='#c0392b';rec.lineWidth=2;rec.beginPath();rec.moveTo(a[0],a[1]);rec.lineTo(b[0],b[1]);rec.stroke();});
  Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st));rec.fillStyle='#c0392b';rec.beginPath();rec.arc(p[0],p[1],3,0,7);rec.fill();rec.font='11px sans-serif';rec.fillStyle='#1d2a22';rec.fillText(st,p[0]+6,p[1]-6);});
  SVK.view=keep;SVK.sc=ks[0];SVK.ox=ks[1];SVK.oy=ks[2];
@@ -1569,74 +1505,614 @@ function svSvgCtx(W,H){var o={out:[],strokeStyle:'#000',fillStyle:'#000',lineWid
  function T(x,y){var m=o._m[o._m.length-1];return[(m[0]*x+m[2]*y+m[4]).toFixed(2),(m[1]*x+m[3]*y+m[5]).toFixed(2)];}
  o.save=function(){o._st.push({s:o.strokeStyle,f:o.fillStyle,w:o.lineWidth,d:o._dash.slice(),fo:o.font,ta:o.textAlign,tb:o.textBaseline});o._m.push(o._m[o._m.length-1].slice());};
  o.restore=function(){var s=o._st.pop();if(s){o.strokeStyle=s.s;o.fillStyle=s.f;o.lineWidth=s.w;o._dash=s.d;o.font=s.fo;o.textAlign=s.ta;o.textBaseline=s.tb;}if(o._m.length>1)o._m.pop();};
- o.translate=function(x,y){var m=o._m[o._m.length-1];m[4]+=m[0]*x+m[2]*y;m[5]+=m[1]*x+m[3]*y;};o.rotate=function(a){var m=o._m[o._m.length-1],c=Math.cos(a),s=Math.sin(a),n=[m[0]*c+m[2]*s,m[1]*c+m[3]*s,-m[0]*s+m[2]*c,-m[1]*s+m[3]*c,m[4],m[5]];o._m[o._m.length-1]=n;};o.scale=function(){};o.setTransform=function(){};
+ o.translate=function(x,y){var m=o._m[o._m.length-1];m[4]+=m[0]*x+m[2]*y;m[5]+=m[1]*x+m[3]*y;};o.rotate=function(a){var m=o._m[o._m.length-1],c=Math.cos(a),s=Math.sin(a),n=[m[0]*c+m[2]*s,m[1]*c+m[3]*s,-m[0]*s+m[2]*c,-m[1]*s+m[3]*c,m[4],m[5]];o._m[o._m.length-1]=n;};o.scale=function(sx,sy){var m=o._m[o._m.length-1];m[0]*=sx;m[1]*=sx;m[2]*=sy;m[3]*=sy;};o.setTransform=function(){};
  o.setLineDash=function(d){o._dash=d||[];};o.beginPath=function(){o._d='';};o.moveTo=function(x,y){var p=T(x,y);o._d+='M'+p[0]+' '+p[1];};o.lineTo=function(x,y){var p=T(x,y);o._d+='L'+p[0]+' '+p[1];};o.closePath=function(){o._d+='Z';};
  o.quadraticCurveTo=function(a,b,x,y){var p=T(a,b),q=T(x,y);o._d+='Q'+p[0]+' '+p[1]+' '+q[0]+' '+q[1];};o.bezierCurveTo=function(a,b,c,d,x,y){var p=T(a,b),q=T(c,d),r=T(x,y);o._d+='C'+p.join(' ')+' '+q.join(' ')+' '+r.join(' ');};
  o.arc=function(x,y,r,a0,a1){var n=Math.max(8,Math.ceil(Math.abs(a1-a0)/0.3));for(var i=0;i<=n;i++){var a=a0+(a1-a0)*i/n,p=T(x+r*Math.cos(a),y+r*Math.sin(a));o._d+=(i==0&&!o._d?'M':'L')+p[0]+' '+p[1];}};
  o.ellipse=function(x,y,rx,ry,rot,a0,a1){var n=24;for(var i=0;i<=n;i++){var a=a0+(Math.min(a1,a0+Math.PI*2)-a0)*i/n,p=T(x+rx*Math.cos(a),y+ry*Math.sin(a));o._d+=(i==0?'M':'L')+p[0]+' '+p[1];}};
  function col(c){return typeof c=='string'?c:'#1d2a22';}
  o.stroke=function(){if(!o._d)return;o.out.push('<path d="'+o._d+'" fill="none" stroke="'+col(o.strokeStyle)+'" stroke-width="'+o.lineWidth+'" stroke-linecap="round" stroke-linejoin="round"'+(o._dash.length?' stroke-dasharray="'+o._dash.join(',')+'"':'')+'/>');};
- o.fill=function(){if(!o._d)return;var f=typeof o.fillStyle=='string'?o.fillStyle:'none';if(typeof o.fillStyle!='string')o.out.push('<path d="'+o._d+'" fill="#1d2a22" fill-opacity="0.12"/>');else o.out.push('<path d="'+o._d+'" fill="'+f+'"/>');};
+ o.fill=function(){if(!o._d)return;var f=typeof o.fillStyle=='string'?o.fillStyle:'none';if(typeof o.fillStyle!='string')o.out.push('<path d="'+o._d+'" fill="#1d2a22" fill-opacity="0.12"/>');else o.out.push('<path d="'+o._d+'" fill="'+f+'" fill-rule="evenodd"'+(o.globalAlpha<1?' fill-opacity="'+o.globalAlpha+'"':'')+'/>');};
  o.fillRect=function(x,y,w,h){var p=T(x,y);o.out.push('<rect x="'+p[0]+'" y="'+p[1]+'" width="'+w+'" height="'+h+'" fill="'+col(o.fillStyle)+'"/>');};o.strokeRect=function(x,y,w,h){o.beginPath();o.moveTo(x,y);o.lineTo(x+w,y);o.lineTo(x+w,y+h);o.lineTo(x,y+h);o.closePath();o.stroke();};
  o.fillText=function(t,x,y){var p=T(x,y),sz=(String(o.font).match(/(\d+)px/)||[0,11])[1];o.out.push('<text x="'+p[0]+'" y="'+p[1]+'" font-family="sans-serif" font-size="'+sz+'" fill="'+col(o.fillStyle)+'"'+(o.textAlign=='center'?' text-anchor="middle"':'')+(o.textBaseline=='middle'?' dominant-baseline="middle"':'')+'>'+esc(t)+'</text>');};
  o.createPattern=function(){return{};};return o;}
-// ======================================================================= the instrument (Android app: TopsideAndroid.ble*)
+// ======================================================================= the sketch, 1.7 (Sully, 16 Nov 2026: "Can you see how SexyTopo does
+// their sketching?" / "Awesome! We definetly need those other sketching features"). Modelled on what SexyTopo's manual describes (its code is
+// GPL, none of it is used here), and the cross sections in Sully's own style ("have a leader line drawn with a directional indicator, use my
+// cross section style, make sure the leader line has a cut out that is a little larger than the LRUD to LRUD polygon dictates").
+// Quick settings (kept on the phone): snap to lines, clip to walls, auto-recentre, fade what's away from the active station, symbols sized by zoom
+var SVQ=load2('ct-sv-q')||{};
+function svQ(k,d){return SVQ[k]==null?d:SVQ[k];}
+function svQSave(){try{localStorage.setItem('ct-sv-q',JSON.stringify(SVQ));}catch(e){}}
+var SVWALLS={wall:1,wall_lower:1,wall_inferred:1,survey_wall:1};
+var SVPENS=['#1d2a22','#7a4a1d','#1e6fd9','#c0392b','#1a9850','#e07b00','#7d3cb5','#8a949e'];
+// what is being drawn on: the plan, the profile, or one cross section's own sketch (its walls drawn by hand)
+function svList(){if(SVK.view=='xs'){var x=svXsById(SVK.xs);return x?(x.sk=x.sk||[]):[];}return SV[SVK.view]||(SV[SVK.view]=[]);}
+function svUKey(){return SVK.view=='xs'?'xs:'+SVK.xs:SVK.view;}
+function svListFor(k){if(/^xs:/.test(k)){var x=svXsById(k.slice(3));return x?(x.sk=x.sk||[]):[];}return SV[k]||(SV[k]=[]);}
+function svOp(op){var k=svUKey();(SVUNDO[k]=SVUNDO[k]||[]).push(op);SVREDO[k]=[];svSaveSoon();svDraw();}
+function svClone(it){return JSON.parse(JSON.stringify(it));}
+function svSet(it,snap){Object.keys(it).forEach(function(k){delete it[k];});Object.keys(snap).forEach(function(k){it[k]=svClone(snap[k]);});}
+function svUndo(dir){var k=svUKey(),from=dir>0?(SVUNDO[k]=SVUNDO[k]||[]):(SVREDO[k]=SVREDO[k]||[]),to=dir>0?(SVREDO[k]=SVREDO[k]||[]):(SVUNDO[k]=SVUNDO[k]||[]),op=from.pop();if(!op)return;var list=svListFor(k);
+ function rm(it){var i=list.indexOf(it);if(i>=0)list.splice(i,1);}
+ if(op.add){if(dir>0)rm(op.add);else list.push(op.add);}
+ else if(op.del){if(dir>0)list.splice(Math.min(op.at,list.length),0,op.del);else rm(op.del);}
+ else if(op.edit){svSet(op.edit,dir>0?op.before:op.after);}
+ else if(op.xsedit){svSet(op.xsedit,dir>0?op.before:op.after);}
+ else if(op.xsadd){if(dir>0){var xi=SV.xs.indexOf(op.xsadd);if(xi>=0)SV.xs.splice(xi,1);}else SV.xs.push(op.xsadd);}
+ else if(op.xsdel){if(dir>0)SV.xs.splice(Math.min(op.at,SV.xs.length),0,op.xsdel);else{var xj=SV.xs.indexOf(op.xsdel);if(xj>=0)SV.xs.splice(xj,1);}}
+ else if(op.repl){if(dir>0){op.repl.news.forEach(rm);op.repl.olds.forEach(function(o){list.push(o);});}else{op.repl.olds.forEach(rm);op.repl.news.forEach(function(o){list.push(o);});}}
+ to.push(op);SVK.sel=null;svSaveSoon();svDraw();}
+function svPts(){var R=svReduce();return{R:R,pos:function(st){if(SVK.view=='xs')return null;if(SVK.view=='plan'){var p=R.P[st];return p?[p[0],p[1]]:null;}var x=R.X[st];return x?[x[0],x[1]]:null;}};}
+function svAnchor(pts){if(SVK.view=='xs')return null;var R=svPts(),best=null,bd=1e18,src=SVK.view=='plan'?R.R.P:R.R.X;Object.keys(src).forEach(function(st){var p=R.pos(st),d=Math.hypot(p[0]-pts[0][0],p[1]-pts[0][1]);if(d<bd){bd=d;best=st;}});return best?{st:best,at:R.pos(best)}:null;}
+function svWorldPts(it,Pp){var sh=svShift(it,Pp);return(it.pts||[[it.x,it.y]]).map(function(p){return[p[0]+sh[0],p[1]+sh[1]];});}
+// ---- the sketch screen: tools along the bottom
+function svSketchShow(v){if(SVK.view!=v||!SVK.cv)SVK.fit=true;SVK.view=v;SVK.sel=null;var b=$('svBody');
+ var T=[['move','✋','Move, zoom; tap a station or a cross section for its menu'],['line','〰','Lines'],['area','▦','Areas'],['point','✳','Symbols'],['pen','✎','Pen (colours)'],['select','⬚','Select, move, edit'],['erase','⌫','Rub out: tap an item, or rub across areas and lines']];
+ if(v!='xs')T.push(['xs','✚','Cross section: tap a station']);
+ b.innerHTML='<canvas id="svCv"></canvas><div id="svLive"></div>'+(v=='xs'?'<div id="svXsBar"></div>':'')+'<div id="svPal"></div><div id="svTools">'+
+  T.map(function(t){return'<button class="ib" data-t="'+t[0]+'" title="'+t[2]+'">'+t[1]+'</button>';}).join('')+
+  '<button class="ib" id="svUn" title="Undo">↶</button><button class="ib" id="svRe" title="Redo">↷</button><button class="ib" id="svFit" title="Fit">⤢</button>'+(v!='xs'?'<button class="ib" id="svCen" title="Centre on the active station">⌖</button>':'')+'<button class="ib" id="svLay" title="Quick settings">⚙</button>'+
+  (svOnUnits().length?'<button class="ib" id="svShot2" title="Take a shot">'+svShotLbl()+'</button>'+(svOnUnits().length>1?'<button class="ib" id="svSelB" title="Fire the other unit">⇄</button>':''):'')+(v!='xs'?'<button class="ib" id="svAt" title="The station you\'re at">📍 '+esc(SV.cur)+'</button>':'')+'</div>';
+ SVK.cv=$('svCv');SVK.ctx=SVK.cv.getContext('2d');svSizeCv();if(SVK.fit)svFitView();
+ Array.prototype.forEach.call(document.querySelectorAll('#svTools [data-t]'),function(btn){btn.onclick=function(){var t=btn.getAttribute('data-t'),pal=t=='line'||t=='area'||t=='point'||t=='pen';SVK.sel=null;
+  if(SVK.tool==t&&pal)svPal(t);else{SVK.tool=t;$('svPal').style.display='none';if(pal)svPal(t);if(t=='xs')toast('Tap a station for its cross section',2000);if(t=='select')toast('Tap a line, area or symbol; drag it or its points. Hold for its menu.',2600);}svToolsOn();svDraw();};});
+ $('svUn').onclick=function(){svUndo(1);};$('svRe').onclick=function(){svUndo(-1);};$('svFit').onclick=function(){SVK.fit=true;svFitView();svDraw();};$('svLay').onclick=svQuick;
+ var e;if(e=$('svAt'))e.onclick=svCurDlg;if(e=$('svShot2'))e.onclick=function(){svCmd(0x38);};if(e=$('svSelB'))e.onclick=svSelNext;if(e=$('svCen'))e.onclick=function(){svCentre(SV.cur);};
+ if(v=='xs')svXsBarShow();
+ svToolsOn();svHook();svDraw();}
+function svToolsOn(){Array.prototype.forEach.call(document.querySelectorAll('#svTools [data-t]'),function(b){b.classList.toggle('on',b.getAttribute('data-t')==SVK.tool);});}
+function svCentre(st){var p=svPts().pos(st);if(!p)return;var W=SVK.cv.width/dpr,H=SVK.cv.height/dpr-60;SVK.ox=W/2-p[0]*SVK.sc;SVK.oy=H/2+p[1]*SVK.sc;SVK.fit=false;svDraw();}
+function svFitView(){var pts=[];if(SVK.view=='xs'){var x=svXsById(SVK.xs);if(x){svXsShape(x).lines.forEach(function(l){l.forEach(function(p){pts.push([p[0],p[1]]);});});svXsSplays(x).forEach(function(p){pts.push([p[0],p[1]]);});}pts.push([0,0]);}
+ else{var r=svReduce();var src=SVK.view=='plan'?r.P:r.X;Object.keys(src).forEach(function(k){var p=src[k];pts.push([p[0],p[1]]);});svXsBox(r,pts);}
+ svList().forEach(function(it){(it.pts||[[it.x,it.y]]).forEach(function(p){pts.push(p);});});
+ var W=SVK.cv.width/dpr,H=SVK.cv.height/dpr-60;if(!pts.length){SVK.sc=20;SVK.ox=W/2;SVK.oy=H/2;return;}
+ var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(function(p){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);});
+ var w=Math.max(SVK.view=='xs'?1:4,x1-x0),h=Math.max(SVK.view=='xs'?1:4,y1-y0);SVK.sc=Math.min(W/w,H/h)*(SVK.view=='xs'?0.7:0.8);SVK.sc=Math.max(2,Math.min(800,SVK.sc));SVK.ox=W/2-(x0+x1)/2*SVK.sc;SVK.oy=H/2+(y0+y1)/2*SVK.sc;}
+// ---- drawing the view
+function svNear(R){var n={};n[SV.cur]=1;R.edges.forEach(function(e){if(e.a==SV.cur)n[e.b]=1;if(e.b==SV.cur)n[e.a]=1;});return n;}
+function svDraw(){if(!SVK.cv||!$('svCv'))return;var c=SVK.ctx,W=SVK.cv.width/dpr,H=SVK.cv.height/dpr;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#f7f5ef';c.fillRect(0,0,W,H);
+ if(SVK.view=='xs'){svDrawXsView(c,W,H);return;}
+ var Pp=svPts(),R=Pp.R;
+ // auto-recentre: a new station off the edge of the screen comes back to the middle
+ if(SVK.recentre){SVK.recentre=false;var pc=Pp.pos(SV.cur);if(pc){var s=w2s(pc);if(s[0]<W*0.12||s[0]>W*0.88||s[1]<H*0.12||s[1]>H*0.8){SVK.ox+=W/2-s[0];SVK.oy+=(H-60)/2-s[1];}}}
+ svGrid(c,W,H);
+ if(SVK.splays)SV.shots.forEach(function(s){if(s.cmt||(s.grp&&(s.kind=='leg'||s.kind=='back')))return;var p=Pp.pos(s.from);if(!p)return;var v=svVec(s),q;
+  if(SVK.view=='plan')q=[p[0]+v[0],p[1]+v[1]];else{var dir=svProfDir(s.from,R),h=Math.hypot(v[0],v[1]),ca=dir?(v[0]*dir[0]+v[1]*dir[1])/Math.max(1e-9,h):0;q=[p[0]+h*ca*(dir?dir[2]:1),p[1]+v[2]];}
+  var a=w2s(p),b=w2s(q);c.strokeStyle=s.kind=='lrud'?'rgba(183,121,31,.75)':s.wall?'rgba(26,110,60,.8)':'rgba(70,90,110,.45)';c.lineWidth=s.wall?1.4:1;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();c.fillStyle=c.strokeStyle;c.fillRect(b[0]-1.5,b[1]-1.5,3,3);});
+ SV.xs.forEach(function(x){if((x.view||'plan')==SVK.view)svDrawXs(c,x,Pp);});
+ var fade=svQ('fade',false)?svNear(R):null;
+ svList().forEach(function(it){var dim=fade&&it.st&&!fade[it.st];if(dim){c.save();c.globalAlpha=0.3;}svDrawItem(c,it,Pp);if(dim)c.restore();});
+ if(SVK.sel)svDrawSel(c,SVK.sel,Pp);
+ R.edges.forEach(function(e){var a=Pp.pos(e.a),b=Pp.pos(e.b);if(!a||!b)return;a=w2s(a);b=w2s(b);c.strokeStyle='#c0392b';c.lineWidth=2;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();});
+ var src=SVK.view=='plan'?R.P:R.X;Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st));c.fillStyle=st==SV.cur?SVA:'#c0392b';c.beginPath();c.arc(p[0],p[1],st==SV.cur?5:3,0,7);c.fill();
+  if(st==SV.cur){c.strokeStyle=SVA;c.lineWidth=1.5;c.beginPath();c.arc(p[0],p[1],9,0,7);c.stroke();}
+  if(SVK.names){c.font=(st==SV.cur?'700 ':'600 ')+'11px system-ui,sans-serif';c.fillStyle='#1d2a22';c.fillText(st,p[0]+6,p[1]-6);}});
+ if(SVK.draw&&SVK.draw.pts.length>1){svDrawItem(c,{k:SVK.draw.k,type:SVK.draw.type,pts:SVK.draw.pts,col:SVK.draw.col,w:SVK.draw.w},Pp,true);}
+ if(SVK.rub)svDrawRub(c);
+ svScaleBar(c,W,H);
+ if(SVK.view=='plan'){c.fillStyle='#1d2a22';c.font='700 13px system-ui';c.fillText('N ↑',W-36,22);}else{c.fillStyle='#1d2a22';c.font='600 12px system-ui';c.fillText('Extended profile',W-110,20);}}
+function svGrid(c,W,H){if(!SVK.grid)return;var step=svU()*(SV.units=='m'?1:5);if(SVK.view=='xs')step/=5;var px=step*SVK.sc;while(px<14){step*=2;px*=2;}var w0=s2w(0,H),w1=s2w(W,0);c.strokeStyle='rgba(26,152,80,.13)';c.lineWidth=1;c.beginPath();
+ for(var gx=Math.floor(w0[0]/step)*step;gx<=w1[0];gx+=step){var sx=w2s([gx,0])[0];c.moveTo(sx,0);c.lineTo(sx,H);}for(var gy=Math.floor(w0[1]/step)*step;gy<=w1[1];gy+=step){var sy=w2s([0,gy])[1];c.moveTo(0,sy);c.lineTo(W,sy);}c.stroke();}
+function svScaleBar(c,W,H){var sb=svU()*(SV.units=='m'?1:10),g=0;while(sb*SVK.sc>160&&g++<60)sb/=2;while(sb*SVK.sc<60&&g++<120)sb*=2;c.fillStyle='rgba(247,245,239,.9)';c.fillRect(8,H-92,sb*SVK.sc+60,24);c.strokeStyle='#1d2a22';c.lineWidth=2;c.beginPath();c.moveTo(14,H-74);c.lineTo(14+sb*SVK.sc,H-74);c.moveTo(14,H-79);c.lineTo(14,H-69);c.moveTo(14+sb*SVK.sc,H-79);c.lineTo(14+sb*SVK.sc,H-69);c.stroke();
+ c.fillStyle='#1d2a22';c.font='11px system-ui,sans-serif';c.fillText(svL(sb,sb<svU()?1:0)+' '+svUn(),20+sb*SVK.sc,H-71);}
+// one item: lines, areas (with holes), symbols (sized by zoom when placed), the pen
+function svDrawItem(c,it,Pp,live){var sh=live?[0,0]:svShift(it,Pp),pts=(it.pts||[]).map(function(p){return w2s([p[0]+sh[0],p[1]+sh[1]]);});
+ if(it.k=='line')svDrawLine(c,it.type,pts);
+ else if(it.k=='area')svDrawArea(c,it.type,pts,(it.holes||[]).map(function(h){return h.map(function(p){return w2s([p[0]+sh[0],p[1]+sh[1]]);});}));
+ else if(it.k=='pen'){if(pts.length<2)return;c.save();c.strokeStyle=it.col||'#1d2a22';c.lineWidth=it.w||2;c.lineCap='round';c.lineJoin='round';c.setLineDash([]);svPath(c,pts);c.stroke();c.restore();}
+ else if(it.k=='point'){var p=w2s([it.x+sh[0],it.y+sh[1]]),s=it.sz?Math.max(0.35,Math.min(3,it.sz*SVK.sc/16)):1;if(s!=1){c.save();c.translate(p[0],p[1]);c.scale(s,s);svDrawPoint(c,it.type,0,0,it.rot||0,it.text||'');c.restore();}else svDrawPoint(c,it.type,p[0],p[1],it.rot||0,it.text||'');}}
+function svDrawArea(c,t,pts,holes){if(pts.length<3){svDrawLine(c,'rock',pts);return;}c.save();
+ function path(){c.beginPath();[pts].concat(holes||[]).forEach(function(r){r.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});c.closePath();});}
+ path();
+ if(t=='water'){c.fillStyle='rgba(30,111,217,.22)';c.fill('evenodd');c.strokeStyle='#1e6fd9';c.lineWidth=1.2;c.stroke();}
+ else if(t=='pillar'){c.fillStyle='#1d2a22';c.fill('evenodd');}
+ else{if(t=='sump'){c.fillStyle='rgba(30,111,217,.18)';c.fill('evenodd');}c.fillStyle=svPattern(c,t);c.fill('evenodd');c.strokeStyle=t=='sump'?'#1e6fd9':'rgba(29,42,34,.35)';c.lineWidth=.8;c.setLineDash([3,3]);c.stroke();}
+ c.restore();}
+// the selected item: a halo, its points as handles, and for a wall the tick pointing into the passage
+function svDrawSel(c,it,Pp){var w=svWorldPts(it,Pp).map(w2s);c.save();c.strokeStyle='rgba(240,140,20,.55)';c.lineWidth=9;c.lineCap='round';c.lineJoin='round';
+ if(w.length>1){svPath(c,w,it.k=='area');c.stroke();}else{c.beginPath();c.arc(w[0][0],w[0][1],14,0,7);c.stroke();}
+ if(it.k!='point'){c.fillStyle='#fff';c.strokeStyle='#e07b00';c.lineWidth=1.5;w.forEach(function(p,i){c.beginPath();c.rect(p[0]-4,p[1]-4,8,8);c.fill();c.stroke();});}
+ if(it.k=='line'&&w.length>1){var a=w[0],b=w[1],L=Math.hypot(b[0]-a[0],b[1]-a[1])||1,nx=(b[1]-a[1])/L,ny=-(b[0]-a[0])/L;   // screen y is down: the left of the line on paper
+  c.strokeStyle='#e0b000';c.lineWidth=3;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(a[0]+nx*16,a[1]+ny*16);c.stroke();}
+ c.restore();}
+function svDrawRub(c){var r=SVK.rub;if(!r||r.pts.length<1)return;c.save();c.strokeStyle='rgba(192,57,43,.35)';c.lineWidth=r.rad*2;c.lineCap='round';c.lineJoin='round';svPath(c,r.pts);c.stroke();c.restore();}
+// ======================================================================= cross sections in Sully's style
+// The cut is square to the bisector of the legs in and out of the station. On the plan: the cut line through the station, a gap across the
+// passage a little wider than the section's left-to-right (wider by max(0.3 m, 15 %)); one side ends in a corner mark (a leg out, then a tick
+// pointing the way the section looks - up the survey); the other side carries on as the leader (a short stub along the cut, then horizontal,
+// vertical or 45 degrees to the section, stopping short of it). The section: walls 1.0 pt, the sediment floor 0.5 pt (anything facing more
+// than 45 degrees down), a block of limestone bricks round it (running bond, the passage knocked out, flat at the sediment level, only where
+// rock is known), a height bar on the right and the station's name above. Sections sit alternately either side of the line.
+var SVPT=1.6;   // screen pixels to a point of Sully's plates
+function svXsById(id){return SV.xs.filter(function(x){return String(x.id)==String(id);})[0];}
+function svXsFrame(st,R){var f=[0,0],n=0;R.edges.forEach(function(e){if(e.a!=st&&e.b!=st)return;var h=Math.hypot(e.v[0],e.v[1]);if(h<1e-6)return;f[0]+=e.v[0]/h;f[1]+=e.v[1]/h;n++;});
+ var h=Math.hypot(f[0],f[1]);if(h<1e-6){var e=R.edges.filter(function(e){return e.a==st||e.b==st;})[0];f=e&&Math.hypot(e.v[0],e.v[1])>1e-6?[e.v[0],e.v[1]]:[0,1];h=Math.hypot(f[0],f[1]);}
+ f=[f[0]/h,f[1]/h];return{f:f,r:[f[1],-f[0]]};}
+function svStnSteep(st,R){var l=R.edges.filter(function(e){return e.a==st||e.b==st;});return l.length>0&&l.every(function(e){return Math.abs(e.v[2])>1.7*Math.hypot(e.v[0],e.v[1]);});}
+// the splays at a station in the section's own coordinates: [x across (right +), y up, in the plane?]
+function svXsSplays(x){if(x.src=='unit')return(x.pts||[]).map(function(q){return[q[0],q[1],q[2]];});var R=svReduce(),fr=svXsFrame(x.at,R),hz=!!x.hz;
+ var sp=SV.shots.filter(function(s){return s.from==x.at&&!s.cmt&&(s.kind=='splay'||s.kind=='lrud');}),wall=sp.filter(function(s){return s.wall;});if(wall.length>=3)sp=wall;
+ return sp.map(function(s){var v=svVec(s),a,b,o;if(hz){a=v[0];b=v[1];o=Math.abs(v[2]);}else{a=v[0]*fr.r[0]+v[1]*fr.r[1];b=v[2];o=Math.abs(v[0]*fr.f[0]+v[1]*fr.f[1]);}var L=Math.hypot(a,b,o)||1;return[a,b,o/L<0.6?1:0,s.id];});}
+// the outline: walls drawn in its editor if any, else the splays in the plane (all of them when too few), else the LRUDs
+function svXsShape(x){var hand=(x.sk||[]).filter(function(it){return it.k=='line'&&SVWALLS[it.type]&&it.pts&&it.pts.length>1;});
+ if(hand.length)return{lines:hand.map(function(it){return it.pts.map(function(p){return[p[0],p[1],1];});}),closed:false,hand:true};
+ var sp=svXsSplays(x),use=sp.filter(function(p){return p[2];});if(use.length<3)use=sp;
+ if(x.src=='unit'&&use.length>=3)return{lines:[use.map(function(p){return[p[0],p[1],p[2]];})],closed:x.closed!==false};
+ if(use.length>=3){var cx=0,cy=0;use.forEach(function(p){cx+=p[0];cy+=p[1];});cx/=use.length;cy/=use.length;var o=Math.hypot(cx,cy)<0.25*svXsSpan(use)?[0,0]:[cx,cy];
+  return{lines:[use.slice().sort(function(a,b){return Math.atan2(a[1]-o[1],a[0]-o[0])-Math.atan2(b[1]-o[1],b[0]-o[0]);}).map(function(p){return[p[0],p[1],p[2]||(sp.length<3?1:p[2])];})],closed:true};}
+ var L=svLrudAt(x.at);if(!L)return{lines:[],closed:true};var l=L.L,r=L.R,u=L.U,d=L.D,k=0.72;
+ return{lines:[[[r,0,1],[k*r,k*u,1],[0,u,1],[-k*l,k*u,1],[-l,0,1],[-k*l,-k*d,1],[0,-d,1],[k*r,-k*d,1]]],closed:true,lrud:true};}
+function svXsSpan(p){var a=1e9,b=-1e9,c=1e9,d=-1e9;p.forEach(function(q){a=Math.min(a,q[0]);b=Math.max(b,q[0]);c=Math.min(c,q[1]);d=Math.max(d,q[1]);});return Math.max(b-a,d-c,0.1);}
+function svLrudAt(st){var o={L:0,R:0,U:0,D:0},any=false;SV.shots.forEach(function(s){if(s.from!=st||s.kind!='lrud'||s.cmt||!/^[LRUD]$/.test(s.lrud||''))return;var v=svVec(s),h=s.lrud=='U'||s.lrud=='D'?Math.abs(v[2]):Math.hypot(v[0],v[1]);o[s.lrud]=Math.max(o[s.lrud],h);any=true;});
+ if(!any)return null;['L','R','U','D'].forEach(function(k){if(!o[k])o[k]=0.5;});return o;}
+function svXsBounds(sh){var b=[1e9,-1e9,1e9,-1e9];sh.lines.forEach(function(l){l.forEach(function(p){b[0]=Math.min(b[0],p[0]);b[1]=Math.max(b[1],p[0]);b[2]=Math.min(b[2],p[1]);b[3]=Math.max(b[3],p[1]);});});if(b[0]>b[1])b=[-0.5,0.5,-0.5,0.5];return b;}
+// how the cut lies in the view: cr along the cut, vd the way it looks (both in the view's world coordinates), and the cut's extent along cr
+function svXsCut(x,R,Pp){var view=x.view||'plan',sh=svXsShape(x),b=svXsBounds(sh),w=b[1]-b[0],pad,lo,hi,cr,vd;
+ if(view=='plan'){var fr=svXsFrame(x.at,R);cr=fr.r;vd=fr.f;if(x.src=='unit'&&x.az!=null){var a=(x.az+(SV.decl||0))*Math.PI/180;vd=[Math.sin(a),Math.cos(a)];cr=[vd[1],-vd[0]];}lo=b[0];hi=b[1];}
+ else{var dir=svProfDir(x.at,R)||[1,0,1];if(x.hz){cr=[1,0];vd=[0,-1];var pd=[dir[0]*dir[2],dir[1]*dir[2]],s=[];sh.lines.forEach(function(l){l.forEach(function(p){s.push(p[0]*pd[0]+p[1]*pd[1]);});});lo=Math.min.apply(null,s.length?s:[-0.5]);hi=Math.max.apply(null,s.length?s:[0.5]);w=hi-lo;}
+  else{cr=[0,1];vd=[dir[2]||1,0];lo=b[2];hi=b[3];w=hi-lo;}}
+ if(x.flip){vd=[-vd[0],-vd[1]];}
+ pad=Math.max(0.3,0.15*Math.max(w,0.1));return{cr:cr,vd:vd,lo:lo-pad,hi:hi+pad,sh:sh,b:b};}
+// the art's size in metres (the section plus its block of rock), for placing it
+function svXsArtSize(sh){var b=svXsBounds(sh),w=b[1]-b[0],h=b[3]-b[2];return{w:w,h:h};}
+// where a section goes: off its station square to the cut, alternate sides, the leader's turn snapped to horizontal, vertical or 45 degrees
+function svXsPlace(x){var R=svReduce(),Pp={R:R,pos:function(st){if((x.view||'plan')=='plan'){var p=R.P[st];return p?[p[0],p[1]]:null;}var q=R.X[st];return q?[q[0],q[1]]:null;}};if(!Pp.pos(x.at)){if(!x.off)x.off=[3,0];return;}
+ var cut=svXsCut(x,R,Pp),sz=svXsArtSize(cut.sh);
+ if(!x.side){var mine=SV.xs.filter(function(o){return(o.view||'plan')==(x.view||'plan')&&o!==x;}).length;x.side=mine%2?-1:1;}
+ var s=x.side,edge=s>0?cut.hi:cut.lo,dist=Math.max(1.2,0.5*Math.max(sz.w,sz.h)+Math.max(1,0.6*Math.max(sz.w,sz.h)));
+ var E=[cut.cr[0]*edge+cut.cr[0]*s*0.25,cut.cr[1]*edge+cut.cr[1]*s*0.25],d=svSnap8([cut.cr[0]*s,cut.cr[1]*s]);
+ x.off=[E[0]+d[0]*dist,E[1]+d[1]*dist];}
+function svSnap8(v){var a=Math.atan2(v[1],v[0]),k=Math.round(a/(Math.PI/4))*(Math.PI/4);return[Math.cos(k),Math.sin(k)];}
+// after a drag: which side of the cut it's on, and its centre moved onto the leader's line
+function svXsSnap(x){var R=svReduce(),cut=svXsCut(x,R),o=x.off||[0,0],t=o[0]*cut.cr[0]+o[1]*cut.cr[1];x.side=t>=0?1:-1;var s=x.side,edge=s>0?cut.hi:cut.lo;
+ var E=[cut.cr[0]*(edge+s*0.25),cut.cr[1]*(edge+s*0.25)],dv=[o[0]-E[0],o[1]-E[1]],L=Math.hypot(dv[0],dv[1]);if(L<0.3)return;var d=svSnap8(dv),proj=Math.max(0.6,dv[0]*d[0]+dv[1]*d[1]);x.off=[E[0]+d[0]*proj,E[1]+d[1]*proj];}
+// floor or wall: each piece of outline by the way it faces (more than 45 degrees down = sediment), small runs absorbed, the down side all floor
+function svXsClass(line,closed){var n=line.length,segs=[];if(n<2)return segs;var cx=0,cy=0;line.forEach(function(p){cx+=p[0];cy+=p[1];});cx/=n;cy/=n;
+ var area=0;if(closed)for(var i=0;i<n;i++){var a=line[i],b=line[(i+1)%n];area+=a[0]*b[1]-b[0]*a[1];}
+ var b=svXsSpan(line),y0=1e9,y1=-1e9;line.forEach(function(p){y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);});var mid=(y0+y1)/2;
+ var m=closed?n:n-1;for(var i=0;i<m;i++){var a=line[i],q=line[(i+1)%n],dx=q[0]-a[0],dy=q[1]-a[1],L=Math.hypot(dx,dy)||1,nx=dy/L,ny=-dx/L;
+  if(closed){if(area<0){nx=-nx;ny=-ny;}}else{var mx=(a[0]+q[0])/2-cx,my=(a[1]+q[1])/2-cy;if(nx*mx+ny*my<0){nx=-nx;ny=-ny;}}
+  segs.push({a:a,b:q,floor:ny<-0.7071,known:(a[2]!==0&&q[2]!==0),len:L});}
+ // runs shorter than 15 % of the size take their neighbours' kind
+ for(var pass=0;pass<2;pass++)for(var i=0;i<segs.length;i++){var j=i,run=0;while(j<segs.length&&segs[j].floor==segs[i].floor){run+=segs[j].len;j++;}
+  if(run<0.15*b&&i>0&&j<segs.length&&segs[i-1].floor==segs[j].floor){for(var k=i;k<j;k++)segs[k].floor=segs[i-1].floor;}i=j-1;}
+ // a wall run between two floor runs is floor too unless it reaches above half height or drops 35 % of the size
+ for(var i=0;i<segs.length;i++){if(segs[i].floor)continue;var j=i,top=-1e9,lo=1e9,hi=-1e9;while(j<segs.length&&!segs[j].floor){top=Math.max(top,segs[j].a[1],segs[j].b[1]);lo=Math.min(lo,segs[j].a[1],segs[j].b[1]);hi=Math.max(hi,segs[j].a[1],segs[j].b[1]);j++;}
+  var before=i>0?segs[i-1].floor:(closed&&segs[segs.length-1].floor),after=j<segs.length?segs[j].floor:(closed&&segs[0].floor);
+  if(before&&after&&top<mid&&(hi-lo)<0.35*b){for(var k=i;k<j;k++)segs[k].floor=true;}i=j-1;}
+ return segs;}
+// the section drawn at screen point (cx,cy), k pixels to the metre; returns its box on screen
+function svXsArt(c,x,sh,cx,cy,k){var b=svXsBounds(sh),mx=(b[0]+b[1])/2,my=(b[2]+b[3])/2,fl=x.flip?-1:1,P=SVPT;
+ function S(p){return[cx+(p[0]-mx)*k*fl,cy-(p[1]-my)*k];}
+ var wpx=(b[1]-b[0])*k,hpx=(b[3]-b[2])*k,band=Math.max(Math.min(5*P,0.45*Math.min(wpx,hpx)),Math.min(5,2.2)*P);
+ var X0=cx-wpx/2,X1=cx+wpx/2,Y0=cy-hpx/2,Y1=cy+hpx/2,segs=[];sh.lines.forEach(function(l){svXsClass(l,sh.closed).forEach(function(s){segs.push(s);});});
+ // the passage polygon (to knock out of the block)
+ var poly=[];if(sh.closed&&sh.lines.length==1)poly=sh.lines[0].map(S);else{var all=[];sh.lines.forEach(function(l){l.forEach(function(p){all.push(p);});});var ax=0,ay=0;all.forEach(function(p){ax+=p[0];ay+=p[1];});ax/=all.length||1;ay/=all.length||1;poly=all.slice().sort(function(a,b){return Math.atan2(a[1]-ay,a[0]-ax)-Math.atan2(b[1]-ay,b[0]-ax);}).map(S);}
+ // the block: down to the sediment level, only the halves with known rock
+ var sed=null;segs.forEach(function(s){if(s.floor){var ya=S(s.a)[1],yb=S(s.b)[1];sed=sed==null?Math.min(ya,yb):Math.min(sed,ya,yb);}});
+ var bot=sed!=null?sed:Y1,left=false,right=false;segs.forEach(function(s){if(s.floor||!s.known)return;var xm=(S(s.a)[0]+S(s.b)[0])/2;if(xm<cx)left=true;else right=true;});
+ if(sh.lrud||sh.hand){left=right=true;}
+ var rects=[];if(left)rects.push([X0-band,cx,Y0-band,bot]);if(right)rects.push([cx,X1+band,Y0-band,bot]);
+ if(left&&right)rects=[[X0-band,X1+band,Y0-band,bot]];
+ c.save();c.strokeStyle='#1d2a22';c.lineWidth=0.36*P;c.setLineDash([]);c.beginPath();
+ var bw=8.8*P,bh=2.5*P;rects.forEach(function(r){var row=0;for(var y=r[2];y<r[3]-0.01;y+=bh,row++){var y2=Math.min(r[3],y+bh);svClipSeg(c,[r[0],y],[r[1],y],poly);var off=(row%2)*bw/2;for(var xx=r[0]+(off||bw);xx<r[1]-0.5;xx+=bw)svClipSeg(c,[xx,y],[xx,y2],poly);}
+  svClipSeg(c,[r[0],r[3]],[r[1],r[3]],poly);svClipSeg(c,[r[0],r[2]],[r[0],r[3]],poly);svClipSeg(c,[r[1],r[2]],[r[1],r[3]],poly);});
+ c.stroke();
+ // the passage knocked out: the walls 1.0 pt, the sediment 0.5 pt
+ segs.forEach(function(s){var a=S(s.a),q=S(s.b);c.lineWidth=(s.floor?0.5:1.0)*P;if(!s.known&&!sh.hand)c.setLineDash([3,2]);else c.setLineDash([]);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(q[0],q[1]);c.stroke();});
+ c.setLineDash([]);
+ // the height bar on the right, the station's name above
+ var bx=X1+band+3.5*P;c.lineWidth=0.54*P;c.beginPath();c.moveTo(bx,Y0);c.lineTo(bx,Y1);c.moveTo(bx-1.9*P,Y0);c.lineTo(bx+1.9*P,Y0);c.moveTo(bx-1.9*P,Y1);c.lineTo(bx+1.9*P,Y1);c.stroke();
+ var fs=Math.round(6.5*P),hgt=b[3]-b[2];c.fillStyle='#1d2a22';c.font=fs+'px system-ui,sans-serif';c.textAlign='left';c.textBaseline='alphabetic';c.fillText(svL(hgt,hgt*(SV.units=='m'?1:1/FT)<10?1:0),bx+2.5*P,(Y0+Y1)/2+0.358*fs);
+ c.textAlign='center';c.font='600 '+Math.round(7*P)+'px system-ui,sans-serif';c.fillText(x.at+(x.hz?' (looking down)':''),cx,Y0-band-3*P);c.textAlign='left';
+ c.restore();return[X0-band,X1+band+3.5*P+fs*2,Y0-band-10*P,Math.max(bot,Y1)];}
+// a straight piece drawn only where it is outside the passage polygon
+function svClipSeg(c,a,b,poly){if(poly.length<3){c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);return;}var ts=[0,1],dx=b[0]-a[0],dy=b[1]-a[1];
+ for(var i=0;i<poly.length;i++){var p=poly[i],q=poly[(i+1)%poly.length],ex=q[0]-p[0],ey=q[1]-p[1],den=dx*ey-dy*ex;if(Math.abs(den)<1e-9)continue;var t=((p[0]-a[0])*ey-(p[1]-a[1])*ex)/den,u=((p[0]-a[0])*dy-(p[1]-a[1])*dx)/den;if(t>0&&t<1&&u>=0&&u<=1)ts.push(t);}
+ ts.sort(function(m,n){return m-n;});for(var j=0;j<ts.length-1;j++){var t0=ts[j],t1=ts[j+1];if(t1-t0<1e-6)continue;var tm=(t0+t1)/2;if(svInPoly([a[0]+dx*tm,a[1]+dy*tm],poly))continue;c.moveTo(a[0]+dx*t0,a[1]+dy*t0);c.lineTo(a[0]+dx*t1,a[1]+dy*t1);}}
+function svInPoly(p,poly){var ins=false;for(var i=0,j=poly.length-1;i<poly.length;j=i++){var a=poly[i],b=poly[j];if((a[1]>p[1])!=(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])ins=!ins;}return ins;}
+// the marker on the plan (or profile) and the section beside it
+function svDrawXs(c,x,Pp){var p=Pp.pos(x.at);if(!p)return;if(!x.off)svXsPlace(x);var R=Pp.R,cut=svXsCut(x,R),k=SVK.sc,P=SVPT,S=w2s(p);
+ function sd(v){return[v[0],-v[1]];}   // world direction to screen direction
+ var cr=sd(cut.cr),vd=sd(cut.vd),s=x.side||1,C=w2s([p[0]+x.off[0],p[1]+x.off[1]]);
+ var gLead=(s>0?cut.hi:cut.lo)*k,gCorner=(s>0?cut.lo:cut.hi)*k;
+ c.save();c.strokeStyle='#1d2a22';c.setLineDash([]);c.lineWidth=0.5*P;c.lineCap='butt';c.beginPath();
+ // the corner mark
+ var A=[S[0]+cr[0]*gCorner,S[1]+cr[1]*gCorner],B=[A[0]-cr[0]*s*4.5*P,A[1]-cr[1]*s*4.5*P];c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1]);c.lineTo(B[0]+vd[0]*4.5*P,B[1]+vd[1]*4.5*P);c.stroke();
+ // the leader: stub along the cut, then H / V / 45 to the art, stopping short of it
+ var L0=[S[0]+cr[0]*gLead,S[1]+cr[1]*gLead],E=[L0[0]+cr[0]*s*4*P,L0[1]+cr[1]*s*4*P];
+ var box=svXsArt(c,x,cut.sh,C[0],C[1],k);c.strokeStyle='#1d2a22';c.setLineDash([]);c.beginPath();c.lineWidth=0.5*P;
+ var dv=[C[0]-E[0],C[1]-E[1]],d=svSnap8(dv),tEnd=svRayBox(E,d,[box[0]-5*P,box[1]+5*P,box[2]-5*P,box[3]+5*P]);
+ c.moveTo(L0[0],L0[1]);c.lineTo(E[0],E[1]);if(tEnd!=null&&tEnd>0)c.lineTo(E[0]+d[0]*tEnd,E[1]+d[1]*tEnd);else{var q=[Math.max(box[0]-5*P,Math.min(box[1]+5*P,E[0])),Math.max(box[2]-5*P,Math.min(box[3]+5*P,E[1]))];c.lineTo(q[0],q[1]);}
+ c.stroke();c.restore();x._box=box;}
+function svRayBox(o,d,b){var t0=-1e9,t1=1e9;for(var i=0;i<2;i++){var lo=b[i*2],hi=b[i*2+1];if(Math.abs(d[i])<1e-9){if(o[i]<lo||o[i]>hi)return null;continue;}var ta=(lo-o[i])/d[i],tb=(hi-o[i])/d[i];if(ta>tb){var t=ta;ta=tb;tb=t;}t0=Math.max(t0,ta);t1=Math.min(t1,tb);}return t1>=t0&&t0>0?t0:null;}
+function svXsBox(R,pts){SV.xs.forEach(function(x){if((x.view||'plan')!=SVK.view)return;var p=SVK.view=='plan'?R.P[x.at]:R.X[x.at];if(!p)return;if(!x.off)svXsPlace(x);var sz=svXsArtSize(svXsShape(x));pts.push([p[0]+x.off[0]-sz.w/2-0.6,p[1]+x.off[1]-sz.h/2-0.6]);pts.push([p[0]+x.off[0]+sz.w/2+1.2,p[1]+x.off[1]+sz.h/2+1]);});}
+// a new section from the splays (or LRUDs) at a station
+function svXsNew(st){var view=SVK.view=='prof'?'prof':'plan',R=svReduce();if(SV.xs.some(function(x){return x.at==st&&(x.view||'plan')==view&&x.src!='unit';})){svXsMenu(SV.xs.filter(function(x){return x.at==st&&(x.view||'plan')==view;})[0]);return null;}
+ var x={id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,4),src:'auto',at:st,view:view,hz:view=='prof'&&svStnSteep(st,R),sk:[],t:Date.now()};
+ if(!svXsShape(x).lines.length){toast('No splays or LRUDs at '+esc(st)+' to make a section from - draw it in its editor',3000);}
+ SV.xs.push(x);svXsPlace(x);svOp({xsadd:x});return x;}
+function svXsAll(){var R=svReduce(),n=0,src=SVK.view=='prof'?R.X:R.P;Object.keys(src).forEach(function(st){if(SV.xs.some(function(x){return x.at==st&&(x.view||'plan')==(SVK.view=='prof'?'prof':'plan');}))return;var x={id:'a'+Date.now().toString(36)+(n+SV.xs.length),src:'auto',at:st,view:SVK.view=='prof'?'prof':'plan',sk:[],t:Date.now()};x.hz=x.view=='prof'&&svStnSteep(st,R);if(!svXsShape(x).lines.length)return;SV.xs.push(x);svXsPlace(x);n++;});
+ svSaveSoon();SVK.fit=true;svFitView();svDraw();toast(n?n+' cross sections added':'Every station with splays has one already',2200);}
+function svXsMenu(x){if(!x)return;var u=x.src=='unit';svDlg('<div class="big">Cross section at '+esc(x.at)+'</div><p class="mut">'+(u?'From the Tacheo'+(x.sn?' '+esc(x.sn):''):svXsShape(x).hand?'Drawn in its editor':svXsShape(x).lrud?'From the LRUDs':'From the splays at '+esc(x.at)+' (the ones marked to wall, when three or more are)')+'. Looking '+(x.flip?'back down':'up')+' the survey.</p>'+
+ '<button class="btn" id="xmEd">✎ Open it to draw its walls</button><button class="btn alt" id="xmFl">⇄ Look the other way</button><button class="btn alt" id="xmSd">↔ Leader to the other side</button><button class="btn alt" id="xmRp">Put it back beside its station</button><button class="btn alt" id="xmDel">Delete this section</button><button class="btn alt" id="xmNo">Close</button>');
+ function ch(f){var before=svClone(x);f();svXsOp(x,before);svDlgClose();svDraw();}
+ $('xmEd').onclick=function(){svDlgClose();svXsOpen(x.id);};$('xmFl').onclick=function(){ch(function(){x.flip=!x.flip;});};$('xmSd').onclick=function(){ch(function(){x.side=-(x.side||1);x.off=null;svXsPlace(x);});};
+ $('xmRp').onclick=function(){ch(function(){x.off=null;svXsPlace(x);});};$('xmNo').onclick=svDlgClose;
+ $('xmDel').onclick=function(){if(!confirm('Delete the cross section at '+x.at+'?'))return;var i=SV.xs.indexOf(x);SV.xs.splice(i,1);svOp({xsdel:x,at:i});svDlgClose();};}
+function svXsOp(x,before){var k=SVK.view;(SVUNDO[k]=SVUNDO[k]||[]).push({xsedit:x,before:before,after:svClone(x)});SVREDO[k]=[];svSaveSoon();}
+// ---- a section's own editor: the splays in its plane (solid) and out of it (dashed), its walls drawn by hand
+function svXsOpen(id){SVK.xs=id;SVK.tool='line';SVK.type='wall';SVVIEW='xs';Array.prototype.forEach.call(document.querySelectorAll('#svViews button'),function(b){b.classList.remove('on');});svSketchShow('xs');}
+function svXsBarShow(){var x=svXsById(SVK.xs),e=$('svXsBar');if(!e||!x)return;e.innerHTML='<button class="ib" id="xbBk">← Plan</button><b style="flex:1;margin-left:6px">Section at '+esc(x.at)+'</b><span class="mut" style="font-size:12px">looking '+(x.flip?'back':'up')+' the survey</span>';
+ $('xbBk').onclick=function(){svView(x.view=='prof'?'prof':'plan');};}
+function svDrawXsView(c,W,H){var x=svXsById(SVK.xs);if(!x){svView('plan');return;}svGrid(c,W,H);var O=w2s([0,0]);
+ svXsSplays(x).forEach(function(p){var q=w2s([p[0],p[1]]);c.strokeStyle=p[2]?'rgba(26,110,60,.85)':'rgba(70,90,110,.5)';c.lineWidth=p[2]?1.4:1;c.setLineDash(p[2]?[]:[4,4]);c.beginPath();c.moveTo(O[0],O[1]);c.lineTo(q[0],q[1]);c.stroke();c.setLineDash([]);c.fillStyle=c.strokeStyle;c.fillRect(q[0]-2,q[1]-2,4,4);});
+ var sh=svXsShape(x);if(!sh.hand){c.strokeStyle='rgba(29,42,34,.35)';c.lineWidth=1.2;c.setLineDash([6,4]);sh.lines.forEach(function(l){svPath(c,l.map(function(p){return w2s(p);}),sh.closed);c.stroke();});c.setLineDash([]);}
+ svList().forEach(function(it){svDrawItem(c,it,null,true);});if(SVK.sel)svDrawSel(c,SVK.sel,null);
+ if(SVK.draw&&SVK.draw.pts.length>1)svDrawItem(c,{k:SVK.draw.k,type:SVK.draw.type,pts:SVK.draw.pts,col:SVK.draw.col,w:SVK.draw.w},null,true);if(SVK.rub)svDrawRub(c);
+ c.fillStyle='#c0392b';c.beginPath();c.arc(O[0],O[1],4,0,7);c.fill();c.font='600 11px system-ui';c.fillStyle='#1d2a22';c.fillText(x.at,O[0]+6,O[1]-6);
+ c.fillStyle='rgba(29,42,34,.6)';c.font='11px system-ui';c.fillText('← left wall',8,H-110);c.textAlign='right';c.fillText('right wall →',W-8,H-110);c.textAlign='left';
+ // the finished section, small, top right
+ c.save();c.fillStyle='rgba(255,255,255,.85)';c.fillRect(W-150,56,142,130);c.restore();var b=svXsBounds(sh),kk=Math.min(90/Math.max(0.2,b[1]-b[0]),80/Math.max(0.2,b[3]-b[2]));if(sh.lines.length)svXsArt(c,x,sh,W-86,124,kk);
+ svScaleBar(c,W,H);}
+// ======================================================================= quick settings (SexyTopo's quick panel), with the phone's compass
+function svQuick(){var Q=[['splays','Splays',SVK.splays,1],['names','Station names',SVK.names,1],['grid','Grid',SVK.grid,1],['snap','Snap lines to the ends of lines',svQ('snap',true)],['clip','Clip lines that overshoot a wall',svQ('clip',true)],
+  ['recentre','Bring a new station back to the middle',svQ('recentre',true)],['fade','Fade the sketch away from the active station',svQ('fade',false)],['symzoom','Symbols sized by the zoom they\'re placed at',svQ('symzoom',true)]];
+ svDlg('<div class="big">Quick settings</div>'+Q.map(function(o){return'<label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px;margin:7px 0"><input type="checkbox" id="q_'+o[0]+'"'+(o[2]?' checked':'')+'> '+o[1]+'</label>';}).join('')+
+  '<div class="k">Compass</div><div style="display:flex;align-items:center;gap:12px"><svg id="qCmp" width="64" height="64" viewBox="-32 -32 64 64"><circle r="30" fill="#0d1319" stroke="#3a4756"/><g id="qNeedle"><path d="M0 -26 L5 0 L0 4 L-5 0Z" fill="#c0392b"/><path d="M0 26 L5 0 L0 -4 L-5 0Z" fill="#e6ecf2"/></g></svg><div><b id="qHd" style="font-size:22px">-</b><div class="mut" style="font-size:12px">the way the top of the phone points (magnetic). Keep it flat, away from the Tacheo.</div></div></div>'+
+  (SVK.view!='xs'?'<div class="k">Cross sections</div><button class="btn alt" id="qXsAll">✚ A section at every station with splays</button>':'')+
+  '<div class="k">Readings</div><button class="btn alt" id="qUndoShot">↶ Undo the last reading</button><button class="btn" id="qGo">Done</button>');
+ var stop=svCompass(function(h){var n=$('qNeedle'),t=$('qHd');if(!n)return;n.setAttribute('transform','rotate('+(-h)+')');t.textContent=Math.round(h)+'°';});
+ $('qGo').onclick=function(){stop();Q.forEach(function(o){var v=$('q_'+o[0]).checked;if(o[3])SVK[o[0]]=v;else SVQ[o[0]]=v;});svQSave();svDlgClose();svDraw();};
+ if($('qXsAll'))$('qXsAll').onclick=function(){stop();svDlgClose();svXsAll();};
+ $('qUndoShot').onclick=function(){var s=SV.shots[SV.shots.length-1];if(!s){toast('No readings yet');return;}if(!confirm('Undo the last reading ('+(s.kind=='leg'?'leg ':s.kind=='back'?'backsight ':s.kind=='lrud'?'LRUD ':'splay ')+svL(s.d)+' '+svUn()+' '+n1(s.az)+'° '+n1(s.cl)+'° at '+s.from+')?'))return;
+  stop();svUndoShot();svDlgClose();};}
+// the last reading taken back; a leg it completed goes back to being splays and the station back to the one before
+function svUndoShot(){var s=SV.shots.pop();if(!s)return;if(s.grp&&(s.kind=='leg'||s.kind=='back')){var g=svGroup(s.grp);if(g.length<SV.legShots){var to=s.to,wasLeg=s.kind=='leg';g.forEach(function(x){x.kind='splay';x.grp=null;x.to='';x.from=wasLeg?s.from:x.from;});
+  if(wasLeg){delete SV.ext[s.grp];if(SV.cur==to){SV.cur=s.from;var nn=svNum(to);if(nn&&nn.n==SV.next-1)SV.next--;}svTellStation();}}}
+ svSaveSoon();svRefresh();toast('Reading taken back',1500);}
+function svCompass(cb){var on=true;function h(e){if(!on)return;var v=e.webkitCompassHeading!=null?e.webkitCompassHeading:e.absolute||e.type=='deviceorientationabsolute'?360-(e.alpha||0):null;if(v!=null)cb((v+360)%360);}
+ window.addEventListener('deviceorientationabsolute',h);window.addEventListener('deviceorientation',h);return function(){on=false;window.removeEventListener('deviceorientationabsolute',h);window.removeEventListener('deviceorientation',h);};}
+// ======================================================================= the station menu (tap a station with ✋)
+function svStnMenu(st){var sp=SV.shots.filter(function(s){return s.from==st&&(s.kind=='splay'||s.kind=='lrud');});
+ svDlg('<div class="big">Station '+esc(st)+(st==SV.cur?' <span class="tg g" style="font-size:12px">active</span>':'')+'</div>'+
+  (st!=SV.cur?'<button class="btn" id="smAct">📍 Make it the active station (new shots go from here)</button>':'')+'<button class="btn alt" id="smCen">⌖ Centre here</button><button class="btn alt" id="smXs">✚ Cross section here</button>'+
+  (sp.length?'<div class="k">Splays at '+esc(st)+'</div><p class="mut" style="font-size:12px;margin:2px 0 6px">To wall: used for its cross section. Off: left out of the sketch, the sections and the exports.</p>'+sp.map(function(s){return'<div class="row" style="display:flex;align-items:center;gap:6px;cursor:default"><span style="flex:1;font-variant-numeric:tabular-nums">'+(s.kind=='lrud'?'<span class="tg">'+esc(s.lrud)+'</span> ':'')+svL(s.d)+' '+svUn()+' · '+n1(s.az)+'° · '+n1(s.cl)+'°</span><button class="chip" data-w="'+s.id+'" style="cursor:pointer;background:'+(s.wall?SVA:'#2a3542')+';color:#fff">to wall</button><button class="chip" data-o="'+s.id+'" style="cursor:pointer;background:'+(s.cmt?'#b7791f':'#2a3542')+';color:#fff">off</button></div>';}).join(''):'')+
+  '<button class="btn alt" id="smNo">Close</button>');
+ if($('smAct'))$('smAct').onclick=function(){SV.cur=st;svTellStation();svSaveSoon();svDlgClose();var a=$('svAt');if(a)a.textContent='📍 '+st;svDraw();toast('New shots go from '+esc(st),1600);};
+ $('smCen').onclick=function(){svDlgClose();svCentre(st);};$('smXs').onclick=function(){svDlgClose();svXsNew(st);};$('smNo').onclick=svDlgClose;
+ Array.prototype.forEach.call(document.querySelectorAll('[data-w],[data-o]'),function(b){b.onclick=function(){var id=b.getAttribute('data-w')||b.getAttribute('data-o'),s=SV.shots.filter(function(x){return x.id==id;})[0];if(!s)return;if(b.hasAttribute('data-w'))s.wall=!s.wall;else s.cmt=!s.cmt;svSaveSoon();svStnMenu(st);svDraw();};});}
+// ======================================================================= an item's menu (hold it, or tap it twice with ⬚)
+function svItemMenu(it){var kind=it.k,list=kind=='line'?SVLINES:kind=='area'?SVAREAS:kind=='point'?SVPOINTS:null,before=svClone(it);
+ function done(){svOp({edit:it,before:before,after:svClone(it)});svDlgClose();}
+ var h='<div class="big">'+(kind=='pen'?'Pen line':esc(((list||[]).filter(function(o){return o[0]==it.type;})[0]||[0,it.type])[1]))+'</div>';
+ if(list)h+='<label>Type</label><select id="imT">'+list.map(function(o){return'<option value="'+o[0]+'"'+(o[0]==it.type?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';
+ if(kind=='pen')h+='<label>Colour</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+SVPENS.map(function(cc){return'<button class="ib" data-c="'+cc+'" style="background:'+cc+';border:2px solid '+(cc==(it.col||SVPENS[0])?'#fff':'transparent')+';width:36px;height:36px"></button>';}).join('')+'</div>';
+ if(kind=='point'&&it.text!=null)h+='<label>Text</label><input id="imX" value="'+esc(it.text||'')+'">';
+ h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">'+(kind=='line'||kind=='pen'?'<button class="btn alt" id="imF" style="flex:1">⇄ Flip it'+(kind=='line'&&SVWALLS[it.type]?' (the passage side)':'')+'</button>':'')+(kind=='point'&&SVDIR[it.type]?'<button class="btn alt" id="imF" style="flex:1">⇄ Turn it round</button>':'')+
+  (kind=='point'?'<button class="btn alt" id="imS1" style="flex:1">Smaller</button><button class="btn alt" id="imS2" style="flex:1">Bigger</button>':'')+'</div>'+
+  '<button class="btn" id="imGo">Done</button><button class="btn alt" id="imDel">Delete it</button>';
+ svDlg(h);
+ if($('imT'))$('imT').onchange=function(){it.type=$('imT').value;svDraw();};
+ Array.prototype.forEach.call(document.querySelectorAll('[data-c]'),function(b){b.onclick=function(){it.col=b.getAttribute('data-c');svDraw();Array.prototype.forEach.call(document.querySelectorAll('[data-c]'),function(o){o.style.borderColor=o===b?'#fff':'transparent';});};});
+ if($('imF'))$('imF').onclick=function(){if(kind=='point')it.rot=(it.rot||0)+Math.PI;else it.pts.reverse();svDraw();toast('Flipped',900);};
+ if($('imS1'))$('imS1').onclick=function(){it.sz=(it.sz||16/SVK.sc)*0.8;svDraw();};if($('imS2'))$('imS2').onclick=function(){it.sz=(it.sz||16/SVK.sc)*1.25;svDraw();};
+ $('imGo').onclick=function(){if($('imX'))it.text=$('imX').value;done();};
+ $('imDel').onclick=function(){var l=svList(),i=l.indexOf(it);if(i>=0){svSet(it,before);l.splice(i,1);SVK.sel=null;svOp({del:it,at:i});}svDlgClose();};}
+// ======================================================================= palettes: lines, areas, symbols (NSS), and the pen's colours
+function svPal(kind){var pal=$('svPal');if(kind=='pen'){var cur=SVK.pen||{col:SVPENS[0],w:2};SVK.pen=cur;
+  pal.innerHTML='<div class="mut" style="font-size:12px;margin:0 0 6px 4px">Pen - notes and anything the symbols don\'t cover</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 4px 8px">'+SVPENS.map(function(cc){return'<button class="ib" data-c="'+cc+'" style="background:'+cc+';width:38px;height:38px;border:2px solid '+(cc==cur.col?'#fff':'transparent')+'"></button>';}).join('')+'</div>'+
+   '<div style="display:flex;gap:6px;margin:0 4px">'+[1,2,4].map(function(w){return'<button class="ib'+(cur.w==w?' on':'')+'" data-w="'+w+'" style="flex:1;height:38px"><span style="display:inline-block;width:34px;height:'+w+'px;background:#e6ecf2;border-radius:2px;vertical-align:middle"></span></button>';}).join('')+'</div>';
+  pal.style.display='block';Array.prototype.forEach.call(pal.querySelectorAll('[data-c]'),function(b){b.onclick=function(){cur.col=b.getAttribute('data-c');SVK.tool='pen';pal.style.display='none';svToolsOn();};});
+  Array.prototype.forEach.call(pal.querySelectorAll('[data-w]'),function(b){b.onclick=function(){cur.w=+b.getAttribute('data-w');svPal('pen');};});return;}
+ var list=kind=='line'?SVLINES:kind=='area'?SVAREAS:SVPOINTS,cur=SVK.type;var h='<div class="mut" style="font-size:12px;margin:0 0 4px 4px">'+(kind=='line'?'Lines':kind=='area'?'Areas':'Symbols')+' - NSS standard'+(kind=='line'?'. Walls: the passage is on the left as you draw (a wall is turned round to face the nearest station).':'')+'</div>';
+ list.forEach(function(o){h+='<button class="pi'+(cur==o[0]?' on':'')+'" data-y="'+o[0]+'"><canvas width="128" height="60"></canvas>'+esc(o[1])+'</button>';});pal.innerHTML=h;pal.style.display='block';
+ Array.prototype.forEach.call(pal.querySelectorAll('.pi'),function(b){var cv=b.querySelector('canvas'),c=cv.getContext('2d'),t=b.getAttribute('data-y');c.scale(2,2);c.fillStyle='#f7f5ef';c.fillRect(0,0,64,30);
+  if(kind=='line')svDrawLine(c,t,[[6,20],[22,12],[40,18],[58,9]]);else if(kind=='area')svDrawArea(c,t,[[6,4],[58,5],[55,26],[8,25]]);else svDrawPoint(c,t,32,15,0,t=='pit_pt'?'20':t=='dome_pt'?'15':t=='ch'?'4':t=='label'?'Abc':'');
+  b.onclick=function(){SVK.type=t;SVK.tool=kind;pal.style.display='none';svToolsOn();toast((kind=='point'&&SVDIR[t]?'Touch and drag the way it points: ':'')+b.textContent,1600);};});}
+// ======================================================================= hit testing
+function svHit(sx,sy,maxd){var Pp=svPts(),list=svList(),best=null,bd=maxd||14;list.forEach(function(it){var w=svWorldPts(it,Pp).map(w2s);
+  if(it.k=='area'&&w.length>2&&svInPoly([sx,sy],w)&&!(it.holes||[]).some(function(h){return svInPoly([sx,sy],h.map(function(p){var sh=svShift(it,Pp);return w2s([p[0]+sh[0],p[1]+sh[1]]);}));})){if(bd>maxd*0.6||!best){best=it;bd=maxd*0.6;}}
+  for(var j=0;j<w.length;j++){var d=j?svSegD(sx,sy,w[j-1],w[j]):Math.hypot(sx-w[0][0],sy-w[0][1]);if(d<bd){bd=d;best=it;}}});return best;}
+function svHitStation(sx,sy){var Pp=svPts(),src=SVK.view=='plan'?Pp.R.P:SVK.view=='prof'?Pp.R.X:{},best=null,bd=16;Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st)),d=Math.hypot(p[0]-sx,p[1]-sy);if(d<bd){bd=d;best=st;}});return best;}
+function svHitXs(sx,sy){var hit=null;SV.xs.forEach(function(x){if((x.view||'plan')!=SVK.view||!x._box)return;var b=x._box;if(sx>=b[0]&&sx<=b[1]&&sy>=b[2]&&sy<=b[3])hit=x;});return hit;}
+// snapping a point to the ends (or points) of lines already drawn
+function svSnapPt(w){if(!svQ('snap',true))return w;var Pp=svPts(),s=w2s(w),best=null,bd=13;svList().forEach(function(it){if(it.k!='line'&&it.k!='area')return;var p=svWorldPts(it,Pp);[p[0],p[p.length-1]].concat(it.k=='area'?p:[]).forEach(function(q){var d=Math.hypot(w2s(q)[0]-s[0],w2s(q)[1]-s[1]);if(d<bd){bd=d;best=q;}});});
+ return best?[best[0],best[1]]:w;}
+// ======================================================================= touch
+function svHook(){var cv=SVK.cv,P=SVK.ptr;
+ cv.onpointerdown=function(e){cv.setPointerCapture(e.pointerId);P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);SVK.fit=false;clearTimeout(SVK.hold);
+  if(ids.length==2){SVK.draw=null;SVK.rub=null;SVK.drag=null;var a=P[ids[0]],b=P[ids[1]];SVK.pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),m:[(a[0]+b[0])/2,(a[1]+b[1])/2],sc:SVK.sc,ox:SVK.ox,oy:SVK.oy};return;}
+  var w=s2w(e.offsetX,e.offsetY),t=SVK.tool;SVK.down={x:e.offsetX,y:e.offsetY,t:Date.now(),moved:false};
+  if(t=='move'){var xs=SVK.view!='xs'&&svHitXs(e.offsetX,e.offsetY);if(xs){SVK.drag={xs:xs,before:svClone(xs),w0:w,off0:(xs.off||[0,0]).slice()};}else SVK.pan={x:e.offsetX,y:e.offsetY,ox:SVK.ox,oy:SVK.oy};}
+  else if(t=='line'||t=='area'||t=='pen'){var w1=t=='pen'?w:svSnapPt(w);SVK.draw={k:t,type:t=='pen'?'pen':SVK.type||(t=='line'?'wall':'water'),pts:[w1],col:SVK.pen&&SVK.pen.col,w:SVK.pen&&SVK.pen.w};
+   SVK.hold=setTimeout(function(){if(SVK.down&&!SVK.down.moved){var it=svHit(SVK.down.x,SVK.down.y,16);if(it){SVK.draw=null;SVK.sel=it;svDraw();svItemMenu(it);}}},550);}
+  else if(t=='point'){SVK.draw={k:'point',type:SVK.type,pts:[w],x0:e.offsetX,y0:e.offsetY};}
+  else if(t=='select'){var sel=SVK.sel,Pp=svPts();if(sel&&sel.k!='point'){var wp=svWorldPts(sel,Pp).map(w2s),ni=-1,nd=16;wp.forEach(function(p,i){var d=Math.hypot(p[0]-e.offsetX,p[1]-e.offsetY);if(d<nd){nd=d;ni=i;}});if(ni>=0){SVK.drag={it:sel,node:ni,before:svClone(sel),w0:w};return;}}
+   var it=svHit(e.offsetX,e.offsetY,16);if(it){var again=it===SVK.sel;SVK.sel=it;SVK.drag={it:it,before:svClone(it),w0:w,again:again};SVK.hold=setTimeout(function(){if(SVK.down&&!SVK.down.moved&&SVK.drag){SVK.drag=null;svItemMenu(it);}},550);}else SVK.sel=null;svDraw();}
+  else if(t=='erase'){SVK.rub={pts:[w],sx:[[e.offsetX,e.offsetY]],rad:12/SVK.sc};}
+  else if(t=='xs'){SVK.pan={x:e.offsetX,y:e.offsetY,ox:SVK.ox,oy:SVK.oy};}};
+ cv.onpointermove=function(e){if(!P[e.pointerId])return;P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);
+  if(SVK.down&&Math.hypot(e.offsetX-SVK.down.x,e.offsetY-SVK.down.y)>6)SVK.down.moved=true;
+  if(SVK.pinch&&ids.length>=2){var a=P[ids[0]],b=P[ids[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),m=[(a[0]+b[0])/2,(a[1]+b[1])/2],k=d/Math.max(10,SVK.pinch.d),pi=SVK.pinch;
+   var ns=Math.max(1,Math.min(800,pi.sc*k));var wx=(pi.m[0]-pi.ox)/pi.sc,wy=(pi.oy-pi.m[1])/pi.sc;SVK.sc=ns;SVK.ox=m[0]-wx*ns;SVK.oy=m[1]+wy*ns;svDraw();return;}
+  if(SVK.pan){if(SVK.down&&SVK.down.moved){SVK.ox=SVK.pan.ox+e.offsetX-SVK.pan.x;SVK.oy=SVK.pan.oy+e.offsetY-SVK.pan.y;svDraw();}return;}
+  var w=s2w(e.offsetX,e.offsetY);
+  if(SVK.drag&&SVK.down&&SVK.down.moved){clearTimeout(SVK.hold);var D=SVK.drag,dx=w[0]-D.w0[0],dy=w[1]-D.w0[1];
+   if(D.xs){D.xs.off=[D.off0[0]+dx,D.off0[1]+dy];}
+   else if(D.node!=null){var it=D.it,sh=svShift(it,svPts());it.pts[D.node]=[D.before.pts[D.node][0]+dx,D.before.pts[D.node][1]+dy];}
+   else{var it=D.it;if(it.k=='point'){it.x=D.before.x+dx;it.y=D.before.y+dy;}else{it.pts=D.before.pts.map(function(p){return[p[0]+dx,p[1]+dy];});if(it.holes)it.holes=D.before.holes.map(function(h){return h.map(function(p){return[p[0]+dx,p[1]+dy];});});}}
+   svDraw();return;}
+  if(SVK.rub){SVK.rub.pts.push(w);SVK.rub.sx.push([e.offsetX,e.offsetY]);svDraw();return;}
+  if(SVK.draw&&SVK.draw.k!='point'){var l=SVK.draw.pts[SVK.draw.pts.length-1];if(Math.hypot((w[0]-l[0])*SVK.sc,(w[1]-l[1])*SVK.sc)>2.5){clearTimeout(SVK.hold);SVK.draw.pts.push(w);svDraw();}}
+  else if(SVK.draw&&SVK.draw.k=='point'){SVK.draw.x1=e.offsetX;SVK.draw.y1=e.offsetY;}};
+ cv.onpointerup=cv.onpointercancel=function(e){delete P[e.pointerId];if(Object.keys(P).length<2)SVK.pinch=null;if(Object.keys(P).length)return;clearTimeout(SVK.hold);var dn=SVK.down;SVK.down=null;
+  var tap=dn&&!dn.moved&&e.type=='pointerup';
+  if(SVK.pan){SVK.pan=null;if(tap&&SVK.view!='xs'){var st=svHitStation(dn.x,dn.y),xs=st?null:svHitXs(dn.x,dn.y);if(SVK.tool=='xs'){if(st)svXsNew(st);else if(xs)svXsMenu(xs);}else if(st)svStnMenu(st);else if(xs)svXsMenu(xs);}svDraw();return;}
+  if(SVK.drag){var D=SVK.drag;SVK.drag=null;if(D.xs){if(tap)svXsMenu(D.xs);else{svXsSnap(D.xs);svXsOp(D.xs,D.before);}svDraw();return;}
+   if(!tap)svOp({edit:D.it,before:D.before,after:svClone(D.it)});else if(D.again&&Date.now()-dn.t<400)svItemMenu(D.it);svDraw();return;}
+  if(SVK.rub){var r=SVK.rub;SVK.rub=null;if(tap||r.pts.length<3){svErase(dn.x,dn.y);}else svRubOut(r);svDraw();return;}
+  var d=SVK.draw;SVK.draw=null;if(!d){svDraw();return;}
+  if(d.k=='point'){var it={k:'point',type:d.type,x:d.pts[0][0],y:d.pts[0][1],rot:0};if(svQ('symzoom',true))it.sz=16/SVK.sc;if(SVDIR[d.type]&&d.x1!=null&&Math.hypot(d.x1-d.x0,d.y1-d.y0)>8)it.rot=Math.atan2(d.y1-d.y0,d.x1-d.x0);
+   if(d.type=='pit_pt'||d.type=='dome_pt'||d.type=='ch'||d.type=='climb'||d.type=='label'){svAsk(d.type=='label'?'Text':d.type=='pit_pt'?'Pit depth ('+svUn()+')':d.type=='dome_pt'?'Dome height ('+svUn()+')':d.type=='ch'?'Ceiling height ('+svUn()+')':'Climb height ('+svUn()+', optional)','',function(v){if(v==null)return;it.text=v;svAddItem(it);});return;}
+   svAddItem(it);return;}
+  if(d.k!='pen'&&d.pts.length>1)d.pts[d.pts.length-1]=svSnapPt(d.pts[d.pts.length-1]);
+  var pts=svSimplify(d.pts,(d.k=='pen'?1:1.6)/SVK.sc);if(pts.length<2){svDraw();return;}
+  var it={k:d.k=='pen'?'pen':d.k,type:d.type,pts:pts};if(d.k=='pen'){it.col=d.col||SVPENS[0];it.w=d.w||2;}
+  if(it.k=='line'&&svQ('clip',true)&&!SVWALLS[it.type])svClipToWalls(it);
+  if(it.k=='line'&&SVWALLS[it.type])svOrientWall(it);
+  if(it.k=='area')svAreaAdd(it);else svAddItem(it);};
+ cv.onwheel=function(e){e.preventDefault();var k=Math.exp(-e.deltaY*0.0015),ns=Math.max(1,Math.min(800,SVK.sc*k)),wx=(e.offsetX-SVK.ox)/SVK.sc,wy=(SVK.oy-e.offsetY)/SVK.sc;SVK.sc=ns;SVK.ox=e.offsetX-wx*ns;SVK.oy=e.offsetY+wy*ns;SVK.fit=false;svDraw();};}
+function svAddItem(it){var an=svAnchor(it.pts||[[it.x,it.y]]);if(an){it.st=an.st;it.at=an.at;}svList().push(it);svOp({add:it});}
+function svErase(x,y){var it=svHit(x,y,14);if(!it)return;var l=svList(),i=l.indexOf(it);l.splice(i,1);if(SVK.sel===it)SVK.sel=null;svOp({del:it,at:i});}
+// a wall faces its passage: turned round so the nearest station is on its left (Therion's way too: walls run anticlockwise round the passage)
+function svOrientWall(it){var Pp=svPts(),src=SVK.view=='xs'?{o:[0,0]}:null,best=null,bd=1e18,pts=it.pts;
+ function near(q){for(var i=1;i<pts.length;i++){var d=svSegD(q[0],q[1],pts[i-1],pts[i]);if(d<bd){bd=d;best={q:q,i:i};}}}
+ if(SVK.view=='xs')near([0,0]);else{var S=SVK.view=='plan'?Pp.R.P:Pp.R.X;Object.keys(S).forEach(function(st){near(Pp.pos(st));});}
+ if(!best)return;var a=pts[best.i-1],b=pts[best.i],cr=(b[0]-a[0])*(best.q[1]-a[1])-(b[1]-a[1])*(best.q[0]-a[0]);if(cr<0)pts.reverse();}
+// a line that runs past a wall at either end is cut back to the wall
+function svClipToWalls(it){var Pp=svPts(),walls=svList().filter(function(o){return o.k=='line'&&SVWALLS[o.type];}).map(function(o){return svWorldPts(o,Pp);});if(!walls.length)return;
+ var p=it.pts,cum=[0];for(var i=1;i<p.length;i++)cum.push(cum[i-1]+Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]));var tot=cum[cum.length-1];if(tot<=0)return;var hits=[];
+ for(var i=1;i<p.length;i++)walls.forEach(function(w){for(var j=1;j<w.length;j++){var X=svSegX(p[i-1],p[i],w[j-1],w[j]);if(X)hits.push({s:cum[i-1]+X.t*(cum[i]-cum[i-1]),pt:X.p,i:i});}});
+ if(!hits.length)return;hits.sort(function(a,b){return a.s-b.s;});var f=hits[0],l=hits[hits.length-1],cutS=f.s<tot*0.25,cutE=l.s>tot*0.75;
+ if(f===l&&cutS&&cutE){if(f.s<tot-f.s)cutE=false;else cutS=false;}
+ var out=(cutS?[f.pt]:[]).concat(p.slice(cutS?f.i:0,cutE?l.i:p.length)).concat(cutE?[l.pt]:[]);
+ if(out.length>=2)it.pts=out;}
+function svSegX(a,b,c,d){var r=[b[0]-a[0],b[1]-a[1]],s=[d[0]-c[0],d[1]-c[1]],den=r[0]*s[1]-r[1]*s[0];if(Math.abs(den)<1e-12)return null;var t=((c[0]-a[0])*s[1]-(c[1]-a[1])*s[0])/den,u=((c[0]-a[0])*r[1]-(c[1]-a[1])*r[0])/den;if(t<0||t>1||u<0||u>1)return null;return{t:t,p:[a[0]+r[0]*t,a[1]+r[1]*t]};}
+// ======================================================================= areas: same-type areas that overlap become one; rubbing out cuts holes or splits them
+function svAreaPolys(it,Pp){var sh=svShift(it,Pp),f=function(r){return r.map(function(p){return[p[0]+sh[0],p[1]+sh[1]];});};return[f(it.pts)].concat((it.holes||[]).map(f));}
+function svInArea(p,rings){var ins=false;rings.forEach(function(r){if(svInPoly(p,r))ins=!ins;});return ins;}
+function svBBox(rings){var b=[1e9,-1e9,1e9,-1e9];rings.forEach(function(r){r.forEach(function(p){b[0]=Math.min(b[0],p[0]);b[1]=Math.max(b[1],p[0]);b[2]=Math.min(b[2],p[1]);b[3]=Math.max(b[3],p[1]);});});return b;}
+function svOverlap(A,B){var a=svBBox(A),b=svBBox(B);if(a[1]<b[0]||b[1]<a[0]||a[3]<b[2]||b[3]<a[2])return false;if(A[0].some(function(p){return svInArea(p,B);})||B[0].some(function(p){return svInArea(p,A);}))return true;
+ for(var i=0;i<A[0].length;i++)for(var j=0;j<B[0].length;j++)if(svSegX(A[0][i],A[0][(i+1)%A[0].length],B[0][j],B[0][(j+1)%B[0].length]))return true;return false;}
+function svAreaAdd(it){var Pp=svPts(),list=svList(),mine=[it.pts],olds=list.filter(function(o){return o.k=='area'&&o.type==it.type&&svOverlap(svAreaPolys(o,Pp),mine);});
+ if(!olds.length){svAddItem(it);return;}
+ var shapes=olds.map(function(o){return svAreaPolys(o,Pp);}).concat([mine]),b=svBBox([].concat.apply([],shapes)),news=svRasterAreas(b,function(p){return shapes.some(function(s){return svInArea(p,s);});},it.type);
+ olds.forEach(function(o){list.splice(list.indexOf(o),1);});news.forEach(function(n){var an=svAnchor(n.pts);if(an){n.st=an.st;n.at=an.at;}list.push(n);});svOp({repl:{olds:olds,news:news}});toast('Joined to the '+(olds.length>1?olds.length+' areas':'area')+' it overlaps',1400);}
+// rubbing across the sketch: areas lose what's under the rub, lines are cut where it crosses them
+function svRubOut(r){var Pp=svPts(),list=svList(),rad=r.rad,rp=r.pts,olds=[],news=[];
+ function near(p){for(var i=0;i<rp.length;i++){var d=i?svSegD(p[0],p[1],rp[i-1],rp[i]):Math.hypot(p[0]-rp[0][0],p[1]-rp[0][1]);if(d<rad)return true;}return false;}
+ var rb=svBBox([rp]);rb=[rb[0]-rad,rb[1]+rad,rb[2]-rad,rb[3]+rad];
+ list.forEach(function(it){if(it.k=='point'){if(near([it.x+svShift(it,Pp)[0],it.y+svShift(it,Pp)[1]])){olds.push(it);}return;}
+  var w=svWorldPts(it,Pp),b=svBBox([w]);if(b[1]<rb[0]||rb[1]<b[0]||b[3]<rb[2]||rb[3]<b[2])return;
+  if(it.k=='area'){var rings=svAreaPolys(it,Pp);var n=svRasterAreas(b,function(p){return svInArea(p,rings)&&!near(p);},it.type);if(n.length==1&&!n[0].holes&&Math.abs(svPolyArea(n[0].pts)-svPolyArea(it.pts))<0.02*Math.abs(svPolyArea(it.pts)))return;olds.push(it);n.forEach(function(x){if(it.col)x.col=it.col;news.push(x);});return;}
+  // a line: resampled finely, the pieces outside the rub kept
+  var step=rad/3,dense=[];for(var i=1;i<w.length;i++){var a=w[i-1],q=w[i],L=Math.hypot(q[0]-a[0],q[1]-a[1]),n=Math.max(1,Math.ceil(L/step));for(var k=0;k<n;k++)dense.push([a[0]+(q[0]-a[0])*k/n,a[1]+(q[1]-a[1])*k/n]);}dense.push(w[w.length-1]);
+  var pieces=[],cur=[],cut=false;dense.forEach(function(p){if(near(p)){cut=true;if(cur.length>1)pieces.push(cur);cur=[];}else cur.push(p);});if(cur.length>1)pieces.push(cur);if(!cut)return;
+  olds.push(it);pieces.forEach(function(pc){var o={k:it.k,type:it.type,pts:svSimplify(pc,1.2/SVK.sc)};if(it.col){o.col=it.col;o.w=it.w;}news.push(o);});});
+ if(!olds.length)return;olds.forEach(function(o){list.splice(list.indexOf(o),1);});news.forEach(function(n){var an=svAnchor(n.pts);if(an){n.st=an.st;n.at=an.at;}list.push(n);});svOp({repl:{olds:olds,news:news}});}
+function svPolyArea(p){var a=0;for(var i=0;i<p.length;i++){var q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1];}return a/2;}
+// a shape given by an inside test, traced back to polygons: marching squares on a fine grid, the loops sorted into outlines and holes
+function svRasterAreas(b,inside,type){var span=Math.max(b[1]-b[0],b[3]-b[2]),cs=Math.max(span/180,0.03),x0=b[0]-2*cs,y0=b[2]-2*cs,nx=Math.ceil((b[1]-b[0])/cs)+5,ny=Math.ceil((b[3]-b[2])/cs)+5,g=new Uint8Array(nx*ny);
+ for(var j=1;j<ny-1;j++)for(var i=1;i<nx-1;i++)g[j*nx+i]=inside([x0+i*cs,y0+j*cs])?1:0;
+ var segs={};function key(a,b){return a+','+b;}
+ // edges of a cell walked anticlockwise: 0 bottom, 1 right, 2 top, 3 left; a segment from where the inside is left to where it is entered
+ for(var j=0;j<ny-1;j++)for(var i=0;i<nx-1;i++){var v=[g[j*nx+i],g[j*nx+i+1],g[(j+1)*nx+i+1],g[(j+1)*nx+i]],m=[[2*i+1,2*j],[2*i+2,2*j+1],[2*i+1,2*j+2],[2*i,2*j+1]];
+  for(var e=0;e<4;e++){if(v[e]&&!v[(e+1)%4]){for(var k=1;k<4;k++){var f=(e-k+4)%4;if(!v[f]&&v[(f+1)%4]){segs[key(m[e][0],m[e][1])]=m[f];break;}}}}}
+ var loops=[];Object.keys(segs).forEach(function(k0){if(!segs[k0])return;var loop=[],k=k0,guard=0;while(segs[k]&&guard++<1e6){var p=k.split(',').map(Number);loop.push([x0+p[0]*cs/2,y0+p[1]*cs/2]);var nx2=segs[k];delete segs[k];k=key(nx2[0],nx2[1]);}if(loop.length>3)loops.push(svSimplify(loop,cs*0.6));});
+ var outs=loops.filter(function(l){return svPolyArea(l)>0;}),holes=loops.filter(function(l){return svPolyArea(l)<0;});
+ return outs.filter(function(o){return Math.abs(svPolyArea(o))>cs*cs*3;}).map(function(o){var it={k:'area',type:type,pts:o},hs=holes.filter(function(h){return svInPoly(h[0],o)&&Math.abs(svPolyArea(h))>cs*cs*3;});if(hs.length)it.holes=hs;return it;});}
+// ======================================================================= Therion: the sketch as a .th2 (plan and extended-profile scraps, stations
+// as station points so Therion fits the drawing to the survey), written from the Therion book's own symbol names
+var SVTH={wall:'wall',wall_lower:'wall -subtype underlying',wall_inferred:'wall -subtype presumed',survey_wall:'wall -subtype presumed',floor_step:'floor-step',ceiling_step:'ceiling-step',pit:'pit',dome:'chimney',drip:'dripline',water_edge:'border -subtype temporary',stream:'water-flow',rock:'rock-border',slope:'slope'};
+var SVTHA={water:'water',sump:'sump',sand:'sand',gravel:'pebbles',mud:'clay',breakdown:'blocks',pillar:'pillar',flowstone:'flowstone',guano:'debris',ice:'ice'};
+var SVTHP={stal:'stalactite',stag:'stalagmite',column:'pillar',straws:'soda-straw',helictite:'helictite',rimstone:'rimstone-pool',pearls:'cave-pearl',popcorn:'popcorn',airflow:'air-draught',waterflow:'water-flow',slope_arrow:'gradient',drip_pt:'water-drip',pool_pt:'water',lead:'continuation',entrance:'entrance',dig:'dig',hazard:'danger',bats:'bat',bones:'bones',boulder:'blocks',break_pt:'breakdown-choke'};
+function svTh2(){var S=40,L=['encoding  utf-8','##XTHERION## xth_me_area_adjust 0 0 1000 1000','##XTHERION## xth_me_area_zoom_to 100',''],R=svReduce(),nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_'),id=0;
+ function xy(p){return(p[0]*S).toFixed(2)+' '+(p[1]*S).toFixed(2);}
+ [['plan','plan',R.P],['prof','extended',R.X]].forEach(function(v){var items=SV[v[0]]||[],pos=function(st){var p=v[2][st];return p?[p[0],p[1]]:null;};if(!items.length&&v[0]=='prof')return;
+  L.push('scrap '+nm+'_'+v[0]+' -projection '+v[1]+' -scale [0 0 '+S+' 0 0.0 0.0 1.0 0.0 m]','');
+  Object.keys(v[2]).forEach(function(st){L.push('point '+xy(pos(st))+' station -name '+st);});L.push('');
+  var Pp={pos:pos};items.forEach(function(it){var w=svWorldPts(it,Pp);
+   if(it.k=='line'&&SVTH[it.type]){L.push('line '+SVTH[it.type]);w.forEach(function(p){L.push('  '+xy(p));});L.push('endline','');}
+   else if(it.k=='area'&&SVTHA[it.type]){var ids=[];[w].concat((it.holes||[]).map(function(h){var sh=svShift(it,Pp);return h.map(function(p){return[p[0]+sh[0],p[1]+sh[1]];});})).forEach(function(r){var b='a'+(++id);ids.push(b);L.push('line border -id '+b+' -close on -visibility off');r.forEach(function(p){L.push('  '+xy(p));});L.push('  '+xy(r[0]),'endline');});L.push('area '+SVTHA[it.type]);ids.forEach(function(b){L.push('  '+b);});L.push('endarea','');}
+   else if(it.k=='point'){var p=w[0],t=SVTHP[it.type],o=SVDIR[it.type]?' -orientation '+((90-(-(it.rot||0))*180/Math.PI+360)%360).toFixed(1):'';
+    if(t)L.push('point '+xy(p)+' '+t+o);else L.push('point '+xy(p)+' label -text "'+String((it.type=='pit_pt'?'pit ':it.type=='dome_pt'?'dome ':it.type=='ch'?'ch ':it.type=='climb'?'climb ':it.type=='squeeze'?'squeeze':'')+(it.text||'')).replace(/"/g,"'")+'"');}
+   else if(it.k=='pen'){L.push('# pen line ('+(it.col||'')+') left out');}});
+  L.push('endscrap','');});
+ // cross sections: a scrap each, its outline as walls
+ SV.xs.forEach(function(x){var sh=svXsShape(x);if(!sh.lines.length)return;L.push('scrap '+nm+'_xs_'+String(x.at).replace(/[^A-Za-z0-9_]/g,'_')+'_'+String(x.id).replace(/[^A-Za-z0-9_]/g,'')+' -projection none -scale [0 0 '+S+' 0 0.0 0.0 1.0 0.0 m]','');
+  sh.lines.forEach(function(l){var pts=l.map(function(p){return[(x.flip?-1:1)*p[0],p[1]];});if(sh.closed)pts.push(pts[0]);if(svPolyArea(pts)<0)pts.reverse();L.push('line wall');pts.forEach(function(p){L.push('  '+xy(p));});L.push('endline','');});
+  L.push('point 0 0 label -text "'+x.at+'"','endscrap','');});
+ return L.join('\n');}
+// ======================================================================= the instruments (Android app: TopsideAndroid.ble*)
+// Android app 1.7 (Sully, 16 Nov 2026: "see if its possible for the sketcher to send a message to a specific tacheo (since sometimes
+// there will be 2), and connect multiple survey devices"): any number of units at once - the FS and BS Tacheos, a SAP6 - each shot
+// tagged with the unit that took it, each unit with its own battery, controls, cross sections and messages. App 1.6 (one unit at a
+// time: bleConnect / bleCmd / bleConsole) still works: its one unit is the only one.
+var SVDEV={units:{},order:[],found:[],state:'off',last:''};
 function svBleOk(){return!!(window.TopsideAndroid&&typeof TopsideAndroid.bleScan=='function');}
-function svDevChip(){var c=$('svDevC');if(!c)return;var st=SVDEV.state;var narrow=window.innerWidth<620;c.textContent=st=='on'?'📡 '+(narrow&&SVDEV.info&&SVDEV.info.batt!=null?'':(SVDEV.name||'Connected'))+(SVDEV.info&&SVDEV.info.batt!=null?(narrow?'':' · ')+SVDEV.info.batt+'%':''):st=='connecting'?'📡 connecting…':svBleOk()?'📡 Connect':'⌨ Typed';
- c.style.background=st=='on'?SVA:st=='connecting'?'#b7791f':'#3a4756';c.style.color='#fff';}
-function svDevSheet(){if(!svBleOk()){svDlg('<div class="big">Instrument</div><p>Shots from a Tacheo or SAP6 come in over Bluetooth in the <b>Topside app for Android</b>. '+(IOS?'iPhones don\'t let apps like this one use Bluetooth, so on an iPhone shots are typed (<b>Add a shot</b>).':'Here, type them with <b>Add a shot</b>.')+'</p>'+(ANDROID?'<a class="btn" href="Topside.apk" style="text-decoration:none">Get the Android app</a>':'')+'<button class="btn alt" id="dvNo">Close</button>');$('dvNo').onclick=svDlgClose;return;}
- var on=SVDEV.state=='on',i=SVDEV.info||{};
- var h='<div class="big">'+(on?'📡 '+esc(SVDEV.name):'Connect an instrument')+'</div>';
- if(on){h+='<div class="card">'+(i.ver?'<div>'+esc(i.ver)+(i.sn?' · '+esc(i.sn):'')+'</div>':'<div class="mut">Asking the unit…</div>')+(i.batt!=null?'<div class="stat"><b>'+i.batt+'%</b> battery'+(i.shots?' · ~'+i.shots+' shots':'')+'</div>':'')+(i.health?'<div class="mut" style="font-size:12.5px">'+esc(i.health)+'</div>':'')+(i.cal?'<div class="mut" style="font-size:12.5px">Calibration accuracy '+esc(i.cal)+'</div>':'')+(i.trip?'<div class="mut" style="font-size:12.5px">This trip on the unit: '+esc(i.trip)+'</div>':'')+'</div>';
-  h+='<div class="k">Remote</div><button class="btn" id="dvShot">🎯 Take a shot</button><button class="btn alt" id="dvLon">🔴 Laser on</button><button class="btn alt" id="dvLoff">⚫ Laser off</button>';
-  h+='<div class="k">From the unit</div><button class="btn alt" id="dvXs">✚ Cross sections on the unit</button><button class="btn alt" id="dvInfo">↻ Battery and health</button><button class="btn alt" id="dvStn">📍 Send the station names</button>';
-  h+='<div class="k">This link</div><button class="btn alt" id="dvOff">Disconnect</button><button class="btn alt" id="dvTurnOff">⏻ Switch the unit off</button>';}
- else{h+='<p class="mut">Switch the Tacheo on with <b>Bluetooth → Phone On</b>. A SAP6 works too.</p><div id="dvList"><p class="mut">Looking…</p></div><button class="btn alt" id="dvAgain">Look again</button>';}
- h+='<button class="btn alt" id="dvNo">Close</button>';svDlg(h);var e;$('dvNo').onclick=svDlgClose;
- if(on){$('dvShot').onclick=function(){svCmd(0x38);};$('dvLon').onclick=function(){svCmd(0x36);};$('dvLoff').onclick=function(){svCmd(0x37);};$('dvOff').onclick=function(){TopsideAndroid.bleDisconnect();localStorage.removeItem('ct-sv-dev');svDlgClose();};
-  $('dvTurnOff').onclick=function(){if(confirm('Switch the unit off?'))svCmd(0x34);};$('dvXs').onclick=svXsList;$('dvInfo').onclick=function(){svInfo().then(svDevSheet);};$('dvStn').onclick=function(){svTellStation(true);toast('Station names sent');};}
- else{$('dvAgain').onclick=svScan;svScan();}}
+function svV2(){return!!(window.TopsideAndroid&&typeof TopsideAndroid.bleOpen=='function');}
+function bOpen(a){if(svV2())TopsideAndroid.bleOpen(a);else TopsideAndroid.bleConnect(a);}
+function bClose(a){if(svV2())TopsideAndroid.bleClose(a||'');else TopsideAndroid.bleDisconnect();}
+function bCmd(a,b){if(svV2())TopsideAndroid.bleSend(a,b);else TopsideAndroid.bleCmd(b);}
+function bText(a,t){if(svV2())TopsideAndroid.bleText(a,t);else TopsideAndroid.bleConsole(t);}
+function svUnits(){return SVDEV.order.map(function(a){return SVDEV.units[a];}).filter(Boolean);}
+function svOnUnits(){return svUnits().filter(function(u){return u.state=='on';});}
+function svUnitOf(addr){addr=addr||SVDEV.last;if(!SVDEV.units[addr]){SVDEV.units[addr]={addr:addr,name:'',state:'off',info:null,rx:'',waiters:[],follow:!svUnits().length,role:'',msg:null};SVDEV.order.push(addr);}return SVDEV.units[addr];}
+function svShort(u){return String(u&&(u.name||u.addr)||'').replace(/^SAP6_/,'');}
+function svPrimary(){var on=svOnUnits(),s=SVDEV.sel&&SVDEV.units[SVDEV.sel];if(s&&s.state=='on')return s;return on.filter(function(u){return u.follow;})[0]||on[0]||null;}
+// with two or more units, the sketch's 🎯 says which unit it fires and ⇄ picks the next (Sully, 16 Nov 2026: "Make sure you have a way to select different connected devices to control")
+function svSelNext(){var on=svOnUnits();if(on.length<2)return;var p=svPrimary(),k=on.indexOf(p);SVDEV.sel=on[(k+1)%on.length].addr;var b=$('svShot2');if(b)b.innerHTML=svShotLbl();toast('🎯 now fires '+esc(svShort(svPrimary())),1500);}
+function svShotLbl(){var on=svOnUnits();return on.length>1?'🎯 '+esc(svShort(svPrimary())):'🎯';}
+function svAgg(){SVDEV.state=svOnUnits().length?'on':svUnits().some(function(u){return u.state=='connecting';})?'connecting':'off';}
+function svDevSave(){try{localStorage.setItem('ct-sv-devs',JSON.stringify(svUnits().filter(function(u){return u.state!='off'||u.keep;}).map(function(u){return{addr:u.addr,name:u.name,follow:u.follow,role:u.role,autoLR:u.autoLR};})));}catch(e){}}
+// the signal (1.7 test 2, Android bleApi 3): smoothed, as 0-4 bars; a warning before the link drops (Sully: "I'd like to know when I'm about to disconnect")
+function svSig(u){if(!u||u.state!='on'||u.rssi==null)return null;var r=u.rssi;return r>-67?4:r>-76?3:r>-84?2:r>-91?1:0;}
+function svSigHtml(u,big){var n=svSig(u);if(n==null)return'';var col=n>=3?'#30a46c':n==2?'#f5a524':'#e5484d',h='<span class="uSig'+(big?' big':'')+(n>=3?' g':'')+'" title="'+Math.round(u.rssi)+' dBm">';
+ for(var k=1;k<=4;k++)h+='<i'+(k<=Math.max(n,1)?' class="l"':'')+' style="height:'+(k*25)+'%;background:'+(k<=Math.max(n,1)?col:'#3a4654')+'"></i>';return h+'</span>';}
+function svRssi(u,r){if(!u||!isFinite(r))return;u.rssi=u.rssi==null?r:u.rssi*0.6+r*0.4;var n=svSig(u),now=Date.now();
+ if(n!=null&&n<=1){u.weak=(u.weak||0)+1;if(u.weak>=2&&now-(u.weakAt||0)>30000){u.weakAt=now;if(u.autoLR!==false&&u.info&&u.info.longrange===false)svSetRange(u,true,'auto');else toast('📶 '+esc(svShort(u))+(n==0?' is about to drop - move closer':' - weak signal, stay close'),3500);if(navigator.vibrate)navigator.vibrate([120,80,120]);}}
+ else u.weak=0;
+ var was=u.sigShown;u.sigShown=n;if(was!==n){svDevChip();var e=document.querySelector('.ucard[data-a="'+u.addr+'"] .uSigW');if(e)e.innerHTML=svSigHtml(u,true)+svSigWord(n);var cs=document.querySelector('#svChat .chTo .chip[data-a="'+u.addr+'"] .chSig');if(cs)cs.innerHTML=svSigHtml(u);}}
+function svSigWord(n){return n==null?'':'<span style="color:'+(n>=3?'#e6ecf2':n==2?'#f5a524':'#ff6b6f')+'">Signal: '+['about to drop - move closer','weak','fair','good','strong'][n]+'</span>';}
+// Long range (1.7: Sully, 16 Nov 2026: "see if you can control the bluetooth extended range setting via the phone app too ... Would be nice to do that if the device starts to get out of range"):
+// the unit's own Bluetooth > Long range (SET=longrange: +8 dBm, the coded radio on a CrossTalk link); the Android app (bleApi 4) also asks for the coded radio on the phone's link
+function svPhyOk(){try{return TopsideAndroid.bleApi&&TopsideAndroid.bleApi()>=4&&!!TopsideAndroid.blePhy;}catch(e){return false;}}
+function svSetRange(u,on,why){if(!u||u.state!='on')return;svAsk1('SET=longrange,'+(on?1:0),/^OK SET|^BAD SET|^\?\?/,4000,u).then(function(l){var ok=l&&l.some(function(x){return /^OK SET/.test(x);});
+  if(!ok){toast('📶 '+esc(svShort(u))+" didn't take the long-range setting",3000);return;}
+  (u.info=u.info||{}).longrange=on;if(svPhyOk())try{TopsideAndroid.blePhy(u.addr,on);}catch(e){}else u.phy=null;
+  toast(why=='auto'?'📶 Signal weak - switched '+esc(svShort(u))+' to long range':'📶 '+esc(svShort(u))+': long range '+(on?'on':'off'),3000);svCardRadio(u);});}
+function svCardRadio(u){var e=document.querySelector('.ucard[data-a="'+u.addr+'"] .uRadio');if(e)e.outerHTML=svRadioHtml(u);svWireRadio(u);}
+function svRadioHtml(u){var i=u.info||{},lr=!!i.longrange,known=i.longrange!=null;
+ return'<div class="uRadio"><div class="uRow"><span>Long range'+(lr?' <small class="mut">'+(u.phy==3?'more power + long-range radio':'more power')+'</small>':'')+'</span><span class="seg uSeg">'+
+  '<button data-lr="0"'+(known&&!lr?' class="on"':'')+'>Off</button><button data-lr="1"'+(lr?' class="on"':'')+'>On</button></span></div>'+
+  '<label class="uRow uChk"><input type="checkbox" data-k="autolr"'+(u.autoLR!==false?' checked':'')+'><span>Turn long range on by itself when the signal gets weak</span></label></div>';}
+function svWireRadio(u){var c=document.querySelector('.ucard[data-a="'+u.addr+'"] .uRadio');if(!c)return;
+ Array.prototype.forEach.call(c.querySelectorAll('[data-lr]'),function(b){b.onclick=function(){svSetRange(u,b.getAttribute('data-lr')=='1');};});
+ var k=c.querySelector('[data-k=autolr]');if(k)k.onchange=function(e){u.autoLR=e.target.checked;svDevSave();};}
+function svDevChip(){var c=$('svDevC');if(!c)return;svAgg();var on=svOnUnits(),narrow=window.innerWidth<620;
+ var worst=null;on.forEach(function(x){var n=svSig(x);if(n!=null&&(worst==null||n<svSig(worst)))worst=x;});var sg=worst?' '+svSigHtml(worst):'';
+ if(on.length>1)c.innerHTML='📡 '+on.length+' units'+sg;
+ else if(on.length==1){var u=on[0],b=u.info&&u.info.batt!=null?u.info.batt+'%':'';c.innerHTML='📡 '+esc(narrow&&b?b:svShort(u)+(b?' · '+b:''))+sg;}
+ else c.textContent=SVDEV.state=='connecting'?'📡 connecting…':svBleOk()?'📡 Connect':'⌨ Typed';
+ c.style.background=SVDEV.state=='on'?SVA:SVDEV.state=='connecting'?'#b7791f':'#3a4756';c.style.color='#fff';}
+function svDevSheet(keepScan){if(!svBleOk()){svDlg('<div class="big">Instruments</div><p>Shots from a Tacheo or SAP6 come in over Bluetooth in the <b>Topside app for Android</b>. '+(IOS?'iPhones don\'t let apps like this one use Bluetooth, so on an iPhone shots are typed (<b>Add a shot</b>).':'Here, type them with <b>Add a shot</b>.')+'</p>'+(ANDROID?'<a class="btn" href="Topside.apk" style="text-decoration:none">Get the Android app</a>':'')+'<button class="btn alt" id="dvNo">Close</button>');$('dvNo').onclick=svDlgClose;return;}
+ var page=SVVIEW=='units'&&!SV&&$('svUnitsPg'),us=svUnits().filter(function(u){return u.state!='off';}),h=page?'':'<div class="big">Instruments</div>';
+ if(!us.length)h+='<p class="mut">Switch the Tacheo on with <b>Bluetooth → Phone On</b>. A SAP6 works too, and two or more units can be connected at once (the FS and the BS).</p>';
+ us.forEach(function(u){var i=u.info||{};
+  var on=u.state=='on',bt=i.batt!=null?i.batt:null,bc=bt==null?'#5b6773':bt<20?'#e5484d':bt<40?'#f5a524':'#30a46c';
+  h+='<div class="card ucard" data-a="'+esc(u.addr)+'">'+
+   '<div class="uHead"><span class="uDot" style="background:'+(on?'#30a46c':u.state=='connecting'?'#f5a524':'#5b6773')+'"></span><b class="uName">'+esc(svShort(u))+'</b>'+(u.state=='connecting'?'<span class="tg w">reconnecting…</span>':'')+
+    (bt!=null?'<span class="uBatt"><span class="uBattBar"><i style="width:'+Math.max(4,Math.min(100,bt))+'%;background:'+bc+'"></i></span>'+bt+'%</span>':'')+'</div>'+
+   (on?'<div class="uSigW">'+(svSig(u)!=null?svSigHtml(u,true)+svSigWord(svSig(u)):'<span class="mut">Signal: waiting…</span>')+'</div>':'')+
+   '<div class="uMeta">'+(i.ver?esc(i.ver)+(i.sn?' · '+esc(i.sn):''):'Asking the unit…')+(i.shots>0?' · about '+i.shots+' shots left':'')+(i.cal?' · cal '+esc(i.cal):'')+(i.trip?'<br>On the unit: '+esc(i.trip):'')+'</div>'+
+   '<button class="uMsg" data-b="msg"><span class="uI">💬</span><span><b>Send a message</b><small>Shows on '+esc(svShort(u))+'\'s screen'+(u.msg===false?' (needs firmware 1.17.8)':'')+'</small></span></button>'+
+   '<div class="uSec">Instrument</div><div class="uGrid">'+
+    [['shot','🎯','Take a shot'],['flash','✨','Flash its laser'],['lon','🔴','Laser on'],['loff','⚫','Laser off']].map(function(b){return'<button class="uB" data-b="'+b[0]+'"><span class="uI">'+b[1]+'</span>'+b[2]+'</button>';}).join('')+'</div>'+
+   '<div class="uSec">This unit in the survey</div>'+
+   '<div class="uRow"><span>Which sight it takes</span><span class="seg uSeg">'+[['','Either'],['FS','Front sight'],['BS','Backsight']].map(function(r){return'<button data-role="'+r[0]+'"'+(u.role==r[0]?' class="on"':'')+'>'+r[1]+'</button>';}).join('')+'</span></div>'+
+   '<label class="uRow uChk"><input type="checkbox" data-k="follow"'+(u.follow?' checked':'')+'><span>Its station names follow this survey</span></label>'+
+   '<div class="uGrid"><button class="uB" data-b="xs"><span class="uI">✚</span>Cross sections on it</button><button class="uB" data-b="info"><span class="uI">↻</span>Refresh its details</button></div>'+
+   '<div class="uSec">Bluetooth</div>'+svRadioHtml(u)+
+   '<div class="uFoot"><button class="uB uDim" data-b="dis">Disconnect</button><button class="uB uRed" data-b="off"><span class="uI">⭘</span>Switch it off</button></div>'+
+   '</div>';});
+ h+='<div class="k">Connect '+(us.length?'another unit':'a unit')+'</div><div id="dvList"><p class="mut">Looking…</p></div><button class="btn alt" id="dvAgain">Look again</button>'+(us.length>1?'<button class="btn alt" id="dvAll">Disconnect all</button>':'')+(page?'':'<button class="btn alt" id="dvNo">Close</button>');
+ if(page)page.innerHTML=h;else svDlg(h);if($('dvNo'))$('dvNo').onclick=svDlgClose;$('dvAgain').onclick=svScan;if($('dvAll'))$('dvAll').onclick=function(){svUnits().forEach(function(u){u.keep=false;u.state='off';});bClose('');svDevSave();svDlgClose();svDevChip();};
+ Array.prototype.forEach.call(document.querySelectorAll((page?'#svUnitsPg':'#svDlgIn')+' .card[data-a]'),function(card){var u=SVDEV.units[card.getAttribute('data-a')];
+  Array.prototype.forEach.call(card.querySelectorAll('[data-role]'),function(b){b.onclick=function(){u.role=b.getAttribute('data-role');svDevSave();svDevSheet();};});
+  svWireRadio(u);
+  card.querySelector('[data-k=follow]').onchange=function(e){u.follow=e.target.checked;svDevSave();if(u.follow)svTellStation(true,u);};
+  Array.prototype.forEach.call(card.querySelectorAll('[data-b]'),function(b){b.onclick=function(){var k=b.getAttribute('data-b');
+   if(k=='shot')svCmd(0x38,u);else if(k=='lon')svCmd(0x36,u);else if(k=='loff')svCmd(0x37,u);else if(k=='flash')svFlash(u);else if(k=='msg'){svDlgClose();svChatShow(u.addr);}
+   else if(k=='xs')svXsList(u);else if(k=='info')svInfo(u).then(svDevSheet);else if(k=='off'){if(confirm('Switch '+svShort(u)+' off?'))svCmd(0x34,u);}
+   else if(k=='dis'){u.keep=false;bClose(u.addr);u.state='off';svDevSave();svDevChip();svDevSheet();}};});});
+ if(keepScan&&page)svFoundShow();else svScan();}
 function svScan(){var l=$('dvList');if(l)l.innerHTML='<p class="mut">Looking… (10 s)</p>';SVDEV.found=[];var r=TopsideAndroid.bleScan(10);if(r&&r!='ok'&&l)l.innerHTML='<p>'+esc(r)+'</p>';}
-function svFoundShow(){var l=$('dvList');if(!l)return;if(!SVDEV.found.length){l.innerHTML='<p class="mut">Nothing yet. Is the unit on, with Bluetooth → Phone On?</p>';return;}
- l.innerHTML=SVDEV.found.map(function(f,i){return'<div class="row" data-i="'+i+'"><div class="t">📡 '+esc(f.name||'Instrument')+'</div><div class="s">'+esc(f.addr)+(f.rssi?' · signal '+f.rssi:'')+'</div></div>';}).join('');
- Array.prototype.forEach.call(l.querySelectorAll('.row'),function(r){r.onclick=function(){var f=SVDEV.found[+r.getAttribute('data-i')];svConnect(f.addr,f.name);svDlgClose();};});}
-function svConnect(addr,name){SVDEV.addr=addr;SVDEV.name=String(name||'').replace(/^SAP6_/,'');SVDEV.state='connecting';svDevChip();try{localStorage.setItem('ct-sv-dev',JSON.stringify({addr:addr,name:name}));}catch(e){}TopsideAndroid.bleConnect(addr);}
-function svCmd(b){if(SVDEV.state!='on'){svDevSheet();return;}TopsideAndroid.bleCmd(b);toast(b==0x38?'Shot asked for':b==0x36?'Laser on':b==0x37?'Laser off':b==0x34?'Switching off':'Sent',1200);}
-// the unit's console (Nordic UART, the same commands as over USB): one command at a time, its reply up to its end line
-function svAsk1(cmd,endRe,ms){return new Promise(function(ok){if(SVDEV.state!='on'||!TopsideAndroid.bleConsole)return ok(null);var w={re:endRe,lines:[],ok:ok,t:setTimeout(function(){done(true);},ms||6000)};
- function done(to){var i=SVDEV.waiters.indexOf(w);if(i>=0)SVDEV.waiters.splice(i,1);clearTimeout(w.t);ok(to&&!w.lines.length?null:w.lines);}w.done=done;SVDEV.waiters.push(w);TopsideAndroid.bleConsole(cmd+'\r\n');});}
-function svRxLine(line){var w=SVDEV.waiters[0];if(!w)return;w.lines.push(line);if(w.re.test(line))w.done(false);}
-function svInfo(){return svAsk1('INFO',/^END/,8000).then(function(l){if(!l)return;var i=SVDEV.info||{};l.forEach(function(x){var p=x.split(' ');
-  if(p[0]=='VER')i.ver=x.slice(4);else if(p[0]=='SN')i.sn=p[1];else if(p[0]=='BATT'){i.batt=Math.round(+p[2]);i.shots=+p[3]||0;}else if(p[0]=='CAL')i.cal=(+p[2]).toFixed(2)+'°';else if(p[0]=='TRIP')i.trip=p[1]+' legs, '+svL(+p[2],0)+' '+svUn()+', '+p[3]+' LRUDs';else if(/^HEALTH|^CALQ/.test(p[0]))i.health=x;});
- SVDEV.info=i;svDevChip();});}
+function svFoundShow(err){var l=$('dvList');if(!l)return;var f=SVDEV.found.filter(function(x){var u=SVDEV.units[x.addr];return!u||u.state=='off';});
+ if(!f.length){l.innerHTML='<p class="mut">'+(err?esc(err):'Nothing new. Is the unit on, with Bluetooth → Phone On?')+'</p>';return;}
+ l.innerHTML=f.map(function(x,i){return'<div class="row" data-i="'+i+'"><div class="t">📡 '+esc(x.name||'Instrument')+'</div><div class="s">'+esc(x.addr)+(x.rssi?' · signal '+x.rssi:'')+'</div></div>';}).join('');
+ Array.prototype.forEach.call(l.querySelectorAll('.row'),function(r){r.onclick=function(){var x=f[+r.getAttribute('data-i')];svConnect(x.addr,x.name);if(!(SVVIEW=='units'&&!SV))svDlgClose();toast('📡 Connecting to '+esc(x.name||'the unit')+' - tap 📡 again to add another',2500);};});}
+function svConnect(addr,name){if(!svV2())svUnits().forEach(function(u){if(u.addr!=addr)u.state='off';});var u=svUnitOf(addr);SVDEV.last=addr;if(name)u.name=name;u.state='connecting';u.keep=true;svDevChip();svDevSave();bOpen(addr);}
+function svCmd(b,u){u=u||svPrimary();if(!u){svDevSheet();return;}bCmd(u.addr,b);toast((b==0x38?'Shot asked for':b==0x36?'Laser on':b==0x37?'Laser off':b==0x34?'Switching off':'Sent')+(svOnUnits().length>1?' · '+esc(svShort(u)):''),1200);}
+function svFlash(u){var k=0;(function step(){if(k>=6){toast('✨ '+esc(svShort(u))+"'s laser flashed",1500);return;}bCmd(u.addr,k%2?0x37:0x36);k++;setTimeout(step,350);})();}
+// the unit's console (Nordic UART, the same commands as over USB): one command at a time per unit, its reply up to its end line
+function svAsk1(cmd,endRe,ms,u){u=u||svPrimary();return new Promise(function(ok){if(!u||u.state!='on')return ok(null);var w={re:endRe,lines:[],ok:ok,t:setTimeout(function(){done(true);},ms||6000)};
+ function done(to){var i=u.waiters.indexOf(w);if(i>=0)u.waiters.splice(i,1);clearTimeout(w.t);ok(to&&!w.lines.length?null:w.lines);}w.done=done;u.waiters.push(w);bText(u.addr,cmd+'\r\n');});}
+function svRxLine(u,line){var m=line.match(/^MSG (SHOWN|READ|TIMEOUT) (\d+)/);if(m)svMsgState(u,+m[2],m[1]);
+ var w=u.waiters[0];if(!w)return;w.lines.push(line);if(w.re.test(line))w.done(false);}
+function svInfo(u){u=u||svPrimary();return svAsk1('INFO',/^END/,8000,u).then(function(l){if(!l||!u)return;var i=u.info||{};l.forEach(function(x){var p=x.split(' ');
+  if(p[0]=='VER')i.ver=x.slice(4);else if(p[0]=='SN')i.sn=p[1];else if(p[0]=='BATT'){i.batt=Math.round(+p[2]);i.shots=+p[3]||0;}else if(p[0]=='CAL')i.cal=(+p[2]).toFixed(2)+'°';else if(p[0]=='SET'){var lr=x.match(/longrange=(\d)/);if(lr)i.longrange=lr[1]=='1';}else if(p[0]=='TRIP')i.trip=p[1]+' legs, '+svL(+p[2],0)+' '+svUn()+', '+p[3]+' LRUDs';});
+ u.info=i;svDevChip();if(SVVIEW=='units'&&!SV&&$('svUnitsPg'))svDevSheet(true);});}
+// on connecting: what it is, the clock (the messages' times), whether it has messages (1.17.8 / SAP6 1.16.30.5), the station names
+function svHello(u){svInfo(u).then(function(){var d=new Date();return svAsk1('TIME='+Math.floor(d.getTime()/1000)+','+(-d.getTimezoneOffset()),/^OK|^\?\?|^ERR/,3000,u);})
+ .then(function(){return svAsk1('MSG?',/^MSG |^\?\?|^ERR|^Unknown/i,3000,u);}).then(function(l){u.msg=!!(l&&l.some(function(x){return /^MSG (IDLE|WAITING|SHOWING)/.test(x);}));if(u.follow)svTellStation(true,u);});}
 // the station names: the unit shows the station it's at and names its own legs to match (STNAT, STNSET; firmware 1.13+)
-function svTellStation(force){if(SVDEV.state!='on'||!SV||!TopsideAndroid.bleConsole)return;var pre=(SV.prefix||'').replace(/[^A-Za-z]/g,'');var p=pre&&(force||!svTellStation.sent)?svAsk1('STNSET='+pre,/^OK|^ERR|^STN |^\?\?/,4000):Promise.resolve();svTellStation.sent=1;
- p.then(function(){return svAsk1('STNAT='+SV.cur,/^OK|^ERR|^STN |^\?\?/,4000);});}
+function svTellStation(force,only){if(!SV)return;svOnUnits().forEach(function(u){if(only&&u!==only)return;if(!u.follow)return;var pre=(SV.prefix||'').replace(/[^A-Za-z]/g,'');
+ var p=pre&&(force||!u.stnSent)?svAsk1('STNSET='+pre,/^OK|^ERR|^STN |^\?\?/,4000,u):Promise.resolve();u.stnSent=1;p.then(function(){return svAsk1('STNAT='+SV.cur,/^OK|^ERR|^STN |^\?\?/,4000,u);});});}
 // cross sections: XSEC? (the list), XSEC=id (one: XP i,t,d,u,v,ex,ey,ez,kept), placed at their station in the plan
-function svXsList(){svDlg('<div class="big">Cross sections on the unit</div><div id="xsL"><p class="mut">Asking the unit…</p></div><button class="btn alt" id="xsNo">Close</button>');$('xsNo').onclick=svDlgClose;
- svAsk1('XSEC?',/^XSEC end/,8000).then(function(l){var el=$('xsL');if(!el)return;if(!l){el.innerHTML='<p>The unit didn\'t answer (firmware 1.16.47 or newer has cross sections).</p>';return;}
+function svXsList(u){u=u||svPrimary();svDlg('<div class="big">Cross sections on '+esc(svShort(u))+'</div><div id="xsL"><p class="mut">Asking the unit…</p></div><button class="btn alt" id="xsNo">Close</button>');$('xsNo').onclick=svDlgClose;
+ svAsk1('XSEC?',/^XSEC end/,8000,u).then(function(l){var el=$('xsL');if(!el)return;if(!l){el.innerHTML='<p>The unit didn\'t answer (firmware 1.16.47 or newer has cross sections).</p>';return;}
   var xs=l.filter(function(x){return /^XS /.test(x);}).map(function(x){var o={};x.slice(3).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=kv.slice(i+1);});return o;});
   if(!xs.length){el.innerHTML='<p class="mut">None saved on the unit. Take one with Tools → Cross section.</p>';return;}
-  el.innerHTML=xs.map(function(o){var have=SV.xs.some(function(x){return x.id==o.id&&x.sn==(SVDEV.info&&SVDEV.info.sn);});return'<div class="row" data-id="'+esc(o.id)+'"><div class="t">At '+esc(o.at=='-'?'?':o.at)+' · '+svL(+o.w,1)+' × '+svL(+o.h,1)+' '+svUn()+(have?' · <span style="color:'+SVA2+'">in the sketch</span>':'')+'</div><div class="s">'+(o.epoch>0?new Date(o.epoch*1000).toLocaleString():'')+' · '+esc(o.pts)+' readings</div></div>';}).join('');
-  Array.prototype.forEach.call(el.querySelectorAll('.row'),function(r){r.onclick=function(){svXsGet(r.getAttribute('data-id'));};});});}
-function svXsGet(id){toast('Fetching the cross section…',4000);svAsk1('XSEC='+id,/^XSEC (end|none)/,15000).then(function(l){if(!l||l.some(function(x){return /^XSEC none/.test(x);})){toast('The unit didn\'t send it');return;}
+  el.innerHTML=xs.map(function(o){var have=SV.xs.some(function(x){return x.id==o.id&&x.sn==(u.info&&u.info.sn);});return'<div class="row" data-id="'+esc(o.id)+'"><div class="t">At '+esc(o.at=='-'?'?':o.at)+' · '+svL(+o.w,1)+' × '+svL(+o.h,1)+' '+svUn()+(have?' · <span style="color:'+SVA2+'">in the sketch</span>':'')+'</div><div class="s">'+(o.epoch>0?new Date(o.epoch*1000).toLocaleString():'')+' · '+esc(o.pts)+' readings</div></div>';}).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('.row'),function(r){r.onclick=function(){svXsGet(r.getAttribute('data-id'),u);};});});}
+function svXsGet(id,u){toast('Fetching the cross section…',4000);svAsk1('XSEC='+id,/^XSEC (end|none)/,15000,u).then(function(l){if(!l||l.some(function(x){return /^XSEC none/.test(x);})){toast('The unit didn\'t send it');return;}
  var hd={},pts=[];l.forEach(function(x){if(/^XSH /.test(x))x.slice(4).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)hd[kv.slice(0,i)]=kv.slice(i+1);});else if(/^XP /.test(x)){var f=x.slice(3).split(',');if(f.length>=9)pts.push([+f[3],+f[4],f[8]=='1'?1:0]);}});
- var at=hd.at&&hd.at!='-'?hd.at:SV.cur,sn=SVDEV.info&&SVDEV.info.sn;SV.xs=SV.xs.filter(function(x){return!(x.id==id&&x.sn==sn);});
- SV.xs.push({id:id,sn:sn,at:at,w:+hd.w||0,h:+hd.h||0,closed:hd.closed=='1',pts:pts,off:[(+hd.w||3)*0.8+2,0],t:Date.now()});svSaveSoon();svDlgClose();SVK.fit=true;toast('Cross section at '+esc(at)+' added to the plan');if(SVVIEW!='plan')svView('plan');else svDraw();});}
-// events from the Android app
+ var at=hd.at&&hd.at!='-'?hd.at:SV.cur,sn=u&&u.info&&u.info.sn;SV.xs=SV.xs.filter(function(x){return!(x.id==id&&x.sn==sn);});
+ var x={id:id,sn:sn,src:'unit',at:at,w:+hd.w||0,h:+hd.h||0,closed:hd.closed=='1',pts:pts,sk:[],t:Date.now()};SV.xs.push(x);svXsPlace(x);svSaveSoon();svDlgClose();SVK.fit=true;toast('Cross section at '+esc(at)+' added to the plan');if(SVVIEW!='plan')svView('plan');else svDraw();});}
+// events from the Android app: window.svBle(kind, data); app 1.7 tags each with its unit's addr
 window.svBle=function(kind,data){try{if(typeof data=='string'&&kind!='rx'){try{data=JSON.parse(data);}catch(e){}}
- if(kind=='found'){if(!SVDEV.found)SVDEV.found=[];if(!SVDEV.found.some(function(f){return f.addr==data.addr;}))SVDEV.found.push(data);svFoundShow();}
- else if(kind=='scanDone'){svFoundShow();}
- else if(kind=='state'){SVDEV.state=data.state=='connected'?'on':data.state=='connecting'?'connecting':'off';if(data.name)SVDEV.name=String(data.name).replace(/^SAP6_/,'');svDevChip();
-  if(SVDEV.state=='on'){toast('📡 Connected to '+esc(SVDEV.name),2500);setTimeout(function(){svInfo().then(function(){svTellStation(true);});},600);}else if(data.state=='disconnected'&&data.msg)toast('📡 '+esc(data.msg),4000);
-  if(SVVIEW=='data'&&SV)svDataShow();}
- else if(kind=='leg'){if(!SV){toast('A shot came in - open a survey to keep it',3000);return;}var s=svAddShot({d:+data.dist,az:az360(+data.az),cl:+data.cl,roll:+data.roll,lbl:data.label||''});if(navigator.vibrate)navigator.vibrate(s.kind=='leg'?[40,60,40]:30);}
- else if(kind=='rx'){SVDEV.rx+=String(data);var i;while((i=SVDEV.rx.search(/\r?\n/))>=0){var line=SVDEV.rx.slice(0,i).replace(/\r$/,'');SVDEV.rx=SVDEV.rx.slice(i+1).replace(/^\n/,'');if(line)svRxLine(line);}}
+ if(kind=='found'){if(!SVDEV.found.some(function(f){return f.addr==data.addr;}))SVDEV.found.push(data);svFoundShow();}
+ else if(kind=='scanDone'){svFoundShow(data&&data.err);}
+ else if(kind=='state'){var u=svUnitOf(data.addr);if(data.addr)SVDEV.last=data.addr;if(data.name)u.name=data.name;var was=u.state;u.state=data.state=='connected'?'on':data.state=='connecting'?'connecting':'off';svDevChip();
+  if(u.state=='on'&&was!='on'){toast('📡 Connected to '+esc(svShort(u)),2500);u.rx='';u.waiters=[];setTimeout(function(){svHello(u);},600);}else if(data.state=='disconnected'&&data.msg)toast('📡 '+esc(svShort(u))+': '+esc(data.msg),4000);
+  if(SVVIEW=='data'&&SV)svDataShow();if(SVVIEW=='units'&&!SV&&$('svUnitsPg'))svDevSheet(true);svChatRefresh();}
+ else if(kind=='leg'){if(!SV){toast('A shot came in - open a survey to keep it',3000);return;}var lu=svUnitOf(data.addr);var s=svAddShot({d:+data.dist,az:az360(+data.az),cl:+data.cl,roll:+data.roll,lbl:data.label||'',dev:svShort(lu),role:lu.role||undefined});if(navigator.vibrate)navigator.vibrate(s.kind=='leg'?[40,60,40]:30);}
+ else if(kind=='rssi'){svRssi(svUnitOf(data.addr),+data.rssi);}
+ else if(kind=='phy'){var pu=svUnitOf(data.addr);pu.phy=+data.tx;svCardRadio(pu);}
+ else if(kind=='rx'||kind=='rx2'){var ru=svUnitOf(kind=='rx2'?data.addr:SVDEV.last),txt=kind=='rx2'?String(data.text||''):String(data);ru.rx+=txt;var i;while((i=ru.rx.search(/\r?\n/))>=0){var line=ru.rx.slice(0,i).replace(/\r$/,'');ru.rx=ru.rx.slice(i+1).replace(/^\n/,'');if(line)svRxLine(ru,line);}}
  }catch(e){toast('Bluetooth: '+esc(e.message));}};
-// reconnect to the last instrument when a survey opens
-function svAutoConnect(){if(!svBleOk()||SVDEV.state!='off')return;var d=load2('ct-sv-dev');if(d&&d.addr)svConnect(d.addr,d.name);}
+// reconnect to the units used last when a survey opens
+function svAutoConnect(){if(!svBleOk()||svOnUnits().length)return;var l=load2('ct-sv-devs')||[],d=load2('ct-sv-dev');if(!l.length&&d&&d.addr)l=[d];if(!svV2())l=l.slice(0,1);
+ l.forEach(function(x){var u=svUnitOf(x.addr);u.name=x.name||u.name;if(x.follow!=null)u.follow=x.follow;u.role=x.role||'';if(x.autoLR===false)u.autoLR=false;if(u.state=='off')svConnect(x.addr,x.name);});}
+// ======================================================================= messages to a unit (Sully, 16 Nov 2026: "On the phone, Have the
+// appearance similar to the modern day chat message session. This will only be a one way message." / "Im not sure how best to place the
+// messaging function on the cell phone"): 💬 in the survey's top bar - a chat panel over the survey, a chip for each connected unit to pick
+// who gets it, the messages as bubbles with their ticks (✓ sent, ✓✓ on the unit's screen, Read when the surveyor pressed a button),
+// quick messages for what gets said underground, kept with the trip. The unit (firmware 1.17.8, SAP6 1.16.30.5) pops it up over
+// whatever page it is on. MSG= / MSG+= (40 characters a line: the console's line is 48) / MSGGO=<id>.
+var SVQUICK=['Shoot a backsight','LRUDs here','Re-shoot that','Set a station here','Come back to me','Good shot','Wait','Hold the laser on the station','Moving on','Done for today'];
+var SVCHAT={to:''};
+var SVMSG=load2('ct-sv-msgs')||[];
+function svMsgs(){if(!SV)return SVMSG;if(!SV.msgs)SV.msgs=[];return SV.msgs;}
+function svMsgSave(){if(SV)svSaveSoon();else try{localStorage.setItem('ct-sv-msgs',JSON.stringify(SVMSG.slice(-200)));}catch(e){}}
+function svMsgId(){var n=(+localStorage.getItem('ct-sv-msgn')||0)+1;try{localStorage.setItem('ct-sv-msgn',n);}catch(e){}return n;}
+function svMsgState(u,id,what){var m=svMsgs().filter(function(x){return x.to==u.addr&&x.id==id;})[0];if(!m)return;var rank={sending:0,sent:1,SHOWN:2,READ:3,TIMEOUT:3};if((rank[what]||0)>=(rank[m.st]||0))m.st=what;svMsgSave();svChatRefresh();}
+function svChatShow(to){if(!$('svChat')){var d=document.createElement('div');d.id='svChat';$('svy').appendChild(d);}SVCHAT.to=to||SVCHAT.to||(svPrimary()&&svPrimary().addr)||'';$('svChat').style.display='flex';svChatRefresh(true);}
+function svChatClose(){var c=$('svChat');if(c)c.style.display='none';}
+function svChatRefresh(focus){var c=$('svChat');if(!c||c.style.display=='none')return;var us=svUnits().filter(function(u){return u.state!='off'||svMsgs().some(function(m){return m.to==u.addr;});});
+ if(!SVCHAT.to&&us.length)SVCHAT.to=us[0].addr;var cur=SVDEV.units[SVCHAT.to],keep=$('chT')?$('chT').value:'';
+ var h='<div class="chHead"><button class="ib" id="chBk">←</button><b style="flex:1">Messages</b><span class="mut" style="font-size:12px">one way, to the unit</span></div><div class="chTo">';
+ if(!us.length)h+='<span class="mut" style="font-size:13px">No unit connected - '+(svBleOk()?'tap 📡 to connect one.':'messages go over Bluetooth in the Android app.')+'</span>';
+ us.forEach(function(u){h+='<button class="chip'+(u.addr==SVCHAT.to?' on':'')+'" data-a="'+esc(u.addr)+'">'+(u.state=='on'?'🟢 ':'⚪ ')+esc(svShort(u))+(u.role?' · '+u.role:'')+'<span class="chSig">'+svSigHtml(u)+'</span></button>';});
+ h+='</div><div class="chList" id="chList">';var list=svMsgs().filter(function(m){return m.to==SVCHAT.to;}),day='';
+ if(cur&&cur.state=='on'&&cur.msg===false)h+='<div class="chNote">'+esc(svShort(cur))+'\'s firmware has no messages yet - update it to 1.17.8 (a SAP6: 1.16.30.5) with Topside.</div>';
+ if(!list.length)h+='<div class="chNote">Messages pop up on '+(cur?esc(svShort(cur)):'the unit')+'\'s screen over whatever page it\'s on. Any button puts one away.</div>';
+ list.forEach(function(m){var d=new Date(m.t),ds=d.toLocaleDateString();if(ds!=day){day=ds;h+='<div class="chDay">'+esc(ds)+'</div>';}
+  var st=m.st=='READ'?'Read':m.st=='SHOWN'?'✓✓ on screen':m.st=='sent'?'✓ sent':m.st=='TIMEOUT'?'Not read (10 min)':m.st=='fail'?'⚠ not sent - '+esc(m.why||'the unit didn\'t answer'):'sending…';
+  h+='<div class="chB'+(m.st=='fail'?' bad':'')+'"><div>'+esc(m.text)+'</div><div class="chMeta">'+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' · <span class="'+(m.st=='READ'?'rd':'')+'">'+st+'</span>'+(m.st=='fail'?' · <a href="#" data-retry="'+m.id+'">try again</a>':'')+'</div></div>';});
+ h+='</div><div class="chQuick">'+SVQUICK.map(function(q){return'<button class="chip" data-q="'+esc(q)+'">'+esc(q)+'</button>';}).join('')+'</div>'+
+  '<div class="chIn"><textarea id="chT" rows="1" maxlength="100" placeholder="Message to '+esc(cur?svShort(cur):'the unit')+'"></textarea><span id="chN" class="mut">0/100</span><button class="ib" id="chGo" style="background:'+SVA+';border-color:'+SVA+'">➤</button></div>';
+ c.innerHTML=h;var t=$('chT');t.value=keep;$('chN').textContent=keep.length+'/100';
+ t.oninput=function(){$('chN').textContent=t.value.length+'/100';$('chN').style.color=t.value.length>72?'#f0b429':'';t.style.height='auto';t.style.height=Math.min(110,t.scrollHeight)+'px';};
+ t.onkeydown=function(e){if(e.key=='Enter'&&!e.shiftKey){e.preventDefault();$('chGo').click();}};
+ $('chBk').onclick=svChatClose;$('chGo').onclick=function(){var v=t.value.replace(/\s+/g,' ').trim();if(!v)return;t.value='';if(!svMsgSend(SVCHAT.to,v)){var t2=$('chT');if(t2){t2.value=v;t2.oninput();}}};
+ Array.prototype.forEach.call(c.querySelectorAll('.chTo .chip'),function(b){b.onclick=function(){SVCHAT.to=b.getAttribute('data-a');svChatRefresh(true);};});
+ Array.prototype.forEach.call(c.querySelectorAll('.chQuick .chip'),function(b){b.onclick=function(){svMsgSend(SVCHAT.to,b.getAttribute('data-q'));};});
+ Array.prototype.forEach.call(c.querySelectorAll('[data-retry]'),function(a){a.onclick=function(e){e.preventDefault();var m=svMsgs().filter(function(x){return x.id==+a.getAttribute('data-retry')&&x.to==SVCHAT.to;})[0];if(m)svMsgPush(m);};});
+ var L=$('chList');L.scrollTop=L.scrollHeight;if(focus&&!('ontouchstart' in window))t.focus();}
+function svMsgSend(to,text){var u=SVDEV.units[to];if(!u||u.state!='on'){toast(u?esc(svShort(u))+' isn\'t connected':'Connect a unit first (📡)',2500);return false;}
+ var m={id:svMsgId(),to:to,toName:svShort(u),text:text.slice(0,100),t:Date.now(),st:'sending'};svMsgs().push(m);svMsgSave();svChatRefresh();svMsgPush(m);return true;}
+// in pieces: MSG= the first 40, MSG+= each 40 after, then MSGGO=<id>; each answered before the next
+function svMsgPush(m){var u=SVDEV.units[m.to];if(!u||u.state!='on'){m.st='fail';m.why='not connected';svChatRefresh();return;}m.st='sending';m.why='';svChatRefresh();
+ var parts=[],t=m.text;
+ // cut inside a word, never at a space (the console trims the ends of a line)
+ while(t.length){var n=Math.min(40,t.length);if(n<t.length){var c=n;while(c>8&&(t[c-1]==' '||t[c]==' '))c--;if(c>8)n=c;}parts.push(t.slice(0,n));t=t.slice(n);}var k=0;
+ (function next(){if(k<parts.length){var p=parts[k],cmd=(k?'MSG+=':'MSG=')+p;k++;return svAsk1(cmd,/^MSG OK|^\?\?|^ERR|^Unknown/i,4000,u).then(function(l){if(!l||!l.some(function(x){return /^MSG OK/.test(x);})){m.st='fail';m.why=l?'this firmware has no messages':'the unit didn\'t answer';if(l)u.msg=false;svMsgSave();svChatRefresh();return;}next();});}
+  svAsk1('MSGGO='+m.id,/^MSG (QUEUED|EMPTY)|^\?\?/,4000,u).then(function(l){if(l&&l.some(function(x){return /^MSG QUEUED/.test(x);})){if(m.st=='sending')m.st='sent';u.msg=true;}else{m.st='fail';m.why='the unit didn\'t answer';}svMsgSave();svChatRefresh();});})();}
 // for testing and for anyone looking in from the console: the open survey as it stands
-window.svState=function(){return SV?{sv:SV,legs:svLegs(),dev:{state:SVDEV.state,name:SVDEV.name,info:SVDEV.info}}:null;};
+window.svState=function(){return SV?{sv:SV,legs:svLegs(),dev:{state:SVDEV.state,units:svUnits().map(function(u){return{addr:u.addr,name:u.name,state:u.state,info:u.info,follow:u.follow,role:u.role,msg:u.msg};})}}:null;};
 /*SURVEY:END*/
 // ---- Why the computer can't be reached, and what to do (Sully, 16 Nov 2026: "If a person doesn't have the remote app thingy you talked of,
 // detect it and tell them, then give them instructions on how to get it and use it" / "For example, I dont"). What is known: whether the

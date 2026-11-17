@@ -92,6 +92,7 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <tr><td>My caves</td><td>Every cave on this phone. Tap one to open it.</td></tr>
 <tr><td>Add a cave</td><td>From a .ctcave file, or straight from Topside on your computer.</td></tr>
 <tr><td>Survey and sketch</td><td>Survey a trip with a Tacheo (or by typing the shots) and sketch it on the phone.</td></tr>
+<tr><td>Tacheo</td><td>Connect one or more units, see their batteries, fire them, and send them messages - without opening a survey (<a href="#tacheo">The Tacheo and the phone</a>).</td></tr>
 <tr><td>Data photos</td><td>Photograph book pages and sketches and send them to your computer.</td></tr>
 <tr><td>My computer</td><td>Pair with Topside on your computer, see its caves and send it files.</td></tr>
 <tr><td>In the cave</td><td>Switch to the dark, big-button mode (or back to Topside mode).</td></tr>
@@ -121,28 +122,44 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <p>Tap any row on the <b>Data</b> page. A leg shows each of its shots with the time. You can rename From and To, set which way the leg goes in the extended profile (→ Right, ← Left, ↕ Vertical, Ignore), mark it <b>Surface</b>, <b>Duplicate</b> or <b>Commented out</b>, turn a leg's shots back into splays, give a splay a To station to make it a leg, or delete it.</p>
 <h3>Sketch</h3>
 <ol class="steps">
-<li><b>Plan</b> or <b>Profile</b> at the top. The legs (red), stations, splays (grey; LRUDs amber) and a grid in your units are drawn for you, north up in the plan. The station you're at is the green dot.</li>
-<li>Pick a tool along the bottom. Tap it again to open its palette of NSS symbols:
+<li><b>Plan</b> or <b>Profile</b> at the top. The legs (red), stations, splays (grey; LRUDs amber; splays marked <i>to wall</i> dark green) and a grid in your units are drawn for you, north up in the plan. The active station - where new shots go from - is the green dot with a ring.</li>
+<li>Pick a tool along the bottom. Tap it again to open its palette:
 <table>
-<tr><td>✋ Move</td><td>One finger moves the drawing. Two fingers move and zoom with any tool.</td></tr>
-<tr><td>〰 Lines</td><td>Wall, lower-level wall, unsurveyed wall, floor step / ledge, ceiling step, pit / drop, dome edge, drip line, water edge, stream (draw it downstream), rock / boulder, slope, rough passage outline.</td></tr>
-<tr><td>▦ Areas</td><td>Water / pool, sump, sand, gravel, mud / clay, breakdown, bedrock pillar, flowstone, guano, ice. Draw round the area.</td></tr>
-<tr><td>✳ Symbols</td><td>Stalactites, stalagmites, column, soda straws, helictites, rimstone, cave pearls, popcorn, a water drip, a small pool, pit depth (in a circle), dome height (in a square), ceiling height, climb, squeeze, lead (?), entrance, dig, hazard, bats, bones, boulder, breakdown block, and text. Air flow, water flow and slope arrows: touch and drag the way they point. The depth and height symbols ask for the number.</td></tr>
-<tr><td>⌫ Rub out</td><td>Tap a line, area or symbol to remove it.</td></tr>
-<tr><td>↶ ↷</td><td>Undo and redo, separately for the plan and the profile.</td></tr>
-<tr><td>⤢ 👁</td><td>Fit the whole survey on the screen; show or hide splays, station names and the grid.</td></tr>
+<tr><td>✋ Move</td><td>One finger moves the drawing; two fingers move and zoom with any tool. <b>Tap a station</b> for its menu; <b>tap a cross section</b> for its menu, or drag it somewhere else.</td></tr>
+<tr><td>〰 Lines</td><td>Wall, lower-level wall, unsurveyed wall, floor step / ledge, ceiling step, pit / drop, dome edge, drip line, water edge, stream (draw it downstream), rock / boulder, slope, rough passage outline. A wall is turned round by itself so the passage is on its left (the way Therion reads walls).</td></tr>
+<tr><td>▦ Areas</td><td>Water / pool, sump, sand, gravel, mud / clay, breakdown, bedrock pillar, flowstone, guano, ice. Draw round the area. An area drawn over another of the same kind joins it.</td></tr>
+<tr><td>✳ Symbols</td><td>Stalactites, stalagmites, column, soda straws, helictites, rimstone, cave pearls, popcorn, a water drip, a small pool, pit depth, dome height, ceiling height, climb, squeeze, lead (?), entrance, dig, hazard, bats, bones, boulder, breakdown block, and text. Air flow, water flow and slope arrows: touch and drag the way they point. Symbols are sized by the zoom you place them at: zoomed in, they're small.</td></tr>
+<tr><td>✎ Pen</td><td>Freehand in eight colours and three widths, for notes and anything the symbols don't cover.</td></tr>
+<tr><td>⬚ Select</td><td>Tap a line, area or symbol to pick it: drag it to move it, drag one of its points to reshape it. <b>Hold it</b> (or tap it again) for its menu: change its type or colour, flip it (a wall's yellow tick points into the passage), make a symbol bigger or smaller, edit its text, delete it. Holding a line with the line or area tool opens the same menu.</td></tr>
+<tr><td>⌫ Rub out</td><td><b>Tap</b> a line, area or symbol to remove it. <b>Rub across</b> the sketch to cut: lines are cut where you rub, and areas lose what's under it - rub a hole in one, or right across to split it in two.</td></tr>
+<tr><td>✚ Cross section</td><td>Tap a station for its cross section (below).</td></tr>
+<tr><td>↶ ↷ ⤢ ⌖</td><td>Undo and redo (the plan, the profile and each section separately), fit everything on the screen, centre on the active station.</td></tr>
+<tr><td>⚙ Quick settings</td><td>Splays, station names and grid on or off; <b>snap lines to the ends of lines</b> (a line started or ended near another's end joins it); <b>clip lines that overshoot a wall</b> (a floor step drawn past a wall is cut back to it); <b>bring a new station back to the middle</b>; <b>fade the sketch away from the active station</b>; symbols sized by zoom. Also the phone's compass, <b>a section at every station</b>, and <b>undo the last reading</b> (a leg it completed goes back to splays and you're back at the station before).</td></tr>
 </table></li>
 <li>Draw as the shots come in - the sketch and the shots are on the same page, so a splay to a wall is the guide for the wall line.</li>
 </ol>
 <div class="tip g">Each thing you draw is tied to the station nearest it. If a shot is fixed later and the station moves, the sketch near it moves with it.</div>
+<h3>A station's menu</h3>
+<p>With ✋, tap a station: <b>make it the active station</b> (new shots go from there - the Tacheo is told too), <b>centre here</b>, <b>cross section here</b>, and its splays, each with two switches: <b>to wall</b> (used for the station's cross section) and <b>off</b> (left out of the sketch, the sections and the exports).</p>
+<h3>Cross sections</h3>
+<p>Tap ✚ then a station. The section is made from that station's splays in the cut (the ones marked <i>to wall</i>, when there are three or more), or from its LRUDs, and drawn the way a finished map draws one:</p>
+<ul>
+<li>On the plan, the cut is square to the passage (the bisector of the legs in and out). The cut line is left out across the passage, a little wider than the section; one end has a corner mark pointing the way the section looks (up the survey), the other carries on as the leader, a short stub then straight across, down or at 45° to the section.</li>
+<li>The section has its walls in heavy line, the floor (anything facing down) in light line, a block of limestone bricks round it, a height bar on the right and the station's name above. Sections go alternately either side of the survey.</li>
+<li>Tap one for its menu: <b>open it to draw its walls</b>, <b>look the other way</b>, <b>leader to the other side</b>, put it back beside its station, delete it. Drag it with ✋ to move it; the leader stays straight, square or at 45°.</li>
+<li><b>Its editor</b> shows the splays in the cut (solid) and out of it (dashed), with the left wall on the left. Draw its walls with the line tool; the drawn walls then replace the outline from the splays, and the finished section in the corner updates as you go.</li>
+<li>In the profile, a section is cut upright through the station; at a station in a shaft (steep legs both ways) it's cut level and looked at from above.</li>
+<li>Sections taken on a Tacheo (Tools → Cross section) come in the same style from the unit's ✚ Sections.</li>
+</ul>
 <h3>The extended profile</h3>
 <p>The profile unrolls the passage. Each leg goes right or left by its direction compared with the first leg (more than 90° off it goes left; steeper than 80° is vertical). Change any leg's direction by tapping it on the Data page.</p>
 <h3>Finish and send</h3>
 <p>The <b>Trip</b> page has the totals, the trip's details and these:</p>
 <table>
-<tr><td>💻 Send to my computer</td><td>Sends the Walls .srv, the plan and profile sketches (.svg) and the whole survey (.ctsurvey) to Topside on your computer, into <b>Documents\Topside\From phone\</b><i>day</i><b>\</b><i>cave - trip</i>. Needs the computer paired (<a href="#pc">Connect to your computer</a>).</td></tr>
+<tr><td>💻 Send to my computer</td><td>Sends the Walls .srv, the Therion .th and .th2, the plan and profile sketches (.svg) and the whole survey (.ctsurvey) to Topside on your computer, into <b>Documents\Topside\From phone\</b><i>day</i><b>\</b><i>cave - trip</i>. Needs the computer paired (<a href="#pc">Connect to your computer</a>).</td></tr>
 <tr><td>Walls .srv</td><td>Legs with their backsights on one line (TypeAB=N, as read), LRUDs, splays (to station "-"), in the units you chose.</td></tr>
-<tr><td>Survex .svx, Therion .th</td><td>In metres, with backcompass and backclino for backsights, and splays flagged.</td></tr>
+<tr><td>Survex .svx</td><td>In metres, with backcompass and backclino for backsights, and splays flagged.</td></tr>
+<tr><td>Therion .th + .th2</td><td>The survey as for Survex, and the sketch as a .th2: a plan scrap and an extended-profile scrap with every station as a station point (so Therion fits the drawing to the survey), walls and lines, areas with their border lines, symbols, and each cross section as its own scrap. The .th inputs the .th2.</td></tr>
 <tr><td>CSV</td><td>Every shot with its time, label, roll and flags.</td></tr>
 <tr><td>Plan / Profile .svg</td><td>The sketch, the line plot and the cross sections, 1 m = 20 px, for CartoTable's sketch tools or Illustrator.</td></tr>
 <tr><td>Everything (.ctsurvey)</td><td>The survey as the phone keeps it, to back it up or move it to another phone.</td></tr>
@@ -150,16 +167,32 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <p>Files saved on Android go to <b>Downloads/Topside</b>.</p>
 
 <h2 id="tacheo" class="g">The Tacheo and the phone</h2>
-<p>With a unit connected (Android app, Tacheo firmware 1.13 or newer for station names, 1.16.47 or newer for cross sections), tap the 📡 chip for:</p>
+<p>In the Android app, connect from the <b>Tacheo</b> tile on Home, or from the 📡 chip at the top of a survey. On the unit: <b>Bluetooth → Phone On</b>. <b>Two or more units can be connected at once</b> - the front sight and back sight Tacheos, a SAP6 - and each shot is tagged with the unit that took it.</p>
+<p>Each connected unit has a card, from the top:</p>
 <table>
-<tr><td>Battery and health</td><td>The unit's firmware, serial number, battery and shots left, calibration accuracy and this trip's legs on the unit. The chip at the top shows the battery.</td></tr>
-<tr><td>🎯 Take a shot, 🔴 Laser</td><td>Fire the unit from the phone (the 🎯 button on the Data page and in the sketch too) - handy with the unit on a tripod or held at a station out of reach.</td></tr>
-<tr><td>📍 Station names</td><td>The phone tells the unit the station you're at after every leg, so the unit's screen and its own trip log name the same stations as the phone. Sent by itself; this sends it again.</td></tr>
-<tr><td>✚ Cross sections</td><td>Lists the sections saved on the unit (Tools → Cross section). Tap one to add it to the plan beside its station.</td></tr>
-<tr><td>⏻ Switch the unit off</td><td>Asks first.</td></tr>
+<tr><td>Name, battery, signal</td><td>A green dot when connected, the battery gauge and %, and the <b>signal</b>: four bars and a word (strong, good, fair, weak, about to drop). Under it the firmware, serial number, shots left, calibration and this trip's legs on the unit.</td></tr>
+<tr><td>💬 Send a message</td><td>The big green button. Opens Messages with this unit picked (below).</td></tr>
+<tr><td>Instrument</td><td><b>Take a shot</b>, <b>Flash its laser</b> (blinks three times - which unit is which, when two are in the same passage), <b>Laser on</b>, <b>Laser off</b>.</td></tr>
+<tr><td>Which sight it takes</td><td><b>Either</b>, <b>Front sight</b> or <b>Backsight</b>. A backsight unit's three agreeing shots are always kept as the backsight of the leg just made; a front sight unit's never are. Each unit's shots are sorted on their own, so two people shooting at once don't mix.</td></tr>
+<tr><td>Its station names follow this survey</td><td>The phone tells this unit the station you're at after every leg (firmware 1.13 or newer), so its screen and its own trip log name the same stations. On for the first unit.</td></tr>
+<tr><td>Cross sections on it</td><td>The cross sections saved on the unit (Tools → Cross section; firmware 1.16.47 or newer). Tap one to add it to the plan beside its station.</td></tr>
+<tr><td>Refresh its details</td><td>Asks the unit again for its battery and the rest.</td></tr>
+<tr><td>Bluetooth: Long range</td><td>The unit's own <b>Bluetooth → Long range</b> setting, from the phone: it transmits louder (+8 dBm), and the app asks for Bluetooth's long-range radio on the phone's link where the phone has one (the card then says <i>more power + long-range radio</i>). It uses a little more battery. <b>Turn long range on by itself when the signal gets weak</b> (on by default) switches it on the moment the signal drops to one bar.</td></tr>
+<tr><td>Disconnect, Switch it off</td><td>Drop the link, or switch the unit off (asks first).</td></tr>
 </table>
-<p>The link comes back by itself if the unit goes out of reach for a moment, and the phone connects to the last unit when you open a survey. A shot the unit sends twice (when the phone's answer was lost) is kept once.</p>
-<div class="tip">iPhones and iPads don't let apps like this one use Bluetooth, so there shots are typed. Everything else - the sketch, the exports, sending to the computer - works the same.</div>
+<p><b>The signal.</b> The phone reads each unit's signal every 2 seconds. The 📡 chip at the top shows the weakest unit's bars, and so does each unit in Messages. When a unit stays at one bar or none, the phone buzzes and says so - <i>weak signal, stay close</i> or <i>about to drop - move closer</i> - at most every 30 s (or switches it to long range, above).</p>
+<p><b>Two units in a survey.</b> On the Data page each unit has its own 🎯. In the sketch, 🎯 says which unit it fires (🎯 TCH-260004) and <b>⇄</b> beside it picks the next one.</p>
+<p>The link comes back by itself if a unit goes out of reach for a moment (the card says <i>reconnecting…</i>), and the phone reconnects to the units used last when you open a survey. A shot a unit sends twice (when the phone's answer was lost) is kept once.</p>
+<h3>Messages to a unit</h3>
+<p>💬 in a survey's top bar (or <b>💬 Messages</b> on the Tacheo page) opens a chat. It's one way: the phone sends, the unit shows it.</p>
+<ol class="steps">
+<li>Pick who gets it from the row of units at the top (a green dot = connected).</li>
+<li>Type it (up to 100 characters) and tap ➤ - or tap one of the quick messages: <i>Shoot a backsight, LRUDs here, Re-shoot that, Set a station here, Come back to me, Good shot, Wait, Hold the laser on the station, Moving on, Done for today</i>.</li>
+<li>It pops up on the unit over whatever page the surveyor is on, in a box in the middle with the rest of the screen dimmed, with a chime. Any button puts it away.</li>
+</ol>
+<p>Under each message: <b>✓ sent</b> (the unit has it), <b>✓✓ on screen</b>, <b>Read</b> (a button was pressed), or <b>Not read (10 min)</b>. A message that didn't go says why, with <b>try again</b>. Messages are kept with the trip (or on the phone, from the Tacheo page). On the unit, <b>Settings → Messages</b> lists the last ten with their times.</p>
+<div class="tip">Messages need firmware <b>1.17.8</b> on a Tacheo (T1, T2, SAP5X, SAP5XC) or <b>1.16.30.5</b> on a SAP6. An older unit gets a note in the chat saying so.</div>
+<div class="tip">iPhones and iPads don't let apps like this one use Bluetooth, so there shots are typed and messages can't be sent. Everything else - the sketch, the exports, sending to the computer - works the same.</div>
 
 <h2 id="caves">Get a cave onto the phone</h2>
 <h3>From your computer (easiest)</h3>
