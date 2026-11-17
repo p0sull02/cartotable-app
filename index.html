@@ -2064,7 +2064,19 @@ function svDevChip(){var c=$('svDevC');if(!c)return;svAgg();var on=svOnUnits(),n
  else if(on.length==1){var u=on[0],b=u.info&&u.info.batt!=null?u.info.batt+'%':'';c.innerHTML='📡 '+esc(narrow&&b?b:svShort(u)+(b?' · '+b:''))+sg;}
  else c.textContent=SVDEV.state=='connecting'?'📡 connecting…':svBleOk()?'📡 Connect':'⌨ Typed';
  c.style.background=SVDEV.state=='on'?SVA:SVDEV.state=='connecting'?'#b7791f':'#3a4756';c.style.color='#fff';}
-function svDevSheet(keepScan){if(!svBleOk()){svDlg('<div class="big">Instruments</div><p>Shots from a Tacheo or SAP6 come in over Bluetooth in the <b>Topside app for Android</b>. '+(IOS?'iPhones don\'t let apps like this one use Bluetooth, so on an iPhone shots are typed (<b>Add a shot</b>).':'Here, type them with <b>Add a shot</b>.')+'</p>'+(ANDROID?'<a class="btn" href="Topside.apk" style="text-decoration:none">Get the Android app</a>':'')+'<button class="btn alt" id="dvNo">Close</button>');$('dvNo').onclick=svDlgClose;return;}
+// 17 Nov 2026 (Sully: "the user will open the app or program, and will be promoted there is an update"): the Tacheo firmware list
+// Topside 1.6.108+ reads (firmware.txt in the releases repository) - a unit on older firmware says so on its card. The phone
+// can't install firmware: Topside on a computer does, and offers it when the unit is plugged in or connected.
+var TFW=null,TFWasked=0;
+function svFwLoad(){if(TFW||Date.now()-TFWasked<600000)return;TFWasked=Date.now();
+ fetch('https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware.txt?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
+  var m={};t.split(/\n\s*\n/).forEach(function(b){var f=(b.match(/^file:\s*(\S+)/m)||[])[1],x=f&&f.match(/_v([\d.]+)_(.+)\.zip$/i);if(x)m[x[2].toLowerCase()]=x[1];});
+  if(Object.keys(m).length){TFW=m;try{if(document.querySelector('.ucard'))svDevSheet(true);}catch(x){}}}).catch(function(){});}
+function svVerNewer(a,b){a=String(a).split('.').map(Number);b=String(b).split('.').map(Number);for(var k=0;k<Math.max(a.length,b.length);k++){var d=(a[k]||0)-(b[k]||0);if(d)return d>0;}return false;}
+function svFwNote(i){if(!TFW||!i||!i.ver)return'';var p=String(i.ver).trim().split(/\s+/),v=p[1],b=(p[2]||'').toLowerCase(),n=TFW[b];
+ if(!v||!n||!svVerNewer(n,v))return'';
+ return'<div style="margin:-4px 0 12px;padding:10px 12px;border-radius:12px;background:rgba(242,169,59,.14);border:1px solid rgba(242,169,59,.5);font-size:14px;line-height:1.4">⬆ <b>Firmware v'+esc(n)+' is out</b> for this unit (it has v'+esc(v)+'). Update it with Topside on a computer: it offers it when the unit is plugged in or connected.</div>';}
+function svDevSheet(keepScan){svFwLoad();if(!svBleOk()){svDlg('<div class="big">Instruments</div><p>Shots from a Tacheo or SAP6 come in over Bluetooth in the <b>Topside app for Android</b>. '+(IOS?'iPhones don\'t let apps like this one use Bluetooth, so on an iPhone shots are typed (<b>Add a shot</b>).':'Here, type them with <b>Add a shot</b>.')+'</p>'+(ANDROID?'<a class="btn" href="Topside.apk" style="text-decoration:none">Get the Android app</a>':'')+'<button class="btn alt" id="dvNo">Close</button>');$('dvNo').onclick=svDlgClose;return;}
  var page=SVVIEW=='units'&&!SV&&$('svUnitsPg'),us=svUnits().filter(function(u){return u.state!='off';}),h=page?'':'<div class="big">Instruments</div>';
  if(!us.length)h+='<p class="mut">Switch the Tacheo on with <b>Bluetooth → Phone On</b>. A SAP6 works too, and two or more units can be connected at once (the FS and the BS).</p>';
  us.forEach(function(u){var i=u.info||{};
@@ -2073,7 +2085,7 @@ function svDevSheet(keepScan){if(!svBleOk()){svDlg('<div class="big">Instruments
    '<div class="uHead"><span class="uDot" style="background:'+(on?'#30a46c':u.state=='connecting'?'#f5a524':'#5b6773')+'"></span><b class="uName">'+esc(svShort(u))+'</b>'+(u.state=='connecting'?'<span class="tg w">reconnecting…</span>':'')+
     (bt!=null?'<span class="uBatt"><span class="uBattBar"><i style="width:'+Math.max(4,Math.min(100,bt))+'%;background:'+bc+'"></i></span>'+bt+'%</span>':'')+'</div>'+
    (on?'<div class="uSigW">'+(svSig(u)!=null?svSigHtml(u,true)+svSigWord(svSig(u)):'<span class="mut">Signal: waiting…</span>')+'</div>':'')+
-   '<div class="uMeta">'+(i.ver?esc(i.ver)+(i.sn?' · '+esc(i.sn):''):'Asking the unit…')+(i.shots>0?' · about '+i.shots+' shots left':'')+(i.cal?' · cal '+esc(i.cal):'')+(i.trip?'<br>On the unit: '+esc(i.trip):'')+'</div>'+
+   '<div class="uMeta">'+(i.ver?esc(i.ver)+(i.sn?' · '+esc(i.sn):''):'Asking the unit…')+(i.shots>0?' · about '+i.shots+' shots left':'')+(i.cal?' · cal '+esc(i.cal):'')+(i.trip?'<br>On the unit: '+esc(i.trip):'')+'</div>'+svFwNote(i)+
    '<button class="uMsg" data-b="msg"><span class="uI">💬</span><span><b>Send a message</b><small>Shows on '+esc(svShort(u))+'\'s screen'+(u.msg===false?' (needs firmware 1.17.8)':'')+'</small></span></button>'+
    '<div class="uSec">Instrument</div><div class="uGrid">'+
     [['shot','🎯','Take a shot'],['flash','✨','Flash its laser'],['lon','🔴','Laser on'],['loff','⚫','Laser off']].map(function(b){return'<button class="uB" data-b="'+b[0]+'"><span class="uI">'+b[1]+'</span>'+b[2]+'</button>';}).join('')+'</div>'+
