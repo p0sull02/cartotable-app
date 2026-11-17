@@ -158,7 +158,7 @@ function savedCaves(){return dbDo('readonly',function(s){return s.getAllKeys();}
 // ======================================================================= the cave
 var S,N,X,Y,Z,SH,M,ED,byName,leadAt,tripsAt,depthMax,files={},imgs={},ground=null,G=null,sinks=[];
 var view={az:0,tilt:90,cx:0,cy:0,cz:0,ppm:1}, mode='plan', colour='travel', sel=-1, trip=-1, route=null, W=0,H=0;
-var lay={prefix:store('ct-prefix')=='1',base:null,baseOp:1,contours:false,cint:10,sinks:false,names:true,leads:true,ents:true,extra:{},ground3d:'see',light:'whole',vex:1,live:0};
+var lay={prefix:store('ct-prefix')=='1',base:null,baseOp:1,contours:false,cint:10,sinks:false,names:true,leads:true,ents:true,extra:{},ground3d:'see',light:'whole',vex:1,live:0,over:{},hillOver:false};
 var measure={on:false,a:null,b:null}, CAVE=store('ct-mode')=='cave';
 function b64(s){var bin=atob(s),n=bin.length,u=new Uint8Array(n);for(var i=0;i<n;i++)u[i]=bin.charCodeAt(i);return u.buffer;}
 function getFile(name){if(files[name])return Promise.resolve(files[name]);var v=D.files&&D.files[name];
@@ -298,6 +298,8 @@ function paint(){LB={};try{keyCheck();}catch(e){}
   else if(lay.base=='live'&&!CAVE)drawLive(attr);
   else if(lay.base!=null&&D.rasters[lay.base]){var r=D.rasters[lay.base];drawRaster(imgs[r.file],r.x0,r.y0,r.mpp,lay.baseOp*dim);if(r.attr)attr.push(r.attr);}
   for(var k in lay.extra){var rr=D.rasters[k];if(rr){drawRaster(imgs[rr.file],rr.x0,rr.y0,rr.mpp,lay.extra[k]*dim);if(rr.attr)attr.push(rr.attr);}}
+  if(lay.hillOver&&G&&lay.base!='hillshade'){g.save();g.globalCompositeOperation='multiply';drawRaster(G.hill,D.ground.x0,D.ground.y0,D.ground.cell,0.55*dim);g.restore();}
+  if(!CAVE&&D.coords)for(var ov in lay.over)drawTiles(LIVE[ov],lay.over[ov],attr);
   if(lay.contours&&G){var cc=contours(lay.cint),t=worldTransform();g.save();g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);
    var gap=lay.cint*FT*view.ppm;   // contours closer than a few pixels on screen are thinned out, not drawn as a solid smear
    if(gap>=4){g.strokeStyle='rgba(176,126,74,.5)';g.lineWidth=0.9/view.ppm;g.stroke(cc.minor);}if(gap*5>=4){g.strokeStyle='rgba(196,140,82,'+(gap>=4?.85:.6)+')';g.lineWidth=(gap>=4?1.7:1.1)/view.ppm;g.stroke(cc.index);}g.restore();}
@@ -464,12 +466,14 @@ function bookHtml(i){var t=D.trips[i],gr=t.g!=null?D.grades[t.g]:null;
 // ---- layers
 function layersHtml(){var h='<div class="k">Base map</div>';
  var opts=[['none','None']];if(D.ground)opts.push(['hillshade','Hillshade (from the elevation)']);D.rasters.forEach(function(r,i){if(r.base)opts.push([String(i),r.name]);});
- if(D.coords&&HOSTED)LIVE.forEach(function(l,i){opts.push(['live'+i,l.name+' (online, any zoom)']);});
+ if(D.coords&&HOSTED)LIVE.forEach(function(l,i){if(!l.over)opts.push(['live'+i,l.name+' (online)']);});
  var cur=lay.base==null?'none':lay.base=='live'?'live'+lay.live:String(lay.base);
  h+=opts.map(function(o){return'<label class="lab"><input type="radio" name="base" value="'+o[0]+'"'+(cur==o[0]?' checked':'')+'> '+esc(o[1])+'</label>';}).join('');
  h+='<div class="mut" style="font-size:12px">Opacity</div><input type="range" id="baseOp" min="0.1" max="1" step="0.05" value="'+lay.baseOp+'">';
  if(D.ground){h+='<div class="k">Ground</div><label class="lab"><input type="checkbox" id="lyC"'+(lay.contours?' checked':'')+'> Contours every <select id="cint" style="margin-left:4px">'+[2,5,10,20,40,100].map(function(v){return'<option'+(v==lay.cint?' selected':'')+'>'+v+'</option>';}).join('')+'</select> ft</label>'+
-  '<label class="lab"><input type="checkbox" id="lyS"'+(lay.sinks?' checked':'')+'> Sinks ('+sinks.length+')</label>';}
+  '<label class="lab"><input type="checkbox" id="lyS"'+(lay.sinks?' checked':'')+'> Sinks ('+sinks.length+')</label>'+
+  '<label class="lab"><input type="checkbox" id="lyHO"'+(lay.hillOver?' checked':'')+'> Hillshade over the map (shows the ground\'s shape on imagery)</label>';}
+ h+=onlineHtml();
  var ex=D.rasters.map(function(r,i){return r.base?'':'<label class="lab"><input type="checkbox" data-ex="'+i+'"'+(lay.extra[i]!=null?' checked':'')+'> '+esc(r.name)+'</label>'+(r.kind=='drafted'?'<button class="btn alt" style="padding:2px 10px;margin:0 0 6px 28px" data-dfdel="'+i+'">Remove</button>':'');}).join('');h+='<div class="k">Map layers</div>'+ex+'<div style="margin-top:6px"><button class="btn alt" id="dfAdd">+ Add a drafted map (PDF / .ai)</button></div>';
  h+='<div class="k">Survey</div><label class="lab"><input type="checkbox" id="lyN"'+(lay.names?' checked':'')+'> Station names</label><label class="lab"><input type="checkbox" id="lyP"'+(lay.prefix?' checked':'')+'> With the survey prefix (BBB903:LT27)</label><label class="lab"><input type="checkbox" id="lyL"'+(lay.leads?' checked':'')+'> Leads</label><label class="lab"><input type="checkbox" id="lyE"'+(lay.ents?' checked':'')+'> Entrances</label>';
  h+='<div class="k">3-D</div><div class="mut" style="font-size:12px">Ground</div><div class="seg" id="g3"><button data-g="off"'+(lay.ground3d=='off'?' class="on"':'')+'>Off</button><button data-g="see"'+(lay.ground3d=='see'?' class="on"':'')+'>See-through</button><button data-g="solid"'+(lay.ground3d=='solid'?' class="on"':'')+'>Solid</button></div>'+
@@ -489,6 +493,39 @@ function exportHtml(){var h='<div class="k">Take it with you</div>';
 function aboutHtml(){return'<div class="big">'+esc(D.name)+'</div><div>'+ft(D.len)+' surveyed · '+ft(D.depth)+' deep · '+N.toLocaleString('en-US')+' stations · '+D.trips.length+' trips · '+D.leads.length+' leads</div>'+(D.score!=null?'<div class="k">Closure score</div><div>'+D.score+' / 100 · '+esc(D.scoreWord)+'</div>':'')+
  (D.ground?'<div class="k">Elevation</div><div class="mut">'+esc(D.ground.src||'from CartoTable')+', '+D.ground.cell.toFixed(1)+' m cells</div>':'')+
  '<div class="k">This copy</div><div class="mut">Read-only, published from CartoTable on '+esc(D.when)+'. Travel times use the trip planner\'s speeds for walking, stooping, crawling, belly crawls, breakdown, climbing and rope, from the passage sizes and notes. '+(D.coords?'':'True coordinates are left out of this copy. ')+(D.untied?D.untied+' stations not tied to the rest of the survey are left out. ':'')+'</div><div class="k">How to</div><div class="mut">Drag to move · pinch or wheel to zoom · twist two fingers (or Shift-drag) to turn the plan · tap a station · in 3-D drag to turn, two fingers to move and zoom.</div><div class="mut" style="margin-top:10px;font-size:12px">CartoTable © 2026 Phillip M. Sullivan. All rights reserved.</div>';}
+function onlineHtml(){var h='<div class="k">Online maps</div>';
+ if(!D.coords)return h+'<div class="card" style="margin:4px 0 8px"><b>Not for this copy of the cave</b><div class="mut">It was sent without the cave\'s true coordinates, so online maps can\'t be lined up with it. On the computer, send it again with <b>With the true coordinates</b> ticked (Phone link), or answer <b>Yes</b> to \u201cIs this phone yours?\u201d (Send to phone).</div></div>';
+ if(!HOSTED)return h+'<div class="mut">Online maps need the Topside app or the web page (this copy is a file).</div>';
+ h+='<div class="mut" style="font-size:12.5px;margin-bottom:4px">Pick a background under <b>Base map</b> above. These go on top:</div>';
+ LIVE.forEach(function(l,i){if(!l.over)return;var on=lay.over[i]!=null;
+  h+='<label class="lab"><input type="checkbox" data-ov="'+i+'"'+(on?' checked':'')+'> '+esc(l.name)+(l.custom?' <a href="#" data-ownrm="'+i+'" style="color:#7fb0ff;font-size:12px;margin-left:6px">remove</a>':'')+'</label>'+
+   (on?'<input type="range" data-ovop="'+i+'" min="0.1" max="1" step="0.05" value="'+lay.over[i]+'" style="margin:0 0 6px 28px;width:calc(100% - 28px)">':'');});
+ var own=LIVE.filter(function(l){return l.custom&&!l.over;});
+ if(own.length)h+='<div class="mut" style="font-size:12.5px;margin-top:6px">Your own maps (in Base map): '+own.map(function(l){var i=LIVE.indexOf(l);return esc(l.name)+' <a href="#" data-ownrm="'+i+'" style="color:#7fb0ff;font-size:12px">remove</a>';}).join(' · ')+'</div>';
+ h+='<div style="margin-top:8px"><button class="btn alt" id="ownAdd">+ Add an online map</button></div><div id="ownForm" style="display:none;margin-top:8px">'+
+  '<input id="ownName" placeholder="Name, e.g. Karst map" style="width:100%;margin-bottom:6px">'+
+  '<input id="ownUrl" placeholder="https://.../{z}/{x}/{y}.png or an ArcGIS .../MapServer address" style="width:100%;margin-bottom:6px">'+
+  '<label class="lab"><input type="checkbox" id="ownOver"> It\'s see-through - put it on top</label>'+
+  '<button class="btn" id="ownSave">Add it</button> <span class="mut" id="ownMsg"></span>'+
+  '<div class="mut" style="font-size:12px;margin-top:4px">Works with map tile addresses ({z} {x} {y}) and ArcGIS map services that are tiled, like a state geology or karst map.</div></div>';
+ h+='<div class="card" style="margin-top:10px"><b>Download for no signal</b><div class="mut">Saves the online maps you\'ve picked (the base and anything on top) for the cave\'s area, so they show in the field.</div><button class="btn" id="lyOffline" style="margin-top:6px">Download these maps</button><span class="mut" id="lyOffMsg"></span></div>';
+ return h;}
+function bindOnline(q){var e;
+ [].forEach.call(q('input[data-ov]'),function(c){c.onchange=function(){var i=+c.dataset.ov;if(c.checked)lay.over[i]=0.9;else delete lay.over[i];draw();showTab('layers');};});
+ [].forEach.call(q('input[data-ovop]'),function(r){r.oninput=function(){lay.over[+r.dataset.ovop]=+r.value;draw();};});
+ [].forEach.call(q('[data-ownrm]'),function(a){a.onclick=function(ev){ev.preventDefault();var L=LIVE[+a.dataset.ownrm],own=[];try{own=JSON.parse(store('ct-maps')||'[]');}catch(x){}
+  own=own.filter(function(m){return m.url!=L.url;});store('ct-maps',JSON.stringify(own));lay.over={};if(lay.base=='live')lay.base=null;liveLoad();draw();showTab('layers');};});
+ if(e=$('ownAdd'))e.onclick=function(){$('ownForm').style.display='';e.style.display='none';};
+ if(e=$('ownSave'))e.onclick=function(){var nm=$('ownName').value.trim()||'My map',u=liveUrl($('ownUrl').value),m=$('ownMsg');
+  if(!/^https:\/\//i.test(u)){m.textContent=' It needs an https:// address.';return;}
+  if(!/\{z\}/.test(u)||!/\{x\}/.test(u)||!/\{y\}/.test(u)){m.textContent=' The address needs {z}, {x} and {y} (or end in /MapServer).';return;}
+  var c=[0,0];for(var i=0;i<N;i++){c[0]+=X[i]/N;c[1]+=Y[i]/N;}var ll=toLatLon(c[0],c[1]),z=13,t=tileXY(ll[0],ll[1],z),url=u.replace('{z}',z).replace('{x}',Math.floor(t[0])).replace('{y}',Math.floor(t[1]));
+  m.textContent=' Trying it...';var im=new Image();var done=false;setTimeout(function(){if(!done){done=true;m.textContent=' No answer from that address - check it, or try again with a signal.';}},12000);
+  im.onload=function(){if(done)return;done=true;var own=[];try{own=JSON.parse(store('ct-maps')||'[]');}catch(x){}own.push({name:nm,url:u,max:19,attr:nm,over:$('ownOver').checked?1:0});store('ct-maps',JSON.stringify(own));liveLoad();
+   var k=LIVE.length-1;if(LIVE[k].over)lay.over[k]=0.9;else{lay.base='live';lay.live=k;}draw();showTab('layers');toast('Added '+nm);};
+  im.onerror=function(){if(done)return;done=true;m.textContent=' That address didn\'t give a map picture for the cave\'s area.';};im.src=url;};
+ if(e=$('lyHO'))e.onchange=function(){lay.hillOver=e.checked;draw();};
+ if(e=$('lyOffline'))e.onclick=function(){saveOffline('lyOffMsg',true);};}
 function bind(){var q=function(s){return document.querySelectorAll('#pane '+s);};
  [].forEach.call(q('[data-st]'),function(r){r.onclick=function(){select(+r.dataset.st,true);};});
  [].forEach.call(q('[data-book]'),function(r){r.onclick=function(){openBook=+r.dataset.book;showTab('books');};});
@@ -515,6 +552,7 @@ function bind(){var q=function(s){return document.querySelectorAll('#pane '+s);}
  if(e=$('bShow'))e.onclick=function(){trip=openBook;if(gl3)gl3.colours();fitTrip();};
  [].forEach.call(q('input[name=base]'),function(r){r.onchange=function(){var v=r.value;if(v=='none')lay.base=null;else if(v=='hillshade')lay.base='hillshade';else if(v.indexOf('live')==0){lay.base='live';lay.live=+v.slice(4);}else lay.base=+v;draw();if(gl3)gl3.texture();};});
  if(e=$('baseOp'))e.oninput=function(){lay.baseOp=+e.value;draw();};
+ bindOnline(q);
  if(e=$('lyC'))e.onchange=function(){lay.contours=e.checked;draw();};if(e=$('cint'))e.onchange=function(){lay.cint=+e.value;lay.contours=true;$('lyC').checked=true;draw();};
  if(e=$('lyS'))e.onchange=function(){lay.sinks=e.checked;draw();};
  if(e=$('lyN'))e.onchange=function(){lay.names=e.checked;draw();};if(e=$('lyP'))e.onchange=function(){lay.prefix=e.checked;store('ct-prefix',e.checked?'1':'');draw();};if(e=$('lyL'))e.onchange=function(){lay.leads=e.checked;draw();};if(e=$('lyE'))e.onchange=function(){lay.ents=e.checked;draw();};
@@ -562,7 +600,7 @@ function copyText(t){try{navigator.clipboard.writeText(t).then(function(){toast(
 function safeName(){return(D.name||'cave').replace(/[^\w.-]+/g,'_');}
 function bindExport(){var e,nm=safeName();
  hookInstall('xInstall');
- if(e=$('xOffline'))e.onclick=saveOffline;
+ if(e=$('xOffline'))e.onclick=function(){saveOffline();};
  if(e=$('xCsv'))e.onclick=function(){var t='station,kind,size,note,travel_min,feet_in,depth_ft\n'+D.leads.map(function(l){var s=S[l.s];return[s[0],l.kind,l.size,l.text,s[4]>=0?Math.round(s[4]/60):'',Math.round(s[8]/FT),Math.round(s[7]/FT)].map(csv).join(',');}).join('\n');save(nm+'_leads.csv',t,'text/csv');};
  if(e=$('xGeo'))e.onclick=function(){var feats=[];for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];feats.push({type:'Feature',properties:{from:S[a][0],to:S[b][0],trip:D.trips[SH[4*k+3]].n},geometry:{type:'LineString',coordinates:[xyOut(a),xyOut(b)]}});}
   save(nm+'.geojson',JSON.stringify({type:'FeatureCollection',features:feats}),'application/geo+json');};
@@ -599,13 +637,27 @@ function utmFwd(lat,lon,zone){var a=6378137,f=1/298.257223563,k0=0.9996,e2=f*(2-
 function toLatLon(x,y){if(!D.coords)return null;var ll=utmInv(x+D.coords.e0,y+D.coords.n0,D.coords.zone,D.coords.south);if(D.coords.nad27){ll[0]+=0.0001;ll[1]-=0.0007;}return ll;}
 function fromLatLon(lat,lon){if(D.coords.nad27){lat-=0.0001;lon+=0.0007;}var u=utmFwd(lat,lon,D.coords.zone);return[u[0]-D.coords.e0,u[1]-D.coords.n0];}
 // ======================================================================= live online base maps (the app's own site, with true coordinates; tiles saved for offline are used with no signal)
-var LIVE=[{name:'USGS aerial',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS The National Map'},
- {name:'Satellite',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Imagery: Esri, Maxar, Earthstar Geographics'},
- {name:'USGS topo',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS The National Map'}];
+// Online maps (17 Nov 2026, Sully: "the app needs a way to download GIS layers online too"). Bases fill the background; overlays
+// (over:1) are see-through and go on top. noBulk: the provider's terms don't allow saving whole areas, so Download for no signal skips them.
+var LIVE_BUILTIN=[
+ {name:'Satellite (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Imagery: Esri, Maxar, Earthstar Geographics'},
+ {name:'USGS aerial',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS The National Map'},
+ {name:'USGS topo',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS The National Map'},
+ {name:'USGS aerial with topo lines',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS The National Map'},
+ {name:'Topo map (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin, USGS, NGA'},
+ {name:'OpenTopoMap',url:'https://tile.opentopomap.org/{z}/{x}/{y}.png',max:17,attr:'OpenTopoMap (CC-BY-SA), OpenStreetMap contributors, SRTM',noBulk:1},
+ {name:'Shaded relief (USGS)',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSShadedReliefOnly/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS The National Map'},
+ {name:'Hillshade, world (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',max:16,attr:'Esri, USGS, NGA, NASA'},
+ {name:'Streams and lakes (USGS)',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS National Hydrography',over:1},
+ {name:'Roads (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin',over:1},
+ {name:'Place names and boundaries (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin',over:1}];
+var LIVE=[];function liveLoad(){var own=[];try{own=JSON.parse(store('ct-maps')||'[]');}catch(x){}LIVE=LIVE_BUILTIN.concat(own.map(function(m){m.custom=1;return m;}));}liveLoad();
+function liveUrl(u){u=String(u||'').trim();if(/\/(MapServer|ImageServer)\/?$/i.test(u))u=u.replace(/\/?$/,'/tile/{z}/{y}/{x}');return u;}
 var tileCache={};
 function tileXY(lat,lon,z){var n=Math.pow(2,z);return[(lon+180)/360*n,(1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2*n];}
 function tileLL(x,y,z){var n=Math.pow(2,z),lon=x/n*360-180,lat=Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;return[lat,lon];}
-function drawLive(attr){var L=LIVE[lay.live||0];if(!L||!D.coords)return;attr.push(L.attr);
+function drawLive(attr){drawTiles(LIVE[lay.live||0],lay.baseOp,attr);}
+function drawTiles(L,op,attr){if(!L||!D.coords)return;if(L.attr&&attr.indexOf(L.attr)<0)attr.push(L.attr);
  var cs=[unproj(0,0),unproj(W,H),unproj(W,0),unproj(0,H)],xs=cs.map(function(c){return c[0];}),ys=cs.map(function(c){return c[1];});
  var a=toLatLon(Math.min.apply(0,xs),Math.min.apply(0,ys)),b=toLatLon(Math.max.apply(0,xs),Math.max.apply(0,ys));
  var mpp=1/view.ppm,z=Math.max(3,Math.min(L.max,Math.round(Math.log(156543.03*Math.cos(a[0]*Math.PI/180)/mpp/dpr)/Math.LN2)));
@@ -614,18 +666,21 @@ function drawLive(attr){var L=LIVE[lay.live||0];if(!L||!D.coords)return;attr.pus
   if(!im){im=tileCache[url]=new Image();im.onload=draw;im.onerror=function(){this.bad=true;};im.src=url;}
   if(!im.complete||im.bad||!im.naturalWidth)continue;
   var p0=fromLatLon.apply(0,tileLL(tx,ty,z)),p1=fromLatLon.apply(0,tileLL(tx+1,ty,z)),p2=fromLatLon.apply(0,tileLL(tx,ty+1,z));
-  var t=worldTransform();g.save();g.globalAlpha=lay.baseOp;g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);g.transform((p1[0]-p0[0])/256,(p1[1]-p0[1])/256,(p2[0]-p0[0])/256,(p2[1]-p0[1])/256,p0[0],p0[1]);g.drawImage(im,0,0,256,256);g.restore();}}
-function saveOffline(){var msg=$('xOffMsg');if(!('serviceWorker' in navigator)||!window.caches){msg.textContent=' This browser can\'t keep pages offline.';return;}
+  var t=worldTransform();g.save();g.globalAlpha=op;g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);g.transform((p1[0]-p0[0])/256,(p1[1]-p0[1])/256,(p2[0]-p0[0])/256,(p2[1]-p0[1])/256,p0[0],p0[1]);g.drawImage(im,0,0,256,256);g.restore();}}
+function saveOffline(mid,picked){var msg=$(mid||'xOffMsg');if(!('serviceWorker' in navigator)||!window.caches){msg.textContent=' This browser can\'t keep pages offline.';return;}
  msg.textContent=' Saving...';navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready;}).then(function(){
   return dbDo('readwrite',function(s){return s.put(D,D.name);}).catch(function(){});}).then(function(){
   if(!D.coords){msg.textContent=' Done - this cave opens with no signal.';return;}
   var lo=[1e9,1e9],hi=[-1e9,-1e9];for(var i=0;i<N;i++){lo[0]=Math.min(lo[0],X[i]);lo[1]=Math.min(lo[1],Y[i]);hi[0]=Math.max(hi[0],X[i]);hi[1]=Math.max(hi[1],Y[i]);}
   var a=toLatLon(lo[0]-400,lo[1]-400),b=toLatLon(hi[0]+400,hi[1]+400),urls=[];
-  LIVE.forEach(function(L){for(var z=12;z<=Math.min(17,L.max);z++){var t1=tileXY(b[0],a[1],z),t2=tileXY(a[0],b[1],z);for(var x=Math.floor(t1[0]);x<=Math.floor(t2[0]);x++)for(var y=Math.floor(t1[1]);y<=Math.floor(t2[1]);y++)urls.push(L.url.replace('{z}',z).replace('{x}',x).replace('{y}',y));}});
-  if(urls.length>6000)urls=urls.filter(function(u){return!/\/tile\/17\//.test(u);});
+  var use=[];if(picked){if(lay.base=='live'&&LIVE[lay.live])use.push(LIVE[lay.live]);for(var ov in lay.over)if(LIVE[ov])use.push(LIVE[ov]);}
+  if(!use.length)use=[LIVE[0],LIVE[2]];var skipped=use.filter(function(L){return L.noBulk;}).map(function(L){return L.name;});use=use.filter(function(L){return!L.noBulk;});
+  function build(top){urls=[];  use.forEach(function(L){for(var z=12;z<=Math.min(top,L.max);z++){var t1=tileXY(b[0],a[1],z),t2=tileXY(a[0],b[1],z);for(var x=Math.floor(t1[0]);x<=Math.floor(t2[0]);x++)for(var y=Math.floor(t1[1]);y<=Math.floor(t2[1]);y++)urls.push(L.url.replace('{z}',z).replace('{x}',x).replace('{y}',y));}});
+}
+  build(17);if(urls.length>6000)build(16);
   return caches.open('cartotable-tiles').then(function(c){var done=0,ok=0,i=0;return new Promise(function(res){function next(){if(i>=urls.length)return;var u=urls[i++];
-   fetch(u,{mode:'no-cors'}).then(function(r){return c.put(u,r);}).then(function(){ok++;}).catch(function(){}).then(function(){done++;msg.textContent=' Imagery '+done+' of '+urls.length+'...';if(done>=urls.length)res(ok);else next();});}
-   if(!urls.length)res(0);for(var k=0;k<6;k++)next();});}).then(function(ok){msg.textContent=' Done - the cave and '+ok+' imagery tiles are on this phone.';});
+   fetch(u,{mode:'no-cors'}).then(function(r){return c.put(u,r);}).then(function(){ok++;}).catch(function(){}).then(function(){done++;msg.textContent=' Maps '+done+' of '+urls.length+'...';if(done>=urls.length)res(ok);else next();});}
+   if(!urls.length)res(0);for(var k=0;k<6;k++)next();});}).then(function(ok){msg.textContent=' Done - the cave and '+ok+' map tiles are on this phone.'+(skipped.length?' ('+skipped.join(', ')+' can\'t be saved for offline - its terms don\'t allow it; it shows while there\'s a signal.)':'');});
  }).catch(function(e){msg.textContent=' Couldn\'t save: '+e.message;});}
 // ======================================================================= 3-D (WebGL)
 var gl3=null;

@@ -1,10 +1,11 @@
 // CartoTable web page - keeps the page and its data on the device, and the map tiles saved for offline.
-const APP = 'cartotable-app-20261117061610', TILES = 'cartotable-tiles';
+const APP = 'cartotable-app-20261117123000', TILES = 'cartotable-tiles';
 self.addEventListener('install', e => { e.waitUntil(caches.open(APP).then(c => Promise.all(["./","index.html","manifest.webmanifest","icon.svg","icon.png","icon-192.png"].map(f => c.add(f).catch(() => null)))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('cartotable-app-') && k !== APP).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   const u = e.request.url;
-  if (/\/tile\/\d+\/\d+\/\d+/.test(u)) { e.respondWith(caches.open(TILES).then(c => c.match(u).then(r => r || fetch(e.request)))); return; }
+  // map tiles: ArcGIS (/tile/z/y/x) and z/x/y.png addresses (OpenTopoMap, your own maps) - the saved copy first, so they show with no signal
+  if (/\/tile\/\d+\/\d+\/\d+/.test(u) || /\/\d+\/\d+\/\d+\.(png|jpe?g|webp)(\?.*)?$/i.test(u)) { e.respondWith(caches.open(TILES).then(c => c.match(u).then(r => r || fetch(e.request)))); return; }
   if (u.indexOf('cdnjs.cloudflare.com/ajax/libs/pdf.js/') >= 0) { e.respondWith(caches.open(APP).then(c => c.match(u).then(r => r || fetch(e.request).then(n => { c.put(u, n.clone()); return n; })))); return; }
   if (e.request.method !== 'GET') return;
   // the page itself: the network first (so an update shows the first time it opens), the kept copy when there's no signal or it's slow
