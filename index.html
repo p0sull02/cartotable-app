@@ -126,6 +126,7 @@ body.cave .tile .tt{font-size:16px}
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
 <div id="modePick" class="over"><div class="in" id="modeIn"></div></div>
 <div id="pcOver" class="over" style="z-index:22"><div class="in" id="pcIn"></div></div>
+<div id="svy" class="over" style="padding:0;z-index:24;overflow:hidden"></div>
 <div id="scr" class="over" style="padding:0;background:#000;z-index:25;overflow:hidden"><div id="scrBar"><button class="ib" id="scrClose" title="Back">✕</button><button class="ib" id="scrFit" title="Fit the screen">⤢</button><button class="ib" id="scrDrag" title="One finger drags on the computer">🖱 Drag</button><button class="ib" id="scrKbB" title="Keyboard">⌨</button><button class="ib" id="scrUp" title="Scroll up / zoom in">▲</button><button class="ib" id="scrDn" title="Scroll down / zoom out">▼</button><button class="ib" id="scrEsc">Esc</button><button class="ib" id="scrEnt">Enter</button><button class="ib" id="scrFind" title="Find (Ctrl+K)">🔍</button><button class="ib" id="scrX" title="Close the dialog on top">Close dialog</button><span id="scrMsg" class="mut" style="font-size:12px"></span></div><div id="scrWrap"><img id="scrImg" alt=""></div><input id="scrKb" type="text" autocomplete="off" autocapitalize="off" style="position:absolute;left:-2000px;top:0;width:40px;opacity:0"></div>
 <div id="scan" class="over" style="padding:0;background:#000;z-index:26;overflow:hidden"><video id="scanV" muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video><div style="position:absolute;left:50%;top:45%;width:62vmin;height:62vmin;transform:translate(-50%,-50%);border:3px solid rgba(255,255,255,.9);border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.35)"></div><div id="scanMsg" style="position:absolute;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom));color:#fff;text-align:center;font-size:15px;text-shadow:0 1px 3px #000"></div><button class="btn alt" id="scanX" style="position:absolute;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%);width:auto;padding:10px 26px">Cancel</button></div>
 <div id="cam" class="over" style="padding:0;background:#000;z-index:26;overflow:hidden"><video id="camV" muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video><div id="camFlash" style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s"></div><div id="camMsg" style="position:absolute;left:16px;right:16px;top:calc(18px + env(safe-area-inset-top));color:#fff;text-align:center;font-size:15px;text-shadow:0 1px 3px #000"></div><div style="position:absolute;left:0;right:0;bottom:calc(22px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-around"><button class="btn alt" id="camDone" style="margin:0;padding:10px 18px">Done</button><button id="camShot" title="Take the photo" style="width:76px;height:76px;border-radius:38px;border:5px solid #fff;background:rgba(255,255,255,.25);cursor:pointer;padding:0"></button><button class="btn alt" id="camTorch" style="margin:0;padding:10px 14px;visibility:hidden">🔦 Light</button></div></div>
@@ -833,6 +834,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
  h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
  h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
+ h+=tileHtml('tSurvey','📐','#1A9850','Survey and sketch','Shots from the Tacheo, sketch as you go');   // 16 Nov 2026 (Sully: "Can you build in a digital sketching/survey suite too? Like sexytopo or Topodroid?")
  h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages read into data on your computer');   // 16 Nov 2026 (Sully: "a short description under it saying it automatically transcribes data from photos")
  if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer');
  h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!!(HOSTED||LOCALPC));   // wide when it would sit alone
@@ -840,7 +842,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';resize();};hookInstall('hInstallTop');
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tPc'))e.onclick=pcSheet;
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;
  $('hMode').onclick=function(){setCave(!CAVE);homeShow();};
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
@@ -1136,6 +1138,506 @@ function pcScreen(){var o=$('scr'),img=$('scrImg'),wrap=$('scrWrap'),st={on:true
  B('scrEsc',function(){send({t:'key',key:'Escape'});});B('scrEnt',function(){send({t:'key',key:'Enter'});});
  B('scrFind',function(){send({t:'find'});setTimeout(function(){kb.focus();},200);});B('scrX',function(){send({t:'close'});});
  window.addEventListener('resize',layout);frame();}
+
+/*SURVEY:BEGIN*/
+// ======================================================================= Survey and sketch
+// Copyright (C) 2026 Phillip M. Sullivan. All rights reserved. Written from scratch for Topside (no SexyTopo / TopoDroid code: both are GPL).
+// Sully, 16 Nov 2026: "Can you build in a digital sketching/survey suite too? Like sexytopo or Topodroid?" / "For the mobile app." /
+// "Use NSS standard symbols, model its functionality from Topodroid." / "Incorporate all the Tacheo features with the app and the digital
+// sketching." / "As many cross communication as possible with it." / "Make the sketch accent color theme green."
+// A survey here is one trip: shots arrive from a Tacheo or a SAP6 over Bluetooth (the Android app; "CaveBLE", the protocol the Tacheo already
+// speaks to SexyTopo and TopoDroid) or are typed. Legs are found as TopoDroid finds them - a run of shots that agree is one leg, the rest are
+// splays - and the Tacheo's own labels (FSx3, backsight, LRUD and its Check) are kept with each shot. Plan and extended profile are worked out
+// as the shots come in, and sketched over in NSS symbols. The Tacheo's console (the same commands as over USB) gives its battery, calibration
+// and health, takes the station names from here, and hands over its cross sections, which are placed at their station in the sketch.
+var SVA='#1A9850',SVA2='#2fbf6f';                 // the survey's accent: green
+var SVDB=null,SV=null,SVVIEW='data',SVDEV={state:'off',name:'',addr:'',info:null,rx:'',lines:[],waiters:[]},SVSAVE=0;
+var SVUNDO={plan:[],prof:[]},SVREDO={plan:[],prof:[]};
+function svDb(){return new Promise(function(ok,no){if(SVDB)return ok(SVDB);try{var r=indexedDB.open('ct-surveys',1);r.onupgradeneeded=function(){r.result.createObjectStore('s',{keyPath:'id'});};r.onsuccess=function(){SVDB=r.result;ok(SVDB);};r.onerror=function(){no(r.error);};}catch(e){no(e);}});}
+function svDo(mode,fn){return svDb().then(function(d){return new Promise(function(ok,no){var t=d.transaction('s',mode),s=t.objectStore('s'),r=fn(s);t.oncomplete=function(){ok(r&&r.result);};t.onerror=function(){no(t.error);};});});}
+function svAll(){return svDo('readonly',function(s){return s.getAll();}).then(function(l){return(l||[]).sort(function(a,b){return(b.t||0)-(a.t||0);});});}
+function svPut(sv){sv.t=Date.now();return svDo('readwrite',function(s){return s.put(sv);});}
+function svSaveSoon(){clearTimeout(SVSAVE);SVSAVE=setTimeout(function(){if(SV)svPut(SV).catch(function(e){toast('Couldn\'t save: '+esc(e&&e.message||e));});},400);}
+function svNew(o){var n=+o.start||1;return{id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:o.name||('Survey '+today()),cave:o.cave||'',prefix:o.prefix||'',date:o.date||today(),
+  team:o.team||'',inst:o.inst||'Tacheo',decl:+o.decl||0,units:o.units||'ft',legShots:+o.legShots||3,tolD:0.05,tolA:1.5,start:n,next:n+1,cur:(o.prefix||'')+n,first:(o.prefix||'')+n,
+  shots:[],plan:[],prof:[],xs:[],ext:{},comment:o.comment||'',t:Date.now()};}
+// ---- units and numbers
+function svU(){return SV&&SV.units=='m'?1:FT;}
+function svL(m,dp){var v=m/svU();return v.toFixed(dp==null?(svU()==1?2:1):dp);}
+function svUn(){return SV&&SV.units=='m'?'m':'ft';}
+function n1(v){return(Math.round(v*10)/10).toFixed(1);}
+function az360(a){a%=360;return a<0?a+360:a;}
+// ---- shots: legs, splays, backsights (TopoDroid's rule: legShots shots in a row that agree are one leg; the rest are splays)
+function svVec(s){var a=(s.az+(SV?SV.decl:0))*Math.PI/180,c=s.cl*Math.PI/180;return[s.d*Math.cos(c)*Math.sin(a),s.d*Math.cos(c)*Math.cos(a),s.d*Math.sin(c)];}
+function svAgree(a,b,rev){var va=svVec(a),vb=svVec(b);if(rev)vb=[-vb[0],-vb[1],-vb[2]];var la=Math.hypot(va[0],va[1],va[2]),lb=Math.hypot(vb[0],vb[1],vb[2]);if(!la||!lb)return false;
+ var dd=Math.abs(a.d-b.d),cos=(va[0]*vb[0]+va[1]*vb[1]+va[2]*vb[2])/la/lb,ang=Math.acos(Math.max(-1,Math.min(1,cos)))*180/Math.PI;
+ return dd<=Math.max(SV.tolD,0.01*Math.max(a.d,b.d))&&ang<=SV.tolA;}
+function svNum(name){var m=String(name).match(/^(.*?)(\d+)$/);return m?{p:m[1],n:+m[2]}:null;}
+function svNextName(){var n=SV.next++;return(SV.prefix||'')+n;}
+function svGroup(g){return SV.shots.filter(function(s){return s.grp===g;});}
+function svMean(list){var v=[0,0,0],d=0;list.forEach(function(s){var x=svVec(s);v[0]+=x[0];v[1]+=x[1];v[2]+=x[2];d+=s.d;});var n=list.length||1;d/=n;var h=Math.hypot(v[0],v[1]),a=az360(Math.atan2(v[0],v[1])*180/Math.PI-(SV?SV.decl:0)),c=Math.atan2(v[2],h)*180/Math.PI;return{d:d,az:a,cl:c};}
+function svLegs(){var m={},out=[];SV.shots.forEach(function(s){if(s.grp&&(s.kind=='leg'||s.kind=='back')&&!s.cmt){(m[s.grp]=m[s.grp]||[]).push(s);}});
+ Object.keys(m).forEach(function(g){var l=m[g],f=l[0],mm=svMean(l);out.push({grp:g,kind:f.kind,from:f.from,to:f.to,d:mm.d,az:mm.az,cl:mm.cl,n:l.length,surf:f.surf,dup:f.dup,t:f.t,ext:SV.ext[g]||null});});
+ return out.sort(function(a,b){return a.t-b.t;});}
+function svLastLeg(){var l=svLegs().filter(function(x){return x.kind=='leg';});return l[l.length-1]||null;}
+function svLrudChar(c){return c&&/^[UDLRudlr?]$/.test(c);}
+// one shot in (from the instrument or typed): kept, then sorted into a leg, a backsight or a splay
+function svAddShot(s){s.id='h'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);s.t=s.t||Date.now();s.from=SV.cur;s.to='';s.kind='splay';
+ if(svLrudChar(s.lbl)){s.kind='lrud';s.lrud=s.lbl.toUpperCase();s.check=s.lbl!=s.lbl.toUpperCase()&&s.lbl!='?';SV.shots.push(s);svAfter(s);return s;}
+ var prev=SV.shots.filter(function(x){return x.kind!='lrud';}),last=prev[prev.length-1];
+ // one more shot agreeing with the leg or backsight just made: part of it
+ if(last&&last.grp&&(last.kind=='leg'||last.kind=='back')&&!s.typed){var g=svGroup(last.grp),mm=svMean(g);if(svAgree(s,{d:mm.d,az:mm.az,cl:mm.cl})){s.kind=last.kind;s.grp=last.grp;s.from=last.from;s.to=last.to;SV.shots.push(s);svAfter(s);return s;}}
+ SV.shots.push(s);
+ if(s.typed&&s.to0){s.kind='leg';s.grp='g'+s.id;s.from=s.from0||SV.cur;s.to=s.to0;svLegMade(s.grp,s.to);svAfter(s);return s;}
+ // the run of splays at this station that agree with this one
+ var run=[s];for(var i=SV.shots.length-2;i>=0;i--){var x=SV.shots[i];if(x.kind=='lrud')continue;if(x.kind!='splay'||x.from!=SV.cur||x.grp||!svAgree(x,s))break;run.unshift(x);if(run.length>=SV.legShots)break;}
+ if(run.length>=SV.legShots){var g='g'+s.id,ll=svLastLeg(),back=ll&&ll.to==SV.cur&&svAgree(s,{d:ll.d,az:ll.az,cl:ll.cl},true)&&(s.lbl!='F');
+  if(s.lbl=='B'||s.lbl=='b')back=!!(ll&&ll.to==SV.cur);
+  run.forEach(function(x){x.grp=g;x.kind=back?'back':'leg';});
+  if(back){run.forEach(function(x){x.from=ll.to;x.to=ll.from;});}
+  else{var to=svNextName();run.forEach(function(x){x.to=to;});svLegMade(g,to);}}
+ svAfter(s);return s;}
+function svLegMade(g,to){var ll=svLegs(),first=ll.filter(function(x){return x.kind=='leg';})[0],me=ll.filter(function(x){return x.grp==g;})[0];
+ if(me&&!SV.ext[g]){var ref=first?first.az:me.az,dd=Math.abs(((me.az-ref)%360+540)%360-180);SV.ext[g]=Math.abs(me.cl)>80?'V':dd<=90?'R':'L';}
+ SV.cur=to;var nn=svNum(to);if(nn&&nn.p==(SV.prefix||'')&&nn.n>=SV.next)SV.next=nn.n+1;svTellStation();}
+function svAfter(s){svSaveSoon();svRefresh(s);}
+// ---- positions: stations from the legs (backsights averaged in, reversed), plan and extended profile
+function svReduce(){var legs=svLegs(),pairs={},adj={};
+ legs.forEach(function(l){var a=l.kind=='back'?l.to:l.from,b=l.kind=='back'?l.from:l.to,v=svVec(l);if(l.kind=='back')v=[-v[0],-v[1],-v[2]];var k=a+'\u0001'+b;
+  if(!pairs[k])pairs[k]={a:a,b:b,v:[0,0,0],n:0,ext:null,grp:null,t:l.t};var p=pairs[k];p.v[0]+=v[0];p.v[1]+=v[1];p.v[2]+=v[2];p.n++;if(l.kind=='leg'){p.ext=l.ext;p.grp=l.grp;}});
+ var edges=Object.keys(pairs).map(function(k){var p=pairs[k];return{a:p.a,b:p.b,v:[p.v[0]/p.n,p.v[1]/p.n,p.v[2]/p.n],ext:p.ext||'R',grp:p.grp,t:p.t};}).sort(function(x,y){return x.t-y.t;});
+ edges.forEach(function(e){(adj[e.a]=adj[e.a]||[]).push({to:e.b,v:e.v,e:e,f:1});(adj[e.b]=adj[e.b]||[]).push({to:e.a,v:[-e.v[0],-e.v[1],-e.v[2]],e:e,f:-1});});
+ var P={},X={},order=[SV.first];if(!adj[SV.first]&&edges.length)order=[edges[0].a];
+ edges.forEach(function(e){if(order.indexOf(e.a)<0)order.push(e.a);});
+ var seen={};order.forEach(function(root){if(seen[root])return;if(P[root]==null){P[root]=[0,0,0];X[root]=[0,0];}seen[root]=1;var q=[root];
+  while(q.length){var s=q.shift();(adj[s]||[]).forEach(function(n){if(seen[n.to])return;seen[n.to]=1;var p=P[s];P[n.to]=[p[0]+n.v[0],p[1]+n.v[1],p[2]+n.v[2]];
+   var h=Math.hypot(n.v[0],n.v[1]),dir=n.e.ext=='L'?-1:n.e.ext=='V'||n.e.ext=='-'?0:1;X[n.to]=[X[s][0]+h*dir*n.f,P[n.to][2]];q.push(n.to);});}});
+ if(!P[SV.cur])P[SV.cur]=P[SV.first]||[0,0,0];if(!X[SV.cur])X[SV.cur]=[0,0];
+ return{P:P,X:X,edges:edges};}
+// ---- the screen
+function svCss(){if($('svCss'))return;var st=document.createElement('style');st.id='svCss';st.textContent=
+ '#svy{--sa:'+SVA+'}#svy .btn{background:var(--sa)}#svy .btn.alt{background:#2a3542}#svBar{position:absolute;left:0;right:0;top:0;height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;display:flex;align-items:center;gap:6px;background:var(--bar);border-bottom:2px solid var(--sa);overflow-x:auto;white-space:nowrap;scrollbar-width:none}'+
+ '#svBar::-webkit-scrollbar{display:none}#svBar h1{font-size:15px;margin:0 4px;font-weight:700;max-width:30vw;overflow:hidden;text-overflow:ellipsis}@media(max-width:620px){#svBar h1{display:none}#svBar .seg button{padding:6px 9px}}#svy .seg button.on{background:var(--sa)}'+
+ '#svBody{position:absolute;left:0;right:0;bottom:0;top:calc(50px + env(safe-area-inset-top));overflow:hidden}#svList{position:absolute;inset:0;overflow:auto;padding:8px 10px 120px}'+
+ '#svCv{position:absolute;left:0;top:0;width:100%;height:100%;touch-action:none;display:block;background:#f7f5ef}'+
+ '#svTools{position:absolute;left:0;right:0;bottom:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(14,20,27,.94);border-top:2px solid var(--sa);display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}'+
+ '#svTools::-webkit-scrollbar{display:none}#svTools .ib{height:44px;min-width:44px;font-size:15px}#svTools .ib.on{background:var(--sa);border-color:var(--sa)}'+
+ '#svPal{position:absolute;left:6px;right:6px;bottom:calc(64px + env(safe-area-inset-bottom));background:rgba(14,20,27,.97);border:1px solid var(--sa);border-radius:12px;padding:8px;display:none;max-height:46vh;overflow:auto}'+
+ '#svPal .pi{display:inline-flex;flex-direction:column;align-items:center;justify-content:flex-start;width:76px;margin:3px;padding:4px 2px;border:1px solid var(--line);border-radius:9px;background:#1f2935;cursor:pointer;font-size:11px;text-align:center;line-height:1.15;vertical-align:top}'+
+ '#svPal .pi.on{border-color:var(--sa);background:#163626}#svPal canvas{width:64px;height:30px;background:#f7f5ef;border-radius:5px;margin-bottom:3px}'+
+ '#svLive{position:absolute;left:8px;right:8px;top:8px;background:rgba(14,20,27,.94);border:1px solid var(--sa);border-radius:10px;padding:6px 10px;font-size:13px;display:none;color:#e6ecf2;pointer-events:none}'+
+ '.svr{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:2px 10px;align-items:center;padding:7px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;cursor:pointer}'+
+ '.svr.sp{color:var(--muted);font-size:12.5px;padding:4px 6px 4px 18px}.svr.leg .st{font-weight:700}.svr.new{background:rgba(26,152,80,.18)}.svr .tg{font-size:11px;font-weight:700;border-radius:8px;padding:1px 6px;background:#2a3542;color:#e6ecf2}'+
+ '.svr .tg.g{background:'+SVA+';color:#fff}.svr .tg.w{background:#b7791f;color:#fff}.svr.cmt{opacity:.45;text-decoration:line-through}#svy .card{border-color:#24533a}#svy .k{color:'+SVA2+'}'+
+ '#svDlg{position:absolute;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:5}#svDlg .in{background:var(--panel);border-top:2px solid var(--sa);border-radius:14px 14px 0 0;width:100%;max-width:640px;max-height:86vh;overflow:auto;padding:12px 14px calc(16px + env(safe-area-inset-bottom))}'+
+ '#svDlg label{display:block;margin:8px 0 2px;color:var(--muted);font-size:12px}#svDlg input,#svDlg select,#svDlg textarea{width:100%;font-size:16px;padding:9px;background:var(--bar);color:var(--ink);border:1px solid var(--line);border-radius:8px;font-family:inherit}'+
+ '#svDlg .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}#svDlg .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}';
+ document.head.appendChild(st);}
+function svOpenUi(){svCss();var o=$('svy');o.style.display='block';
+ o.innerHTML='<div id="svBar"></div><div id="svBody"></div><div id="svDlg"><div class="in" id="svDlgIn"></div></div>';}
+function svClose(){$('svy').style.display='none';SV=null;homeShow();}
+// ---- the list of surveys
+function svListShow(){svOpenUi();SV=null;
+ $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>Survey and sketch</h1><span style="flex:1"></span><button class="ib on" id="svNewB" style="background:'+SVA+';border-color:'+SVA+'">＋ New survey</button>';
+ $('svBk').onclick=svClose;$('svNewB').onclick=svNewDlg;
+ $('svBody').innerHTML='<div id="svList"><p class="mut">Loading…</p></div>';
+ svAll().then(function(l){var h='';
+  h+='<div class="card"><b>Survey with a Tacheo, take shots and sketch as you go.</b><div class="mut" style="font-size:13px;margin-top:3px">Shots come in over Bluetooth'+(window.TopsideAndroid&&TopsideAndroid.bleScan?'':' in the Android app')+' or are typed; legs and splays are sorted as they arrive, and the plan and profile draw themselves. Sketch over them in NSS symbols, then send the trip to Topside.</div></div>';
+  if(!l.length)h+='<p class="mut">No surveys on this phone yet.</p>';
+  l.forEach(function(s){var legs=s.shots.filter(function(x){return x.kind=='leg';}).length,sp=s.shots.filter(function(x){return x.kind=='splay'||x.kind=='lrud';}).length;
+   h+='<div class="row" data-id="'+esc(s.id)+'"><div class="t">'+esc(s.name)+(s.cave?' <span class="mut">· '+esc(s.cave)+'</span>':'')+'</div><div class="s">'+esc(s.date)+' · '+s.shots.length+' shots · at '+esc(s.cur)+((s.plan||[]).length+(s.prof||[]).length?' · sketched':'')+'</div></div>';});
+  $('svList').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('#svList .row'),function(r){r.onclick=function(){var id=r.getAttribute('data-id');l.forEach(function(s){if(s.id==id)svOpen(s);});};});
+ }).catch(function(e){$('svList').innerHTML='<p>Couldn\'t read the surveys: '+esc(e&&e.message||e)+'</p>';});}
+function svDlg(html){var d=$('svDlg');$('svDlgIn').innerHTML=html;d.style.display='flex';d.onclick=function(ev){if(ev.target==d)svDlgClose();};}
+function svDlgClose(){$('svDlg').style.display='none';}
+function svNewDlg(){var last=load2('ct-sv-last')||{};
+ svDlg('<div class="big">New survey</div><label>Cave</label><input id="nCave" value="'+esc(last.cave||(D&&D.name)||'')+'"><label>Survey name (the trip)</label><input id="nName" value="'+esc(today())+'">'+
+  '<div class="two"><div><label>Station prefix</label><input id="nPre" value="'+esc(last.prefix||'A')+'" autocapitalize="characters"></div><div><label>First station number</label><input id="nStart" type="number" value="1"></div></div>'+
+  '<div class="two"><div><label>Date</label><input id="nDate" type="date" value="'+today()+'"></div><div><label>Units shown</label><select id="nUnits"><option value="ft"'+(last.units!='m'?' selected':'')+'>Feet</option><option value="m"'+(last.units=='m'?' selected':'')+'>Metres</option></select></div></div>'+
+  '<label>Team</label><input id="nTeam" value="'+esc(last.team||'')+'" placeholder="Book, instrument, point">'+
+  '<div class="two"><div><label>Instrument</label><select id="nInst"><option>Tacheo</option><option>SAP6</option><option>DistoX2</option><option>BRIC</option><option>Cavway X1</option><option>Suunto and tape</option><option>Other</option></select></div><div><label>Shots per leg</label><select id="nLeg"><option value="3">3 (TopoDroid, Tacheo FSx3)</option><option value="2">2</option><option value="1">1 (every shot a leg)</option></select></div></div>'+
+  '<label>Declination (° east +)</label><input id="nDecl" type="number" step="0.1" value="'+esc(last.decl||0)+'">'+
+  '<button class="btn" id="nGo">Start the survey</button><button class="btn alt" id="nNo">Cancel</button>');
+ if(last.inst)$('nInst').value=last.inst;if(last.legShots)$('nLeg').value=String(last.legShots);
+ $('nNo').onclick=svDlgClose;$('nGo').onclick=function(){var o={cave:$('nCave').value.trim(),name:$('nName').value.trim(),prefix:$('nPre').value.trim().toUpperCase(),start:$('nStart').value,date:$('nDate').value,units:$('nUnits').value,team:$('nTeam').value.trim(),inst:$('nInst').value,legShots:$('nLeg').value,decl:$('nDecl').value};
+  try{localStorage.setItem('ct-sv-last',JSON.stringify(o));}catch(e){}var s=svNew(o);svPut(s).then(function(){svDlgClose();svOpen(s);});};}
+// ---- one survey
+function svOpen(s){SV=s;['plan','prof','xs','shots'].forEach(function(k){if(!SV[k])SV[k]=[];});if(!SV.ext)SV.ext={};SVUNDO={plan:[],prof:[]};SVREDO={plan:[],prof:[]};svOpenUi();
+ $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1 id="svTtl">'+esc(SV.name)+'</h1><span class="chip" id="svDevC" style="cursor:pointer"></span>'+
+  '<div class="seg" id="svViews"><button data-v="data">Data</button><button data-v="plan">Plan</button><button data-v="prof">Profile</button><button data-v="trip">Trip</button></div>';
+ $('svBk').onclick=function(){svPut(SV).then(svListShow);};$('svDevC').onclick=svDevSheet;
+ Array.prototype.forEach.call(document.querySelectorAll('#svViews button'),function(b){b.onclick=function(){svView(b.getAttribute('data-v'));};});
+ svDevChip();svAutoConnect();svView(SV.shots.length?SVVIEW:'data');}
+function svView(v){SVVIEW=v;Array.prototype.forEach.call(document.querySelectorAll('#svViews button'),function(b){b.classList.toggle('on',b.getAttribute('data-v')==v);});
+ if(v=='data')svDataShow();else if(v=='trip')svTripShow();else svSketchShow(v);}
+function svRefresh(s){if(!SV)return;if(SVVIEW=='data')svDataShow(s&&s.id);else if(SVVIEW=='plan'||SVVIEW=='prof'){svDraw();svLive(s);}if(s&&!s.typed&&SVVIEW!='data')svLive(s);}
+// ---- Data: the shots, newest at the bottom (TopoDroid's data list)
+function svTag(s){var l=s.lbl;if(!l)return'';if(l=='3')return'<span class="tg g">FSx3</span>';if(l=='B')return s.kind=='back'?'':'<span class="tg">BS</span>';if(l=='b')return'<span class="tg w">BS check</span>';if(l=='F')return'<span class="tg">FS</span>';
+ if(svLrudChar(l))return'<span class="tg'+(s.check?' w':'')+'">'+(l=='?'?'LRUD':l.toUpperCase())+(s.check?' check':'')+'</span>';return'';}
+function svDataShow(hl){var b=$('svBody');var top=$('svList')?$('svList').scrollTop:-1,atEnd=$('svList')?($('svList').scrollTop+$('svList').clientHeight>=$('svList').scrollHeight-40):true;
+ var h='<div id="svList">';
+ h+='<div class="card" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px"><div class="mut" style="width:100%;font-size:12px">'+esc(SV.cave?SV.cave+' · ':'')+esc(SV.name)+'</div><b style="font-size:16px">At '+esc(SV.cur)+'</b><span class="mut" style="font-size:12.5px;flex:1">next leg: '+esc(SV.cur)+' → '+esc((SV.prefix||'')+SV.next)+'</span>'+
+  '<button class="btn alt" id="svCurB" style="margin:0">Change</button></div>';
+ if(!SV.shots.length)h+='<p class="mut">No shots yet. '+(svBleOk()?'Connect the Tacheo (the chip at the top), then take shots: '+SV.legShots+' that agree make a leg, the rest are splays.':'Type them with <b>Add a shot</b>.')+'</p>';
+ var shown={};SV.shots.forEach(function(s){
+  if(s.grp&&(s.kind=='leg'||s.kind=='back')){if(shown[s.grp])return;shown[s.grp]=1;var g=svGroup(s.grp),mm=svMean(g),lb=g.map(function(x){return x.lbl;}).filter(Boolean),sp=svSpread(g);
+   h+='<div class="svr leg'+(s.cmt?' cmt':'')+(hl&&g.some(function(x){return x.id==hl;})?' new':'')+'" data-g="'+s.grp+'"><span class="st">'+esc(s.from)+' → '+esc(s.to)+'</span><span>'+(s.kind=='back'?'<span class="tg">backsight</span> ':'')+(g.length>1?'<span class="mut" style="font-size:11.5px">×'+g.length+(sp?' ±'+sp:'')+'</span> ':'')+svTag(g[g.length-1])+(s.surf?' <span class="tg">surface</span>':'')+(s.dup?' <span class="tg">dup</span>':'')+'</span><span>'+svL(mm.d)+'</span><span>'+n1(mm.az)+'°</span><span>'+n1(mm.cl)+'°</span></div>';return;}
+  h+='<div class="svr sp'+(s.cmt?' cmt':'')+(hl==s.id?' new':'')+'" data-s="'+s.id+'"><span>'+esc(s.from)+'</span><span>'+(s.kind=='lrud'?'':'splay ')+svTag(s)+'</span><span>'+svL(s.d)+'</span><span>'+n1(s.az)+'°</span><span>'+n1(s.cl)+'°</span></div>';});
+ h+='<div style="margin:12px 0"><button class="btn" id="svAddB">＋ Add a shot</button>'+(SVDEV.state=='on'?'<button class="btn alt" id="svShotB">🎯 Shot</button><button class="btn alt" id="svLasB">🔴 Laser</button>':'')+'</div>';
+ h+='<p class="mut" style="font-size:12px">Units: '+(SV.units=='m'?'metres':'feet')+', degrees. Tap a row to edit it.</p></div>';
+ b.innerHTML=h;var L=$('svList');if(atEnd||top<0)L.scrollTop=L.scrollHeight;else L.scrollTop=top;
+ $('svAddB').onclick=svAddDlg;$('svCurB').onclick=svCurDlg;var e;if(e=$('svShotB'))e.onclick=function(){svCmd(0x38);};if(e=$('svLasB'))e.onclick=function(){svCmd(0x36);};
+ Array.prototype.forEach.call(L.querySelectorAll('.svr'),function(r){r.onclick=function(){var g=r.getAttribute('data-g'),id=r.getAttribute('data-s');svEditDlg(g?svGroup(g):SV.shots.filter(function(x){return x.id==id;}));};});}
+function svSpread(g){if(g.length<2)return'';var mm=svMean(g),m=0;g.forEach(function(x){m=Math.max(m,Math.abs(x.d-mm.d));});return svL(m,2);}
+function svCurDlg(){var st=svStations();svDlg('<div class="big">The station you\'re at</div><p class="mut">New shots start here. Pick one surveyed already (to start a side passage) or type a name.</p><label>Station</label><input id="cuN" value="'+esc(SV.cur)+'" list="cuL" autocapitalize="characters"><datalist id="cuL">'+st.map(function(n){return'<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
+ '<label>Next new station number</label><input id="cuX" type="number" value="'+SV.next+'"><button class="btn" id="cuGo">Set</button><button class="btn alt" id="cuNo">Cancel</button>');
+ $('cuNo').onclick=svDlgClose;$('cuGo').onclick=function(){var n=$('cuN').value.trim().toUpperCase();if(n)SV.cur=n;var x=+$('cuX').value;if(x>0)SV.next=x;svDlgClose();svTellStation();svSaveSoon();svRefresh();};}
+function svStations(){var s={};s[SV.first]=1;SV.shots.forEach(function(x){if(x.from)s[x.from]=1;if(x.to)s[x.to]=1;});return Object.keys(s);}
+function svAddDlg(){svDlg('<div class="big">Add a shot</div><div class="two"><div><label>From</label><input id="aF" value="'+esc(SV.cur)+'" autocapitalize="characters"></div><div><label>To (empty = a splay)</label><input id="aT" value="'+esc((SV.prefix||'')+SV.next)+'" autocapitalize="characters"></div></div>'+
+ '<div class="three"><div><label>Distance ('+svUn()+')</label><input id="aD" type="number" step="0.01" inputmode="decimal"></div><div><label>Azimuth °</label><input id="aA" type="number" step="0.1" inputmode="decimal"></div><div><label>Clino °</label><input id="aC" type="number" step="0.1" inputmode="decimal"></div></div>'+
+ '<div class="three"><div><label>L</label><input id="aL" type="number" step="0.1" inputmode="decimal"></div><div><label>R</label><input id="aR" type="number" step="0.1" inputmode="decimal"></div><div><label>U / D</label><input id="aUD" placeholder="U/D" inputmode="decimal"></div></div>'+
+ '<button class="btn" id="aGo">Add</button><button class="btn alt" id="aNo">Close</button><p class="mut" style="font-size:12px">LRUDs are added as splays at the From station.</p>');
+ $('aNo').onclick=svDlgClose;$('aD').focus();
+ $('aGo').onclick=function(){var d=parseFloat($('aD').value)*svU(),a=parseFloat($('aA').value),c=parseFloat($('aC').value)||0;if(!(d>0)||isNaN(a)){toast('Distance and azimuth, please');return;}
+  var f=$('aF').value.trim().toUpperCase()||SV.cur,t=$('aT').value.trim().toUpperCase(),keepCur=SV.cur;SV.cur=f;
+  var s={d:d,az:az360(a),cl:c,typed:true,from0:f,to0:t||null};svAddShot(s);
+  if(t){var nn=svNum(t);if(nn&&nn.p==(SV.prefix||'')&&nn.n>=SV.next)SV.next=nn.n+1;}else SV.cur=keepCur;
+  var lr=[['L',$('aL').value,-90],['R',$('aR').value,90]];var ud=String($('aUD').value||'').split(/[\/ ,]+/);
+  lr.forEach(function(x){var v=parseFloat(x[1]);if(v>0)svAddLrud(f,x[0],v*svU(),az360(a+x[2]),0);});
+  if(parseFloat(ud[0])>0)svAddLrud(f,'U',parseFloat(ud[0])*svU(),0,90);if(parseFloat(ud[1])>0)svAddLrud(f,'D',parseFloat(ud[1])*svU(),0,-90);
+  ['aD','aA','aC','aL','aR','aUD'].forEach(function(k){$(k).value='';});$('aF').value=SV.cur;$('aT').value=(SV.prefix||'')+SV.next;$('aD').focus();toast('Added');};}
+function svAddLrud(st,dir,d,az,cl){var s={id:'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t:Date.now(),d:d,az:az,cl:cl,lbl:dir,kind:'lrud',lrud:dir,from:st,to:'',typed:true};SV.shots.push(s);svSaveSoon();}
+function svEditDlg(g){if(!g.length)return;var s=g[0],isLeg=!!s.grp&&(s.kind=='leg'||s.kind=='back'),ext=isLeg?(SV.ext[s.grp]||'R'):'';
+ var h='<div class="big">'+(isLeg?(s.kind=='back'?'Backsight ':'Leg ')+esc(s.from)+' → '+esc(s.to):(s.kind=='lrud'?'LRUD ':'Splay ')+'from '+esc(s.from))+'</div>';
+ h+='<div class="mut" style="font-size:12.5px">'+g.map(function(x){return svL(x.d)+' '+svUn()+'  '+n1(x.az)+'°  '+n1(x.cl)+'°'+(x.lbl?'  ['+esc(x.lbl)+']':'')+'  '+new Date(x.t).toLocaleTimeString();}).join('<br>')+'</div>';
+ h+='<div class="two"><div><label>From</label><input id="eF" value="'+esc(s.from)+'" autocapitalize="characters"></div><div><label>To'+(isLeg?'':' (a name makes it a leg)')+'</label><input id="eT" value="'+esc(s.to||'')+'" autocapitalize="characters"></div></div>';
+ if(isLeg)h+='<label>Extended profile</label><div class="seg" id="eX">'+[['R','→ Right'],['L','← Left'],['V','↕ Vertical'],['-','Ignore']].map(function(o){return'<button data-x="'+o[0]+'"'+(ext==o[0]?' class="on"':'')+'>'+o[1]+'</button>';}).join('')+'</div>';
+ h+='<div style="margin-top:10px">'+[['surf','Surface'],['dup','Duplicate'],['cmt','Commented out']].map(function(o){return'<label class="lab" style="display:flex;color:var(--ink)"><input type="checkbox" id="e_'+o[0]+'"'+(s[o[0]]?' checked':'')+'> '+o[1]+'</label>';}).join('')+'</div>';
+ h+='<button class="btn" id="eGo">Save</button>'+(isLeg?'<button class="btn alt" id="eSplay">Make them splays</button>':'')+'<button class="btn alt" id="eDel">Delete</button><button class="btn alt" id="eNo">Cancel</button>';
+ svDlg(h);var X=ext;if($('eX'))Array.prototype.forEach.call($('eX').querySelectorAll('button'),function(b){b.onclick=function(){X=b.getAttribute('data-x');Array.prototype.forEach.call($('eX').querySelectorAll('button'),function(c){c.classList.toggle('on',c==b);});};});
+ $('eNo').onclick=svDlgClose;
+ $('eDel').onclick=function(){if(!confirm('Delete '+(g.length>1?'these '+g.length+' shots':'this shot')+'?'))return;var ids=g.map(function(x){return x.id;});SV.shots=SV.shots.filter(function(x){return ids.indexOf(x.id)<0;});svDlgClose();svSaveSoon();svRefresh();};
+ if($('eSplay'))$('eSplay').onclick=function(){g.forEach(function(x){x.kind='splay';x.grp=null;x.to='';});svDlgClose();svSaveSoon();svRefresh();};
+ $('eGo').onclick=function(){var f=$('eF').value.trim().toUpperCase(),t=$('eT').value.trim().toUpperCase();
+  g.forEach(function(x){x.from=f;['surf','dup','cmt'].forEach(function(k){x[k]=$('e_'+k).checked;});});
+  if(isLeg){g.forEach(function(x){x.to=t;});if(!t){g.forEach(function(x){x.kind='splay';x.grp=null;});}else SV.ext[s.grp]=X;}
+  else if(t){var gg='g'+g[0].id;g.forEach(function(x){x.to=t;x.kind='leg';x.grp=gg;});SV.ext[gg]='R';}
+  svDlgClose();svSaveSoon();svRefresh();};}
+// ---- Trip: details, settings, exports, the computer
+function svTripShow(){var legs=svLegs().filter(function(l){return l.kind=='leg';}),len=0;legs.forEach(function(l){len+=l.d;});
+ var h='<div id="svList"><div class="card"><div class="stat"><b>'+legs.length+'</b> legs</div><div class="stat"><b>'+svL(len,0)+'</b> '+svUn()+'</div><div class="stat"><b>'+SV.shots.filter(function(x){return x.kind=='splay'||x.kind=='lrud';}).length+'</b> splays</div><div class="stat"><b>'+(SV.plan.length+SV.prof.length)+'</b> sketch items</div><div class="stat"><b>'+SV.xs.length+'</b> cross sections</div></div>';
+ h+='<div class="k">Send and save</div>';
+ h+=(PC?'<button class="btn" id="tPcB">💻 Send to '+esc(PC.name)+'</button>':'<button class="btn alt" id="tPcB">💻 Send to my computer</button>');
+ h+='<button class="btn alt" id="tSrv">Walls .srv</button><button class="btn alt" id="tSvx">Survex .svx</button><button class="btn alt" id="tTh">Therion .th</button><button class="btn alt" id="tCsv">CSV</button><button class="btn alt" id="tSvgP">Plan sketch .svg</button><button class="btn alt" id="tSvgE">Profile sketch .svg</button><button class="btn alt" id="tJson">Everything (.ctsurvey)</button>';
+ h+='<div class="k">The trip</div><label class="mut" style="font-size:12px">Name</label><input class="fld" id="tName" value="'+esc(SV.name)+'"><label class="mut" style="font-size:12px">Cave</label><input class="fld" id="tCave" value="'+esc(SV.cave)+'">'+
+  '<label class="mut" style="font-size:12px">Team</label><input class="fld" id="tTeam" value="'+esc(SV.team)+'"><label class="mut" style="font-size:12px">Notes</label><textarea class="fld" id="tNote" rows="3">'+esc(SV.comment)+'</textarea>';
+ h+='<div class="k">How shots are sorted</div><div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="mut" style="font-size:12px">Shots per leg</label><select class="fld" id="tLeg"><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></div>'+
+  '<div><label class="mut" style="font-size:12px">Declination °</label><input class="fld" id="tDecl" type="number" step="0.1" value="'+SV.decl+'"></div><div><label class="mut" style="font-size:12px">Agree within (distance, '+svUn()+')</label><input class="fld" id="tTolD" type="number" step="0.01" value="'+svL(SV.tolD,2)+'"></div>'+
+  '<div><label class="mut" style="font-size:12px">Agree within (angle °)</label><input class="fld" id="tTolA" type="number" step="0.1" value="'+SV.tolA+'"></div><div><label class="mut" style="font-size:12px">Units shown</label><select class="fld" id="tUnits"><option value="ft">Feet</option><option value="m">Metres</option></select></div></div>';
+ h+='<button class="btn" id="tSave">Save the trip</button><div class="k">On this phone</div><button class="btn alt" id="tDel">Delete this survey</button></div>';
+ $('svBody').innerHTML=h;$('tLeg').value=String(SV.legShots);$('tUnits').value=SV.units;
+ $('tSave').onclick=function(){SV.name=$('tName').value.trim()||SV.name;SV.cave=$('tCave').value.trim();SV.team=$('tTeam').value.trim();SV.comment=$('tNote').value;SV.legShots=+$('tLeg').value;SV.decl=+$('tDecl').value||0;
+  SV.units=$('tUnits').value;SV.tolD=Math.max(0.005,(+$('tTolD').value||0.05)*svU());SV.tolA=Math.max(0.1,+$('tTolA').value||1.5);$('svTtl').textContent=SV.name;svPut(SV).then(function(){toast('Saved');svTripShow();});};
+ $('tDel').onclick=function(){if(!confirm('Delete "'+SV.name+'" and its sketch from this phone? This can\'t be undone.'))return;svDo('readwrite',function(s){return s.delete(SV.id);}).then(svListShow);};
+ var base=clean(SV.cave?SV.cave+' - '+SV.name:SV.name)||'survey';
+ $('tSrv').onclick=function(){save(base+'.srv',svWalls(),'text/plain');};$('tSvx').onclick=function(){save(base+'.svx',svSurvex(),'text/plain');};$('tTh').onclick=function(){save(base+'.th',svTherion(),'text/plain');};
+ $('tCsv').onclick=function(){save(base+'.csv',svCsv(),'text/csv');};$('tSvgP').onclick=function(){save(base+' plan.svg',svSvg('plan'),'image/svg+xml');};$('tSvgE').onclick=function(){save(base+' profile.svg',svSvg('prof'),'image/svg+xml');};
+ $('tJson').onclick=function(){save(base+'.ctsurvey',JSON.stringify(SV),'application/json');};
+ $('tPcB').onclick=svSendPc;}
+function svSendPc(){if(!PC){pcSheet();return;}var base=clean(SV.cave?SV.cave+' - '+SV.name:SV.name)||'survey',folder=clean((SV.cave||'Survey')+' - '+SV.name),day=today();
+ var files=[[base+'.srv',svWalls(),'text/plain'],[base+' plan.svg',svSvg('plan'),'image/svg+xml'],[base+' profile.svg',svSvg('prof'),'image/svg+xml'],[base+'.ctsurvey',JSON.stringify(SV),'application/json']];
+ toast('Sending to '+esc(PC.name)+'…',8000);var i=0;(function next(){if(i>=files.length){toast('Sent to '+esc(PC.name)+': From phone\\'+esc(day)+'\\'+esc(folder),6000);return;}var f=files[i++];
+  pcJson('POST','/api/upload?name='+encodeURIComponent(f[0])+'&folder='+encodeURIComponent(folder),new Blob([f[1]],{type:f[2]}),60000).then(next,function(e){toast('Couldn\'t send: '+esc(e&&e.message||e)+' - '+esc(pcWhyShort()),7000);});})();}
+// ---- exports
+function svOut(){var legs=svLegs(),out=[];SV.shots.forEach(function(s){if(s.grp&&(s.kind=='leg'||s.kind=='back'))return;out.push(s);});return{legs:legs,splays:out};}
+function svLrudOf(st){var r={};SV.shots.forEach(function(s){if(s.kind=='lrud'&&s.from==st&&!s.cmt){var v=s.lrud=='U'||s.lrud=='D'?Math.abs(s.d*Math.sin(s.cl*Math.PI/180)):s.d*Math.cos(s.cl*Math.PI/180);r[s.lrud]=v;}});return r;}
+function svWalls(){var o=svOut(),m=SV.units=='m',k=m?1:1/FT,L=[];L.push(';Topside survey: '+SV.name+(SV.cave?' ('+SV.cave+')':''));L.push(';Team: '+(SV.team||'-')+'   Instrument: '+(SV.inst||'-'));if(SV.comment)SV.comment.split(/\n/).forEach(function(x){L.push(';'+x);});
+ L.push('#Date '+SV.date);L.push('#Units '+(m?'Meters':'Feet')+' Order=DAV Decl='+(SV.decl||0)+' TypeAB=N,5 TypeVB=N,5');   // backsights as read (not turned 180)
+ // a leg and its backsight on one line, Walls' way: 26.29 100.1/280.0 -5.0/5.0
+ var backs=o.legs.filter(function(l){return l.kind=='back';}),used={},lr={};
+ o.legs.forEach(function(l){if(l.kind=='back'&&used[l.grp])return;var bs=null;
+  if(l.kind=='leg')backs.forEach(function(b){if(!bs&&!used[b.grp]&&b.from==l.to&&b.to==l.from){bs=b;used[b.grp]=1;}});
+  var c=l.cmt||l.surf?';':'',x=svLrudOf(l.from),lrud='';if(!lr[l.from]&&(x.L!=null||x.R!=null||x.U!=null||x.D!=null)){lr[l.from]=1;lrud=' *'+[x.L,x.R,x.U,x.D].map(function(v){return v==null?'--':(v*k).toFixed(1);}).join(',')+'*';}
+  var d=bs?(l.d+bs.d)/2:l.d,az=bs?l.az.toFixed(1)+'/'+bs.az.toFixed(1):l.kind=='back'?'--/'+l.az.toFixed(1):l.az.toFixed(1),cl=bs?l.cl.toFixed(1)+'/'+bs.cl.toFixed(1):l.kind=='back'?'--/'+l.cl.toFixed(1):l.cl.toFixed(1);
+  var fr=l.kind=='back'?l.to:l.from,to=l.kind=='back'?l.from:l.to;   // a backsight with no leg: booked from the leg's own end
+  L.push(c+fr+'\t'+to+'\t'+(d*k).toFixed(2)+'\t'+az+'\t'+cl+lrud+(l.n>1||bs?'\t;x'+l.n+(bs?' + BS x'+bs.n:''):'')+(l.surf?'\t;surface':''));});
+ // LRUDs at stations with no leg from them (the end of the line)
+ svStations().forEach(function(st){if(lr[st])return;var x=svLrudOf(st);if(x.L==null&&x.R==null&&x.U==null&&x.D==null)return;lr[st]=1;L.push(st+'\t*'+[x.L,x.R,x.U,x.D].map(function(v){return v==null?'--':(v*k).toFixed(1);}).join(',')+'*');});
+ o.splays.forEach(function(s){L.push((s.cmt?';':'')+s.from+'\t-\t'+(s.d*k).toFixed(2)+'\t'+s.az.toFixed(1)+'\t'+s.cl.toFixed(1)+(s.kind=='lrud'?'\t;'+s.lrud:''));});
+ return L.join('\r\n')+'\r\n';}
+// legs with their backsights paired (the same two stations, reversed): one line each in every format, not a leg and a loop
+function svPairs(legs){var backs=legs.filter(function(l){return l.kind=='back';}),used={},out=[];
+ legs.forEach(function(l){if(l.kind=='back')return;var bs=null;backs.forEach(function(b){if(!bs&&!used[b.grp]&&b.from==l.to&&b.to==l.from){bs=b;used[b.grp]=1;}});out.push({l:l,from:l.from,to:l.to,d:bs?(l.d+bs.d)/2:l.d,az:l.az,cl:l.cl,baz:bs?bs.az:null,bcl:bs?bs.cl:null,n:l.n,bn:bs?bs.n:0,cmt:l.cmt,surf:l.surf});});
+ backs.forEach(function(b){if(!used[b.grp])out.push({l:b,from:b.to,to:b.from,d:b.d,az:null,cl:null,baz:b.az,bcl:b.cl,n:0,bn:b.n,cmt:b.cmt,surf:b.surf});});   // a backsight alone: booked from the leg's own end
+ return out;}
+function f1(v){return v==null?'-':v.toFixed(1);}
+function svSurvex(){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('*begin '+nm);L.push('; Topside survey: '+SV.name+(SV.cave?' ('+SV.cave+')':''));L.push('*date '+SV.date.replace(/-/g,'.'));if(SV.team)L.push('*team "'+SV.team.replace(/"/g,"'")+'"');
+ if(SV.decl)L.push('*calibrate declination '+SV.decl);L.push('*units length metres');var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'*data normal from to tape compass backcompass clino backclino':'*data normal from to tape compass clino');
+ pr.forEach(function(x){L.push((x.cmt?';':'')+x.from+' '+x.to+' '+x.d.toFixed(3)+' '+f1(x.az)+(anyB?' '+f1(x.baz):'')+' '+f1(x.cl)+(anyB?' '+f1(x.bcl):''));});
+ if(o.splays.length){if(anyB)L.push('*data normal from to tape compass clino');L.push('*flags splay');o.splays.forEach(function(s){L.push((s.cmt?';':'')+s.from+' . '+s.d.toFixed(3)+' '+s.az.toFixed(1)+' '+s.cl.toFixed(1));});L.push('*flags not splay');}
+ L.push('*end '+nm);return L.join('\n')+'\n';}
+function svTherion(){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('encoding utf-8');L.push('survey '+nm+' -title "'+(SV.name||'').replace(/"/g,"'")+'"');L.push('  centreline');L.push('    date '+SV.date.replace(/-/g,'.'));
+ (SV.team||'').split(/[,;]+/).map(function(x){return x.trim();}).filter(Boolean).forEach(function(t){L.push('    team "'+t.replace(/"/g,"'")+'"');});if(SV.decl)L.push('    declination '+SV.decl+' degrees');
+ L.push('    units length meters');var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'    data normal from to length compass backcompass clino backclino':'    data normal from to length compass clino');
+ pr.forEach(function(x){L.push('    '+(x.cmt?'# ':'')+x.from+' '+x.to+' '+x.d.toFixed(3)+' '+f1(x.az)+(anyB?' '+f1(x.baz):'')+' '+f1(x.cl)+(anyB?' '+f1(x.bcl):''));});
+ if(o.splays.length){if(anyB)L.push('    data normal from to length compass clino');L.push('    flags splay');o.splays.forEach(function(s){L.push('    '+(s.cmt?'# ':'')+s.from+' - '+s.d.toFixed(3)+' '+s.az.toFixed(1)+' '+s.cl.toFixed(1));});L.push('    flags not splay');}
+ L.push('  endcentreline');L.push('endsurvey');return L.join('\n')+'\n';}
+function svCsv(){var L=['time,from,to,kind,distance_m,azimuth,clino,roll,label,group,flags'];SV.shots.forEach(function(s){L.push([new Date(s.t).toISOString(),s.from,s.to||'',s.kind,s.d.toFixed(3),s.az.toFixed(2),s.cl.toFixed(2),s.roll==null?'':s.roll.toFixed(1),s.lbl||'',s.grp||'',[s.surf?'surface':'',s.dup?'dup':'',s.cmt?'commented':''].filter(Boolean).join(' ')].map(function(v){v=String(v);return /[,"]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(','));});return L.join('\n')+'\n';}
+// ---- the sketch: plan and extended profile, NSS symbols (green accent)
+var SVK={tool:'move',type:'wall',view:'plan',sc:20,ox:0,oy:0,fit:true,splays:true,names:true,grid:true,cv:null,ctx:null,ptr:{},draw:null,pinch:null};
+var SVLINES=[['wall','Wall'],['wall_lower','Lower-level wall'],['wall_inferred','Unsurveyed wall'],['floor_step','Floor step / ledge'],['ceiling_step','Ceiling step'],['pit','Pit / drop'],['dome','Dome edge'],['drip','Drip line'],
+ ['water_edge','Water edge'],['stream','Stream (draw downstream)'],['rock','Rock / boulder'],['slope','Slope'],['survey_wall','Passage outline (rough)']];
+var SVAREAS=[['water','Water / pool'],['sump','Sump'],['sand','Sand'],['gravel','Gravel'],['mud','Mud / clay'],['breakdown','Breakdown'],['pillar','Bedrock pillar'],['flowstone','Flowstone'],['guano','Guano'],['ice','Ice / snow']];
+var SVPOINTS=[['stal','Stalactites'],['stag','Stalagmites'],['column','Column'],['straws','Soda straws'],['helictite','Helictites'],['rimstone','Rimstone'],['pearls','Cave pearls'],['popcorn','Popcorn'],
+ ['airflow','Air flow (drag)'],['waterflow','Water flow (drag)'],['slope_arrow','Slope (drag)'],['drip_pt','Water drip'],['pool_pt','Small pool'],['pit_pt','Pit (depth)'],['dome_pt','Dome (height)'],['ch','Ceiling height'],
+ ['climb','Climb'],['squeeze','Squeeze'],['lead','Lead (?)'],['entrance','Entrance'],['dig','Dig'],['hazard','Hazard'],['bats','Bats'],['bones','Bones'],['boulder','Boulder'],['break_pt','Breakdown block'],['label','Text']];
+var SVDIR={airflow:1,waterflow:1,slope_arrow:1};
+function svSketchShow(v){if(SVK.view!=v||!SVK.cv)SVK.fit=true;SVK.view=v;var b=$('svBody');
+ b.innerHTML='<canvas id="svCv"></canvas><div id="svLive"></div><div id="svPal"></div><div id="svTools">'+
+  '<button class="ib" data-t="move" title="Move and zoom">✋</button><button class="ib" data-t="line" title="Lines">〰 <span id="svTL"></span></button><button class="ib" data-t="area" title="Areas">▦</button><button class="ib" data-t="point" title="Symbols">✳</button>'+
+  '<button class="ib" data-t="erase" title="Rub out">⌫</button><button class="ib" id="svUn" title="Undo">↶</button><button class="ib" id="svRe" title="Redo">↷</button><button class="ib" id="svFit" title="Fit">⤢</button><button class="ib" id="svLay" title="Show">👁</button>'+
+  (SVDEV.state=='on'?'<button class="ib" id="svShot2" title="Take a shot">🎯</button>':'')+'<button class="ib" id="svAt" title="The station you\'re at">📍 '+esc(SV.cur)+'</button></div>';
+ SVK.cv=$('svCv');SVK.ctx=SVK.cv.getContext('2d');svSizeCv();if(SVK.fit)svFitView();
+ Array.prototype.forEach.call(document.querySelectorAll('#svTools [data-t]'),function(btn){btn.onclick=function(){var t=btn.getAttribute('data-t');if(SVK.tool==t&&(t=='line'||t=='area'||t=='point'))svPal(t);else{SVK.tool=t;$('svPal').style.display='none';if(t=='line'||t=='area'||t=='point')svPal(t);}svToolsOn();};});
+ $('svUn').onclick=function(){svUndo(1);};$('svRe').onclick=function(){svUndo(-1);};$('svFit').onclick=function(){SVK.fit=true;svFitView();svDraw();};$('svLay').onclick=svLayers;$('svAt').onclick=svCurDlg;var e;if(e=$('svShot2'))e.onclick=function(){svCmd(0x38);};
+ svToolsOn();svHook();svDraw();}
+function svToolsOn(){Array.prototype.forEach.call(document.querySelectorAll('#svTools [data-t]'),function(b){b.classList.toggle('on',b.getAttribute('data-t')==SVK.tool);});var l=$('svTL');if(l)l.textContent='';}
+function svSizeCv(){var c=SVK.cv,r=c.getBoundingClientRect();c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);}
+function svPts(){var R=svReduce();return{R:R,pos:function(st){if(SVK.view=='plan'){var p=R.P[st];return p?[p[0],p[1]]:null;}var x=R.X[st];return x?[x[0],x[1]]:null;}};}
+function svXsBox(R,pts){SV.xs.forEach(function(x){var p=R.P[x.at];if(!p)return;var o=x.off||[3,3];(x.pts||[]).forEach(function(q){pts.push([p[0]+o[0]+q[0],p[1]+o[1]+q[1]]);});});}
+function svFitView(){var r=svReduce(),pts=[];if(SVK.view=='plan')svXsBox(r,pts);var src=SVK.view=='plan'?r.P:r.X;Object.keys(src).forEach(function(k){var p=src[k];pts.push([p[0],p[1]]);});(SV[SVK.view]||[]).forEach(function(it){(it.pts||[[it.x,it.y]]).forEach(function(p){pts.push(p);});});
+ var W=SVK.cv.width/dpr,H=SVK.cv.height/dpr-60;if(!pts.length){SVK.sc=20;SVK.ox=W/2;SVK.oy=H/2;return;}
+ var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(function(p){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);});
+ var w=Math.max(4,x1-x0),h=Math.max(4,y1-y0);SVK.sc=Math.min(W/w,H/h)*0.8;SVK.sc=Math.max(2,Math.min(400,SVK.sc));SVK.ox=W/2-(x0+x1)/2*SVK.sc;SVK.oy=H/2+(y0+y1)/2*SVK.sc;}
+function w2s(p){return[SVK.ox+p[0]*SVK.sc,SVK.oy-p[1]*SVK.sc];}
+function s2w(x,y){return[(x-SVK.ox)/SVK.sc,(SVK.oy-y)/SVK.sc];}
+function svDraw(){if(!SVK.cv||!$('svCv'))return;var c=SVK.ctx,W=SVK.cv.width/dpr,H=SVK.cv.height/dpr;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#f7f5ef';c.fillRect(0,0,W,H);
+ var Pp=svPts(),R=Pp.R;
+ if(SVK.grid){var step=svU()*(SV.units=='m'?1:5),px=step*SVK.sc;while(px<14){step*=2;px*=2;}var w0=s2w(0,H),w1=s2w(W,0);c.strokeStyle='rgba(26,152,80,.13)';c.lineWidth=1;c.beginPath();
+  for(var gx=Math.floor(w0[0]/step)*step;gx<=w1[0];gx+=step){var sx=w2s([gx,0])[0];c.moveTo(sx,0);c.lineTo(sx,H);}for(var gy=Math.floor(w0[1]/step)*step;gy<=w1[1];gy+=step){var sy=w2s([0,gy])[1];c.moveTo(0,sy);c.lineTo(W,sy);}c.stroke();}
+ // splays (TopoDroid draws them light, as guides for the walls)
+ if(SVK.splays)SV.shots.forEach(function(s){if(s.cmt||(s.grp&&(s.kind=='leg'||s.kind=='back')))return;var p=Pp.pos(s.from);if(!p)return;var v=svVec(s),q;
+  if(SVK.view=='plan')q=[p[0]+v[0],p[1]+v[1]];else{var dir=svProfDir(s.from,R),h=Math.hypot(v[0],v[1]),ca=dir?(v[0]*dir[0]+v[1]*dir[1])/Math.max(1e-9,h):0;q=[p[0]+h*ca*(dir?dir[2]:1),p[1]+v[2]];}
+  var a=w2s(p),b=w2s(q);c.strokeStyle=s.kind=='lrud'?'rgba(183,121,31,.75)':'rgba(70,90,110,.45)';c.lineWidth=1;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();c.fillStyle=c.strokeStyle;c.fillRect(b[0]-1.5,b[1]-1.5,3,3);});
+ // cross sections from the Tacheo (plan: beside their station)
+ if(SVK.view=='plan')SV.xs.forEach(function(x){svDrawXs(c,x,Pp);});
+ // the sketch
+ (SV[SVK.view]||[]).forEach(function(it){svDrawItem(c,it,Pp);});
+ // legs and stations
+ R.edges.forEach(function(e){var a=Pp.pos(e.a),b=Pp.pos(e.b);if(!a||!b)return;a=w2s(a);b=w2s(b);c.strokeStyle='#c0392b';c.lineWidth=2;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();});
+ var src=SVK.view=='plan'?R.P:R.X;Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st));c.fillStyle=st==SV.cur?SVA:'#c0392b';c.beginPath();c.arc(p[0],p[1],st==SV.cur?5:3,0,7);c.fill();
+  if(SVK.names){c.font='600 11px system-ui,sans-serif';c.fillStyle='#1d2a22';c.fillText(st,p[0]+6,p[1]-6);}});
+ if(SVK.draw&&SVK.draw.pts.length>1){svDrawItem(c,{k:SVK.draw.k,type:SVK.draw.type,pts:SVK.draw.pts},Pp,true);}
+ // scale bar
+ var sb=svU()*(SV.units=='m'?1:10);while(sb*SVK.sc<60)sb*=2;while(sb*SVK.sc>160)sb/=2;c.fillStyle='rgba(247,245,239,.9)';c.fillRect(8,H-92,sb*SVK.sc+60,24);c.strokeStyle='#1d2a22';c.lineWidth=2;c.beginPath();c.moveTo(14,H-74);c.lineTo(14+sb*SVK.sc,H-74);c.moveTo(14,H-79);c.lineTo(14,H-69);c.moveTo(14+sb*SVK.sc,H-79);c.lineTo(14+sb*SVK.sc,H-69);c.stroke();
+ c.fillStyle='#1d2a22';c.font='11px system-ui,sans-serif';c.fillText(svL(sb,0)+' '+svUn(),20+sb*SVK.sc,H-71);
+ if(SVK.view=='plan'){c.fillStyle='#1d2a22';c.font='700 13px system-ui';c.fillText('N ↑',W-36,22);}else{c.fillStyle='#1d2a22';c.font='600 12px system-ui';c.fillText('Extended profile',W-110,20);}}
+function svProfDir(st,R){var e=R.edges.filter(function(x){return x.a==st||x.b==st;})[0];if(!e)return null;var h=Math.hypot(e.v[0],e.v[1])||1;var s=e.ext=='L'?-1:1;return[e.v[0]/h,e.v[1]/h,s];}
+// item anchored to the station nearest where it was drawn: if that station moves (a shot fixed), the item moves with it
+function svAnchor(pts){var R=svPts(),best=null,bd=1e18,src=SVK.view=='plan'?R.R.P:R.R.X;Object.keys(src).forEach(function(st){var p=R.pos(st),d=Math.hypot(p[0]-pts[0][0],p[1]-pts[0][1]);if(d<bd){bd=d;best=st;}});return best?{st:best,at:R.pos(best)}:null;}
+function svShift(it,Pp){if(!it.st||!it.at)return[0,0];var p=Pp.pos(it.st);if(!p)return[0,0];return[p[0]-it.at[0],p[1]-it.at[1]];}
+function svDrawItem(c,it,Pp,live){var sh=live?[0,0]:svShift(it,Pp),pts=(it.pts||[]).map(function(p){return w2s([p[0]+sh[0],p[1]+sh[1]]);});
+ if(it.k=='line')svDrawLine(c,it.type,pts);else if(it.k=='area')svDrawArea(c,it.type,pts);else if(it.k=='point'){var p=w2s([it.x+sh[0],it.y+sh[1]]);svDrawPoint(c,it.type,p[0],p[1],it.rot||0,it.text||'');}}
+function svPath(c,pts,close){c.beginPath();pts.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});if(close)c.closePath();}
+function svTicks(c,pts,every,len,side,dash){var acc=0;for(var i=1;i<pts.length;i++){var a=pts[i-1],b=pts[i],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);if(!L)continue;var nx=-dy/L*side,ny=dx/L*side,t=(every-acc);
+  while(t<=L){var x=a[0]+dx*t/L,y=a[1]+dy*t/L;c.moveTo(x,y);c.lineTo(x+nx*len,y+ny*len);t+=every;}acc=(acc+L)%every;}}
+function svArrowHead(c,a,b,size){var dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;c.beginPath();c.moveTo(b[0],b[1]);c.lineTo(b[0]-ux*size-uy*size*.5,b[1]-uy*size+ux*size*.5);c.lineTo(b[0]-ux*size+uy*size*.5,b[1]-uy*size-ux*size*.5);c.closePath();c.fill();}
+function svDrawLine(c,t,pts){if(pts.length<2)return;c.save();c.lineJoin='round';c.lineCap='round';var ink='#1d2a22',blue='#1e6fd9';c.setLineDash([]);
+ if(t=='wall'||t=='survey_wall'){c.strokeStyle=ink;c.lineWidth=t=='wall'?2.2:1.2;if(t=='survey_wall')c.setLineDash([2,3]);svPath(c,pts);c.stroke();}
+ else if(t=='wall_lower'){c.strokeStyle=ink;c.lineWidth=1.6;c.setLineDash([7,5]);svPath(c,pts);c.stroke();}
+ else if(t=='wall_inferred'){c.strokeStyle=ink;c.lineWidth=1.4;c.setLineDash([2,4]);svPath(c,pts);c.stroke();}
+ else if(t=='floor_step'){c.strokeStyle=ink;c.lineWidth=1.4;svPath(c,pts);c.stroke();c.beginPath();svTicks(c,pts,8,5,1);c.stroke();}
+ else if(t=='ceiling_step'){c.strokeStyle=ink;c.lineWidth=1.4;c.setLineDash([6,4]);svPath(c,pts);c.stroke();c.setLineDash([]);c.beginPath();svTicks(c,pts,10,5,1);c.stroke();}
+ else if(t=='pit'){c.strokeStyle=ink;c.lineWidth=1.6;svPath(c,pts);c.stroke();c.lineWidth=1.1;c.beginPath();svTicks(c,pts,6,9,1);c.stroke();}
+ else if(t=='dome'){c.strokeStyle=ink;c.lineWidth=1.3;c.setLineDash([5,4]);svPath(c,pts);c.stroke();c.setLineDash([]);c.lineWidth=1;c.beginPath();svTicks(c,pts,7,7,-1);c.stroke();}
+ else if(t=='drip'){c.strokeStyle=ink;c.lineWidth=1.6;c.setLineDash([1,5]);svPath(c,pts);c.stroke();}
+ else if(t=='water_edge'){c.strokeStyle=blue;c.lineWidth=1.6;svPath(c,pts);c.stroke();}
+ else if(t=='stream'){c.strokeStyle=blue;c.fillStyle=blue;c.lineWidth=1.8;svPath(c,pts);c.stroke();svArrowHead(c,pts[pts.length-2],pts[pts.length-1],9);}
+ else if(t=='rock'){c.strokeStyle=ink;c.lineWidth=1.1;svPath(c,pts);c.stroke();}
+ else if(t=='slope'){c.strokeStyle=ink;c.lineWidth=1;svPath(c,pts);c.stroke();c.beginPath();svTicks(c,pts,9,4,1);svTicks(c,pts,18,9,1);c.stroke();}
+ else{c.strokeStyle=ink;c.lineWidth=1.5;svPath(c,pts);c.stroke();}
+ c.restore();}
+var SVPAT={};
+function svPattern(c,t){if(SVPAT[t])return SVPAT[t];var p=document.createElement('canvas'),s=t=='breakdown'?28:t=='sump'||t=='ice'?10:12;p.width=p.height=s;var x=p.getContext('2d');x.strokeStyle=x.fillStyle=t=='sump'||t=='water'||t=='ice'?'#1e6fd9':'#1d2a22';x.lineWidth=1;
+ if(t=='sand'){[[2,3],[8,2],[5,8],[10,9],[1,10]].forEach(function(d){x.fillRect(d[0],d[1],1.2,1.2);});}
+ else if(t=='gravel'){[[3,3],[9,8]].forEach(function(d){x.beginPath();x.arc(d[0],d[1],1.8,0,7);x.stroke();});}
+ else if(t=='mud'){x.beginPath();x.moveTo(1,3);x.lineTo(5,3);x.moveTo(7,9);x.lineTo(11,9);x.stroke();}
+ else if(t=='breakdown'){x.beginPath();x.moveTo(3,9);x.lineTo(9,3);x.lineTo(12,10);x.closePath();x.moveTo(15,20);x.lineTo(23,16);x.lineTo(22,25);x.lineTo(16,25);x.closePath();x.stroke();}
+ else if(t=='sump'){x.globalAlpha=.7;x.beginPath();x.moveTo(0,10);x.lineTo(10,0);x.moveTo(0,0);x.lineTo(10,10);x.stroke();}
+ else if(t=='flowstone'){x.beginPath();x.moveTo(0,6);x.quadraticCurveTo(3,3,6,6);x.quadraticCurveTo(9,9,12,6);x.stroke();}
+ else if(t=='guano'){[[2,2],[3,4],[8,7],[9,9],[5,10]].forEach(function(d){x.fillRect(d[0],d[1],1.6,1.6);});}
+ else if(t=='ice'){x.beginPath();x.moveTo(5,1);x.lineTo(5,9);x.moveTo(1,5);x.lineTo(9,5);x.stroke();}
+ SVPAT[t]=c.createPattern(p,'repeat');return SVPAT[t];}
+function svDrawArea(c,t,pts){if(pts.length<3){svDrawLine(c,'rock',pts);return;}c.save();svPath(c,pts,true);
+ if(t=='water'){c.fillStyle='rgba(30,111,217,.22)';c.fill();c.strokeStyle='#1e6fd9';c.lineWidth=1.2;c.stroke();}
+ else if(t=='pillar'){c.fillStyle='#1d2a22';c.fill();}
+ else{if(t=='sump'){c.fillStyle='rgba(30,111,217,.18)';c.fill();}c.fillStyle=svPattern(c,t);c.fill();c.strokeStyle='rgba(29,42,34,.35)';c.lineWidth=.8;c.setLineDash([3,3]);c.stroke();}
+ c.restore();}
+function svDrawPoint(c,t,x,y,rot,text){c.save();c.translate(x,y);var ink='#1d2a22',blue='#1e6fd9';c.strokeStyle=c.fillStyle=ink;c.lineWidth=1.4;c.lineCap='round';c.font='600 12px system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';
+ function L(a,b,d,e){c.moveTo(a,b);c.lineTo(d,e);}
+ if(SVDIR[t])c.rotate(rot);
+ if(t=='stal'){c.beginPath();L(0,7,0,-2);L(0,-2,-5,-8);L(0,-2,5,-8);c.stroke();}                       // stalactites: Y
+ else if(t=='stag'){c.beginPath();L(0,-7,0,2);L(0,2,-5,8);L(0,2,5,8);c.stroke();}                       // stalagmites: upside-down Y
+ else if(t=='column'){c.beginPath();L(0,-8,0,8);L(-5,-8,5,-8);L(-5,8,5,8);c.stroke();}
+ else if(t=='straws'){c.beginPath();[-4,0,4].forEach(function(dx){L(dx,-6,dx,4);});c.stroke();}
+ else if(t=='helictite'){c.beginPath();c.moveTo(0,7);c.bezierCurveTo(-6,2,6,-2,0,-7);c.stroke();}
+ else if(t=='rimstone'){c.beginPath();c.arc(0,4,8,Math.PI*1.15,Math.PI*1.85);c.stroke();c.beginPath();c.arc(0,9,8,Math.PI*1.15,Math.PI*1.85);c.stroke();}
+ else if(t=='pearls'){c.beginPath();c.arc(0,0,7,0,7);c.stroke();[[-2,-1],[2,1],[0,3]].forEach(function(d){c.beginPath();c.arc(d[0],d[1],1.3,0,7);c.fill();});}
+ else if(t=='popcorn'){[[-4,-2],[0,-4],[4,-1],[-2,3],[3,4]].forEach(function(d){c.beginPath();c.arc(d[0],d[1],1.6,0,7);c.stroke();});}
+ else if(t=='airflow'){c.beginPath();L(-12,0,10,0);c.stroke();svArrowHead(c,[-12,0],[12,0],7);c.beginPath();L(-12,0,-16,-5);L(-8,0,-12,-5);c.stroke();}            // arrow with barbed tail
+ else if(t=='waterflow'){c.strokeStyle=c.fillStyle=blue;c.beginPath();L(-12,0,10,0);c.stroke();svArrowHead(c,[-12,0],[12,0],7);}
+ else if(t=='slope_arrow'){c.beginPath();L(-12,0,10,0);L(-12,-4,-12,4);c.stroke();svArrowHead(c,[-12,0],[12,0],7);}
+ else if(t=='drip_pt'){c.strokeStyle=c.fillStyle=blue;c.beginPath();c.moveTo(0,-7);c.quadraticCurveTo(6,2,0,6);c.quadraticCurveTo(-6,2,0,-7);c.fill();}
+ else if(t=='pool_pt'){c.strokeStyle=blue;c.fillStyle='rgba(30,111,217,.25)';c.beginPath();c.ellipse(0,0,9,5,0,0,7);c.fill();c.stroke();}
+ else if(t=='pit_pt'){c.beginPath();c.arc(0,0,10,0,7);c.stroke();c.fillText(text||'',0,1);}                // depth in a circle (NSS)
+ else if(t=='dome_pt'){c.strokeRect(-10,-10,20,20);c.fillText(text||'',0,1);}                          // height in a square
+ else if(t=='ch'){c.fillText(text?text:'?',0,0);c.beginPath();L(-9,8,9,8);c.stroke();}                    // ceiling height
+ else if(t=='climb'){c.beginPath();L(-7,5,0,-6);L(0,-6,7,5);c.stroke();if(text)c.fillText(text,0,13);}
+ else if(t=='squeeze'){c.beginPath();c.arc(-9,0,7,-0.9,0.9);c.stroke();c.beginPath();c.arc(9,0,7,Math.PI-0.9,Math.PI+0.9);c.stroke();}
+ else if(t=='lead'){c.font='700 18px system-ui';c.fillText('?',0,1);}
+ else if(t=='entrance'){c.beginPath();L(-10,6,0,-8);L(0,-8,10,6);L(10,6,-10,6);c.stroke();c.beginPath();L(-5,6,-2,1);L(0,6,2,1);L(5,6,6,2);c.stroke();}
+ else if(t=='dig'){c.strokeRect(-6,-6,12,12);c.beginPath();L(-6,-6,6,6);L(6,-6,-6,6);c.stroke();}
+ else if(t=='hazard'){c.strokeStyle=c.fillStyle='#c0392b';c.beginPath();L(0,-9,9,7);L(9,7,-9,7);L(-9,7,0,-9);c.stroke();c.fillText('!',0,2);}
+ else if(t=='bats'){c.beginPath();c.moveTo(-10,-2);c.quadraticCurveTo(-5,-6,0,0);c.quadraticCurveTo(5,-6,10,-2);c.stroke();}
+ else if(t=='bones'){c.beginPath();L(-7,0,7,0);c.stroke();[-7,7].forEach(function(dx){c.beginPath();c.arc(dx,-2,2,0,7);c.arc(dx,2,2,0,7);c.fill();});}
+ else if(t=='boulder'){c.beginPath();c.moveTo(-8,3);c.lineTo(-4,-6);c.lineTo(5,-7);c.lineTo(9,1);c.lineTo(3,7);c.lineTo(-5,7);c.closePath();c.stroke();}
+ else if(t=='break_pt'){c.beginPath();c.moveTo(-7,5);c.lineTo(0,-7);c.lineTo(7,5);c.closePath();c.stroke();}
+ else if(t=='label'){c.textAlign='left';c.font='600 13px system-ui';c.fillText(text||'',0,0);}
+ else{c.beginPath();c.arc(0,0,3,0,7);c.fill();}
+ c.restore();}
+function svDrawXs(c,x,Pp){var p=Pp.pos(x.at);if(!p)return;var o=x.off||[3,3],sc=SVK.sc,base=w2s([p[0]+o[0],p[1]+o[1]]),st=w2s(p);
+ c.save();c.strokeStyle='rgba(26,152,80,.6)';c.setLineDash([3,3]);c.lineWidth=1;c.beginPath();c.moveTo(st[0],st[1]);c.lineTo(base[0],base[1]);c.stroke();c.setLineDash([]);
+ var pts=(x.pts||[]).filter(function(q){return q[2];});if(!pts.length)pts=x.pts||[];c.strokeStyle='#1d2a22';c.lineWidth=1.8;c.beginPath();pts.forEach(function(q,i){var X=base[0]+q[0]*sc,Y=base[1]-q[1]*sc;if(i)c.lineTo(X,Y);else c.moveTo(X,Y);});if(x.closed)c.closePath();c.stroke();
+ c.fillStyle='#c0392b';c.beginPath();c.arc(base[0],base[1],2.5,0,7);c.fill();c.fillStyle=SVA;c.font='600 10px system-ui';c.fillText('XS '+x.at,base[0]+4,base[1]+12);c.restore();}
+// palettes
+function svPal(kind){var list=kind=='line'?SVLINES:kind=='area'?SVAREAS:SVPOINTS,pal=$('svPal'),cur=SVK.type;var h='<div class="mut" style="font-size:12px;margin:0 0 4px 4px">'+(kind=='line'?'Lines':kind=='area'?'Areas':'Symbols')+' - NSS standard</div>';
+ list.forEach(function(o){h+='<button class="pi'+(cur==o[0]?' on':'')+'" data-y="'+o[0]+'"><canvas width="128" height="60"></canvas>'+esc(o[1])+'</button>';});pal.innerHTML=h;pal.style.display='block';
+ Array.prototype.forEach.call(pal.querySelectorAll('.pi'),function(b){var cv=b.querySelector('canvas'),c=cv.getContext('2d'),t=b.getAttribute('data-y');c.scale(2,2);c.fillStyle='#f7f5ef';c.fillRect(0,0,64,30);
+  if(kind=='line')svDrawLine(c,t,[[6,20],[22,12],[40,18],[58,9]]);else if(kind=='area')svDrawArea(c,t,[[6,4],[58,5],[55,26],[8,25]]);else svDrawPoint(c,t,32,15,0,t=='pit_pt'?'20':t=='dome_pt'?'15':t=='ch'?'4':t=='label'?'Abc':'');
+  b.onclick=function(){SVK.type=t;SVK.tool=kind;pal.style.display='none';svToolsOn();toast((kind=='point'&&SVDIR[t]?'Touch and drag the way it points: ':'')+b.textContent,1600);};});}
+function svLayers(){svDlg('<div class="big">Show</div>'+[['splays','Splays (guides for the walls)'],['names','Station names'],['grid','Grid']].map(function(o){return'<label class="lab" style="display:flex;color:var(--ink)"><input type="checkbox" id="ly_'+o[0]+'"'+(SVK[o[0]]?' checked':'')+'> '+o[1]+'</label>';}).join('')+
+ '<button class="btn" id="lyGo">Done</button>');$('lyGo').onclick=function(){['splays','names','grid'].forEach(function(k){SVK[k]=$('ly_'+k).checked;});svDlgClose();svDraw();};}
+// touch: one finger draws with the tool (✋ moves), two fingers always move and zoom
+function svHook(){var cv=SVK.cv,P=SVK.ptr;
+ cv.onpointerdown=function(e){cv.setPointerCapture(e.pointerId);P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);SVK.fit=false;
+  if(ids.length==2){if(SVK.draw){SVK.draw=null;}var a=P[ids[0]],b=P[ids[1]];SVK.pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),m:[(a[0]+b[0])/2,(a[1]+b[1])/2],sc:SVK.sc,ox:SVK.ox,oy:SVK.oy};return;}
+  var w=s2w(e.offsetX,e.offsetY);
+  if(SVK.tool=='move'){SVK.pan={x:e.offsetX,y:e.offsetY,ox:SVK.ox,oy:SVK.oy};}
+  else if(SVK.tool=='line'||SVK.tool=='area'){SVK.draw={k:SVK.tool,type:SVK.type||(SVK.tool=='line'?'wall':'water'),pts:[w]};}
+  else if(SVK.tool=='point'){SVK.draw={k:'point',type:SVK.type,pts:[w],x0:e.offsetX,y0:e.offsetY};}
+  else if(SVK.tool=='erase'){svErase(e.offsetX,e.offsetY);}};
+ cv.onpointermove=function(e){if(!P[e.pointerId])return;P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);
+  if(SVK.pinch&&ids.length>=2){var a=P[ids[0]],b=P[ids[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),m=[(a[0]+b[0])/2,(a[1]+b[1])/2],k=d/Math.max(10,SVK.pinch.d),pi=SVK.pinch;
+   var ns=Math.max(1,Math.min(800,pi.sc*k));var wx=(pi.m[0]-pi.ox)/pi.sc,wy=(pi.oy-pi.m[1])/pi.sc;SVK.sc=ns;SVK.ox=m[0]-wx*ns;SVK.oy=m[1]+wy*ns;svDraw();return;}
+  if(SVK.pan){SVK.ox=SVK.pan.ox+e.offsetX-SVK.pan.x;SVK.oy=SVK.pan.oy+e.offsetY-SVK.pan.y;svDraw();return;}
+  if(SVK.draw&&SVK.draw.k!='point'){var w=s2w(e.offsetX,e.offsetY),l=SVK.draw.pts[SVK.draw.pts.length-1];if(Math.hypot((w[0]-l[0])*SVK.sc,(w[1]-l[1])*SVK.sc)>2.5){SVK.draw.pts.push(w);svDraw();}}
+  else if(SVK.draw&&SVK.draw.k=='point'){SVK.draw.x1=e.offsetX;SVK.draw.y1=e.offsetY;}};
+ cv.onpointerup=cv.onpointercancel=function(e){delete P[e.pointerId];if(Object.keys(P).length<2)SVK.pinch=null;if(Object.keys(P).length)return;SVK.pan=null;
+  var d=SVK.draw;SVK.draw=null;if(!d){svDraw();return;}
+  if(d.k=='point'){var it={k:'point',type:d.type,x:d.pts[0][0],y:d.pts[0][1],rot:0};if(SVDIR[d.type]&&d.x1!=null&&Math.hypot(d.x1-d.x0,d.y1-d.y0)>8)it.rot=Math.atan2(d.y1-d.y0,d.x1-d.x0);
+   if(d.type=='pit_pt'||d.type=='dome_pt'||d.type=='ch'||d.type=='climb'||d.type=='label'){svAsk(d.type=='label'?'Text':d.type=='pit_pt'?'Pit depth ('+svUn()+')':d.type=='dome_pt'?'Dome height ('+svUn()+')':d.type=='ch'?'Ceiling height ('+svUn()+')':'Climb height ('+svUn()+', optional)','',function(v){if(v==null)return;it.text=v;svAddItem(it);});return;}
+   svAddItem(it);return;}
+  var pts=svSimplify(d.pts,1.6/SVK.sc);if(pts.length<2){svDraw();return;}svAddItem({k:d.k,type:d.type,pts:pts});};
+ cv.onwheel=function(e){e.preventDefault();var k=Math.exp(-e.deltaY*0.0015),ns=Math.max(1,Math.min(800,SVK.sc*k)),wx=(e.offsetX-SVK.ox)/SVK.sc,wy=(SVK.oy-e.offsetY)/SVK.sc;SVK.sc=ns;SVK.ox=e.offsetX-wx*ns;SVK.oy=e.offsetY+wy*ns;SVK.fit=false;svDraw();};}
+function svAsk(label,val,cb){svDlg('<div class="big">'+esc(label)+'</div><input id="askV" value="'+esc(val)+'"><button class="btn" id="askGo">OK</button><button class="btn alt" id="askNo">Cancel</button>');var i=$('askV');i.focus();
+ $('askGo').onclick=function(){svDlgClose();cb(i.value.trim());};$('askNo').onclick=function(){svDlgClose();cb(null);};i.onkeydown=function(e){if(e.key=='Enter')$('askGo').click();};}
+function svAddItem(it){var an=svAnchor(it.pts||[[it.x,it.y]]);if(an){it.st=an.st;it.at=an.at;}SV[SVK.view].push(it);SVUNDO[SVK.view].push({add:it});SVREDO[SVK.view]=[];svSaveSoon();svDraw();}
+function svErase(x,y){var Pp=svPts(),best=-1,bd=14,list=SV[SVK.view];list.forEach(function(it,i){var sh=svShift(it,Pp),pts=(it.pts||[[it.x,it.y]]).map(function(p){return w2s([p[0]+sh[0],p[1]+sh[1]]);});
+  for(var j=0;j<pts.length;j++){var d=j?svSegD(x,y,pts[j-1],pts[j]):Math.hypot(x-pts[0][0],y-pts[0][1]);if(d<bd){bd=d;best=i;}}});
+ if(best>=0){var it=list.splice(best,1)[0];SVUNDO[SVK.view].push({del:it,at:best});SVREDO[SVK.view]=[];svSaveSoon();svDraw();}}
+function svSegD(x,y,a,b){var dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy,t=L?Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/L)):0;return Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy);}
+function svUndo(dir){var v=SVK.view,from=dir>0?SVUNDO[v]:SVREDO[v],to=dir>0?SVREDO[v]:SVUNDO[v],op=from.pop();if(!op)return;var list=SV[v];
+ if(op.add){if(dir>0){var i=list.indexOf(op.add);if(i>=0)list.splice(i,1);}else list.push(op.add);}else if(op.del){if(dir>0)list.splice(op.at,0,op.del);else{var j=list.indexOf(op.del);if(j>=0)list.splice(j,1);}}
+ to.push(op);svSaveSoon();svDraw();}
+function svSimplify(pts,eps){if(pts.length<3)return pts;var keep=new Array(pts.length).fill(false);keep[0]=keep[pts.length-1]=true;(function rdp(a,b){var m=-1,md=0;for(var i=a+1;i<b;i++){var d=svSegD(pts[i][0],pts[i][1],pts[a],pts[b]);if(d>md){md=d;m=i;}}if(md>eps){keep[m]=true;rdp(a,m);rdp(m,b);}})(0,pts.length-1);
+ return pts.filter(function(p,i){return keep[i];}).map(function(p){return[Math.round(p[0]*1000)/1000,Math.round(p[1]*1000)/1000];});}
+function svLive(s){var e=$('svLive');if(!e||!s)return;e.innerHTML=(s.kind=='leg'?'<b style="color:'+SVA2+'">Leg '+esc(s.from)+' → '+esc(s.to)+'</b>':s.kind=='back'?'<b>Backsight '+esc(s.from)+' → '+esc(s.to)+'</b>':s.kind=='lrud'?'<b>LRUD '+esc(s.lrud)+' at '+esc(s.from)+'</b>':'Splay at <b>'+esc(s.from)+'</b>')+
+ ' &nbsp; '+svL(s.d)+' '+svUn()+' &nbsp; '+n1(s.az)+'° &nbsp; '+n1(s.cl)+'°'+(s.lbl=='3'?' &nbsp; <b style="color:'+SVA2+'">FSx3</b>':'');e.style.display='block';clearTimeout(svLive.t);svLive.t=setTimeout(function(){e.style.display='none';},4000);var a=$('svAt');if(a)a.textContent='📍 '+SV.cur;}
+// SVG of a view: legs, splays, stations, the sketch, cross sections - for Topside / CartoTable and Illustrator
+function svSvg(view){var keep=SVK.view,ks=[SVK.sc,SVK.ox,SVK.oy];SVK.view=view;var R=svReduce(),src=view=='plan'?R.P:R.X,pts=[];Object.keys(src).forEach(function(k){pts.push([src[k][0],src[k][1]]);});(SV[view]||[]).forEach(function(it){(it.pts||[[it.x,it.y]]).forEach(function(p){pts.push(p);});});
+ if(view=='plan')svXsBox(R,pts);if(!pts.length)pts=[[0,0]];var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(function(p){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);});var pad=5;x0-=pad;y0-=pad;x1+=pad;y1+=pad;
+ var S=20,W=Math.ceil((x1-x0)*S),H=Math.ceil((y1-y0)*S);SVK.sc=S;SVK.ox=-x0*S;SVK.oy=y1*S;
+ // drawn with the same canvas code into a recording context, written out as SVG paths
+ var rec=svSvgCtx(W,H);var Pp={R:R,pos:function(st){if(view=='plan'){var p=R.P[st];return p?[p[0],p[1]]:null;}var x=R.X[st];return x?[x[0],x[1]]:null;}};
+ if(view=='plan')SV.xs.forEach(function(x){svDrawXs(rec,x,Pp);});(SV[view]||[]).forEach(function(it){svDrawItem(rec,it,Pp);});
+ R.edges.forEach(function(e){var a=Pp.pos(e.a),b=Pp.pos(e.b);if(!a||!b)return;a=w2s(a);b=w2s(b);rec.strokeStyle='#c0392b';rec.lineWidth=2;rec.beginPath();rec.moveTo(a[0],a[1]);rec.lineTo(b[0],b[1]);rec.stroke();});
+ Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st));rec.fillStyle='#c0392b';rec.beginPath();rec.arc(p[0],p[1],3,0,7);rec.fill();rec.font='11px sans-serif';rec.fillStyle='#1d2a22';rec.fillText(st,p[0]+6,p[1]-6);});
+ SVK.view=keep;SVK.sc=ks[0];SVK.ox=ks[1];SVK.oy=ks[2];
+ return'<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">\n<!-- Topside survey '+esc(SV.name)+' - '+(view=='plan'?'plan':'extended profile')+', 1 m = '+S+' px'+(view=='plan'?', north up':'')+' -->\n<rect width="100%" height="100%" fill="#ffffff"/>\n'+rec.out.join('\n')+'\n</svg>\n';}
+function svSvgCtx(W,H){var o={out:[],strokeStyle:'#000',fillStyle:'#000',lineWidth:1,font:'11px sans-serif',textAlign:'left',textBaseline:'alphabetic',lineCap:'round',lineJoin:'round',globalAlpha:1,_d:'',_dash:[],_m:[[1,0,0,1,0,0]],_st:[]};
+ function T(x,y){var m=o._m[o._m.length-1];return[(m[0]*x+m[2]*y+m[4]).toFixed(2),(m[1]*x+m[3]*y+m[5]).toFixed(2)];}
+ o.save=function(){o._st.push({s:o.strokeStyle,f:o.fillStyle,w:o.lineWidth,d:o._dash.slice(),fo:o.font,ta:o.textAlign,tb:o.textBaseline});o._m.push(o._m[o._m.length-1].slice());};
+ o.restore=function(){var s=o._st.pop();if(s){o.strokeStyle=s.s;o.fillStyle=s.f;o.lineWidth=s.w;o._dash=s.d;o.font=s.fo;o.textAlign=s.ta;o.textBaseline=s.tb;}if(o._m.length>1)o._m.pop();};
+ o.translate=function(x,y){var m=o._m[o._m.length-1];m[4]+=m[0]*x+m[2]*y;m[5]+=m[1]*x+m[3]*y;};o.rotate=function(a){var m=o._m[o._m.length-1],c=Math.cos(a),s=Math.sin(a),n=[m[0]*c+m[2]*s,m[1]*c+m[3]*s,-m[0]*s+m[2]*c,-m[1]*s+m[3]*c,m[4],m[5]];o._m[o._m.length-1]=n;};o.scale=function(){};o.setTransform=function(){};
+ o.setLineDash=function(d){o._dash=d||[];};o.beginPath=function(){o._d='';};o.moveTo=function(x,y){var p=T(x,y);o._d+='M'+p[0]+' '+p[1];};o.lineTo=function(x,y){var p=T(x,y);o._d+='L'+p[0]+' '+p[1];};o.closePath=function(){o._d+='Z';};
+ o.quadraticCurveTo=function(a,b,x,y){var p=T(a,b),q=T(x,y);o._d+='Q'+p[0]+' '+p[1]+' '+q[0]+' '+q[1];};o.bezierCurveTo=function(a,b,c,d,x,y){var p=T(a,b),q=T(c,d),r=T(x,y);o._d+='C'+p.join(' ')+' '+q.join(' ')+' '+r.join(' ');};
+ o.arc=function(x,y,r,a0,a1){var n=Math.max(8,Math.ceil(Math.abs(a1-a0)/0.3));for(var i=0;i<=n;i++){var a=a0+(a1-a0)*i/n,p=T(x+r*Math.cos(a),y+r*Math.sin(a));o._d+=(i==0&&!o._d?'M':'L')+p[0]+' '+p[1];}};
+ o.ellipse=function(x,y,rx,ry,rot,a0,a1){var n=24;for(var i=0;i<=n;i++){var a=a0+(Math.min(a1,a0+Math.PI*2)-a0)*i/n,p=T(x+rx*Math.cos(a),y+ry*Math.sin(a));o._d+=(i==0?'M':'L')+p[0]+' '+p[1];}};
+ function col(c){return typeof c=='string'?c:'#1d2a22';}
+ o.stroke=function(){if(!o._d)return;o.out.push('<path d="'+o._d+'" fill="none" stroke="'+col(o.strokeStyle)+'" stroke-width="'+o.lineWidth+'" stroke-linecap="round" stroke-linejoin="round"'+(o._dash.length?' stroke-dasharray="'+o._dash.join(',')+'"':'')+'/>');};
+ o.fill=function(){if(!o._d)return;var f=typeof o.fillStyle=='string'?o.fillStyle:'none';if(typeof o.fillStyle!='string')o.out.push('<path d="'+o._d+'" fill="#1d2a22" fill-opacity="0.12"/>');else o.out.push('<path d="'+o._d+'" fill="'+f+'"/>');};
+ o.fillRect=function(x,y,w,h){var p=T(x,y);o.out.push('<rect x="'+p[0]+'" y="'+p[1]+'" width="'+w+'" height="'+h+'" fill="'+col(o.fillStyle)+'"/>');};o.strokeRect=function(x,y,w,h){o.beginPath();o.moveTo(x,y);o.lineTo(x+w,y);o.lineTo(x+w,y+h);o.lineTo(x,y+h);o.closePath();o.stroke();};
+ o.fillText=function(t,x,y){var p=T(x,y),sz=(String(o.font).match(/(\d+)px/)||[0,11])[1];o.out.push('<text x="'+p[0]+'" y="'+p[1]+'" font-family="sans-serif" font-size="'+sz+'" fill="'+col(o.fillStyle)+'"'+(o.textAlign=='center'?' text-anchor="middle"':'')+(o.textBaseline=='middle'?' dominant-baseline="middle"':'')+'>'+esc(t)+'</text>');};
+ o.createPattern=function(){return{};};return o;}
+// ======================================================================= the instrument (Android app: TopsideAndroid.ble*)
+function svBleOk(){return!!(window.TopsideAndroid&&typeof TopsideAndroid.bleScan=='function');}
+function svDevChip(){var c=$('svDevC');if(!c)return;var st=SVDEV.state;var narrow=window.innerWidth<620;c.textContent=st=='on'?'📡 '+(narrow&&SVDEV.info&&SVDEV.info.batt!=null?'':(SVDEV.name||'Connected'))+(SVDEV.info&&SVDEV.info.batt!=null?(narrow?'':' · ')+SVDEV.info.batt+'%':''):st=='connecting'?'📡 connecting…':svBleOk()?'📡 Connect':'⌨ Typed';
+ c.style.background=st=='on'?SVA:st=='connecting'?'#b7791f':'#3a4756';c.style.color='#fff';}
+function svDevSheet(){if(!svBleOk()){svDlg('<div class="big">Instrument</div><p>Shots from a Tacheo or SAP6 come in over Bluetooth in the <b>Topside app for Android</b>. '+(IOS?'iPhones don\'t let apps like this one use Bluetooth, so on an iPhone shots are typed (<b>Add a shot</b>).':'Here, type them with <b>Add a shot</b>.')+'</p>'+(ANDROID?'<a class="btn" href="Topside.apk" style="text-decoration:none">Get the Android app</a>':'')+'<button class="btn alt" id="dvNo">Close</button>');$('dvNo').onclick=svDlgClose;return;}
+ var on=SVDEV.state=='on',i=SVDEV.info||{};
+ var h='<div class="big">'+(on?'📡 '+esc(SVDEV.name):'Connect an instrument')+'</div>';
+ if(on){h+='<div class="card">'+(i.ver?'<div>'+esc(i.ver)+(i.sn?' · '+esc(i.sn):'')+'</div>':'<div class="mut">Asking the unit…</div>')+(i.batt!=null?'<div class="stat"><b>'+i.batt+'%</b> battery'+(i.shots?' · ~'+i.shots+' shots':'')+'</div>':'')+(i.health?'<div class="mut" style="font-size:12.5px">'+esc(i.health)+'</div>':'')+(i.cal?'<div class="mut" style="font-size:12.5px">Calibration accuracy '+esc(i.cal)+'</div>':'')+(i.trip?'<div class="mut" style="font-size:12.5px">This trip on the unit: '+esc(i.trip)+'</div>':'')+'</div>';
+  h+='<div class="k">Remote</div><button class="btn" id="dvShot">🎯 Take a shot</button><button class="btn alt" id="dvLon">🔴 Laser on</button><button class="btn alt" id="dvLoff">⚫ Laser off</button>';
+  h+='<div class="k">From the unit</div><button class="btn alt" id="dvXs">✚ Cross sections on the unit</button><button class="btn alt" id="dvInfo">↻ Battery and health</button><button class="btn alt" id="dvStn">📍 Send the station names</button>';
+  h+='<div class="k">This link</div><button class="btn alt" id="dvOff">Disconnect</button><button class="btn alt" id="dvTurnOff">⏻ Switch the unit off</button>';}
+ else{h+='<p class="mut">Switch the Tacheo on with <b>Bluetooth → Phone On</b>. A SAP6 works too.</p><div id="dvList"><p class="mut">Looking…</p></div><button class="btn alt" id="dvAgain">Look again</button>';}
+ h+='<button class="btn alt" id="dvNo">Close</button>';svDlg(h);var e;$('dvNo').onclick=svDlgClose;
+ if(on){$('dvShot').onclick=function(){svCmd(0x38);};$('dvLon').onclick=function(){svCmd(0x36);};$('dvLoff').onclick=function(){svCmd(0x37);};$('dvOff').onclick=function(){TopsideAndroid.bleDisconnect();localStorage.removeItem('ct-sv-dev');svDlgClose();};
+  $('dvTurnOff').onclick=function(){if(confirm('Switch the unit off?'))svCmd(0x34);};$('dvXs').onclick=svXsList;$('dvInfo').onclick=function(){svInfo().then(svDevSheet);};$('dvStn').onclick=function(){svTellStation(true);toast('Station names sent');};}
+ else{$('dvAgain').onclick=svScan;svScan();}}
+function svScan(){var l=$('dvList');if(l)l.innerHTML='<p class="mut">Looking… (10 s)</p>';SVDEV.found=[];var r=TopsideAndroid.bleScan(10);if(r&&r!='ok'&&l)l.innerHTML='<p>'+esc(r)+'</p>';}
+function svFoundShow(){var l=$('dvList');if(!l)return;if(!SVDEV.found.length){l.innerHTML='<p class="mut">Nothing yet. Is the unit on, with Bluetooth → Phone On?</p>';return;}
+ l.innerHTML=SVDEV.found.map(function(f,i){return'<div class="row" data-i="'+i+'"><div class="t">📡 '+esc(f.name||'Instrument')+'</div><div class="s">'+esc(f.addr)+(f.rssi?' · signal '+f.rssi:'')+'</div></div>';}).join('');
+ Array.prototype.forEach.call(l.querySelectorAll('.row'),function(r){r.onclick=function(){var f=SVDEV.found[+r.getAttribute('data-i')];svConnect(f.addr,f.name);svDlgClose();};});}
+function svConnect(addr,name){SVDEV.addr=addr;SVDEV.name=String(name||'').replace(/^SAP6_/,'');SVDEV.state='connecting';svDevChip();try{localStorage.setItem('ct-sv-dev',JSON.stringify({addr:addr,name:name}));}catch(e){}TopsideAndroid.bleConnect(addr);}
+function svCmd(b){if(SVDEV.state!='on'){svDevSheet();return;}TopsideAndroid.bleCmd(b);toast(b==0x38?'Shot asked for':b==0x36?'Laser on':b==0x37?'Laser off':b==0x34?'Switching off':'Sent',1200);}
+// the unit's console (Nordic UART, the same commands as over USB): one command at a time, its reply up to its end line
+function svAsk1(cmd,endRe,ms){return new Promise(function(ok){if(SVDEV.state!='on'||!TopsideAndroid.bleConsole)return ok(null);var w={re:endRe,lines:[],ok:ok,t:setTimeout(function(){done(true);},ms||6000)};
+ function done(to){var i=SVDEV.waiters.indexOf(w);if(i>=0)SVDEV.waiters.splice(i,1);clearTimeout(w.t);ok(to&&!w.lines.length?null:w.lines);}w.done=done;SVDEV.waiters.push(w);TopsideAndroid.bleConsole(cmd+'\r\n');});}
+function svRxLine(line){var w=SVDEV.waiters[0];if(!w)return;w.lines.push(line);if(w.re.test(line))w.done(false);}
+function svInfo(){return svAsk1('INFO',/^END/,8000).then(function(l){if(!l)return;var i=SVDEV.info||{};l.forEach(function(x){var p=x.split(' ');
+  if(p[0]=='VER')i.ver=x.slice(4);else if(p[0]=='SN')i.sn=p[1];else if(p[0]=='BATT'){i.batt=Math.round(+p[2]);i.shots=+p[3]||0;}else if(p[0]=='CAL')i.cal=(+p[2]).toFixed(2)+'°';else if(p[0]=='TRIP')i.trip=p[1]+' legs, '+svL(+p[2],0)+' '+svUn()+', '+p[3]+' LRUDs';else if(/^HEALTH|^CALQ/.test(p[0]))i.health=x;});
+ SVDEV.info=i;svDevChip();});}
+// the station names: the unit shows the station it's at and names its own legs to match (STNAT, STNSET; firmware 1.13+)
+function svTellStation(force){if(SVDEV.state!='on'||!SV||!TopsideAndroid.bleConsole)return;var pre=(SV.prefix||'').replace(/[^A-Za-z]/g,'');var p=pre&&(force||!svTellStation.sent)?svAsk1('STNSET='+pre,/^OK|^ERR|^STN |^\?\?/,4000):Promise.resolve();svTellStation.sent=1;
+ p.then(function(){return svAsk1('STNAT='+SV.cur,/^OK|^ERR|^STN |^\?\?/,4000);});}
+// cross sections: XSEC? (the list), XSEC=id (one: XP i,t,d,u,v,ex,ey,ez,kept), placed at their station in the plan
+function svXsList(){svDlg('<div class="big">Cross sections on the unit</div><div id="xsL"><p class="mut">Asking the unit…</p></div><button class="btn alt" id="xsNo">Close</button>');$('xsNo').onclick=svDlgClose;
+ svAsk1('XSEC?',/^XSEC end/,8000).then(function(l){var el=$('xsL');if(!el)return;if(!l){el.innerHTML='<p>The unit didn\'t answer (firmware 1.16.47 or newer has cross sections).</p>';return;}
+  var xs=l.filter(function(x){return /^XS /.test(x);}).map(function(x){var o={};x.slice(3).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=kv.slice(i+1);});return o;});
+  if(!xs.length){el.innerHTML='<p class="mut">None saved on the unit. Take one with Tools → Cross section.</p>';return;}
+  el.innerHTML=xs.map(function(o){var have=SV.xs.some(function(x){return x.id==o.id&&x.sn==(SVDEV.info&&SVDEV.info.sn);});return'<div class="row" data-id="'+esc(o.id)+'"><div class="t">At '+esc(o.at=='-'?'?':o.at)+' · '+svL(+o.w,1)+' × '+svL(+o.h,1)+' '+svUn()+(have?' · <span style="color:'+SVA2+'">in the sketch</span>':'')+'</div><div class="s">'+(o.epoch>0?new Date(o.epoch*1000).toLocaleString():'')+' · '+esc(o.pts)+' readings</div></div>';}).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('.row'),function(r){r.onclick=function(){svXsGet(r.getAttribute('data-id'));};});});}
+function svXsGet(id){toast('Fetching the cross section…',4000);svAsk1('XSEC='+id,/^XSEC (end|none)/,15000).then(function(l){if(!l||l.some(function(x){return /^XSEC none/.test(x);})){toast('The unit didn\'t send it');return;}
+ var hd={},pts=[];l.forEach(function(x){if(/^XSH /.test(x))x.slice(4).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)hd[kv.slice(0,i)]=kv.slice(i+1);});else if(/^XP /.test(x)){var f=x.slice(3).split(',');if(f.length>=9)pts.push([+f[3],+f[4],f[8]=='1'?1:0]);}});
+ var at=hd.at&&hd.at!='-'?hd.at:SV.cur,sn=SVDEV.info&&SVDEV.info.sn;SV.xs=SV.xs.filter(function(x){return!(x.id==id&&x.sn==sn);});
+ SV.xs.push({id:id,sn:sn,at:at,w:+hd.w||0,h:+hd.h||0,closed:hd.closed=='1',pts:pts,off:[(+hd.w||3)*0.8+2,0],t:Date.now()});svSaveSoon();svDlgClose();SVK.fit=true;toast('Cross section at '+esc(at)+' added to the plan');if(SVVIEW!='plan')svView('plan');else svDraw();});}
+// events from the Android app
+window.svBle=function(kind,data){try{if(typeof data=='string'&&kind!='rx'){try{data=JSON.parse(data);}catch(e){}}
+ if(kind=='found'){if(!SVDEV.found)SVDEV.found=[];if(!SVDEV.found.some(function(f){return f.addr==data.addr;}))SVDEV.found.push(data);svFoundShow();}
+ else if(kind=='scanDone'){svFoundShow();}
+ else if(kind=='state'){SVDEV.state=data.state=='connected'?'on':data.state=='connecting'?'connecting':'off';if(data.name)SVDEV.name=String(data.name).replace(/^SAP6_/,'');svDevChip();
+  if(SVDEV.state=='on'){toast('📡 Connected to '+esc(SVDEV.name),2500);setTimeout(function(){svInfo().then(function(){svTellStation(true);});},600);}else if(data.state=='disconnected'&&data.msg)toast('📡 '+esc(data.msg),4000);
+  if(SVVIEW=='data'&&SV)svDataShow();}
+ else if(kind=='leg'){if(!SV){toast('A shot came in - open a survey to keep it',3000);return;}var s=svAddShot({d:+data.dist,az:az360(+data.az),cl:+data.cl,roll:+data.roll,lbl:data.label||''});if(navigator.vibrate)navigator.vibrate(s.kind=='leg'?[40,60,40]:30);}
+ else if(kind=='rx'){SVDEV.rx+=String(data);var i;while((i=SVDEV.rx.search(/\r?\n/))>=0){var line=SVDEV.rx.slice(0,i).replace(/\r$/,'');SVDEV.rx=SVDEV.rx.slice(i+1).replace(/^\n/,'');if(line)svRxLine(line);}}
+ }catch(e){toast('Bluetooth: '+esc(e.message));}};
+// reconnect to the last instrument when a survey opens
+function svAutoConnect(){if(!svBleOk()||SVDEV.state!='off')return;var d=load2('ct-sv-dev');if(d&&d.addr)svConnect(d.addr,d.name);}
+// for testing and for anyone looking in from the console: the open survey as it stands
+window.svState=function(){return SV?{sv:SV,legs:svLegs(),dev:{state:SVDEV.state,name:SVDEV.name,info:SVDEV.info}}:null;};
+/*SURVEY:END*/
 // ---- Why the computer can't be reached, and what to do (Sully, 16 Nov 2026: "If a person doesn't have the remote app thingy you talked of,
 // detect it and tell them, then give them instructions on how to get it and use it" / "For example, I dont"). What is known: whether the
 // computer has Tailscale (its addresses, from its last hello), and on the Android app 1.5+ the phone's own network and whether Tailscale is
