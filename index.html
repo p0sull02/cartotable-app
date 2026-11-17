@@ -1871,6 +1871,7 @@ function svDraw(){if(!SVK.cv||!$('svCv'))return;var c=SVK.ctx,W=SVK.cv.width/dpr
   if(st==SV.cur){c.strokeStyle=SVA;c.lineWidth=1.5;c.beginPath();c.arc(p[0],p[1],9,0,7);c.stroke();}
   if(SVK.names){c.font=(st==SV.cur?'700 ':'600 ')+'11px system-ui,sans-serif';c.fillStyle='#1d2a22';c.fillText(st,p[0]+6,p[1]-6);}});
  if(SVK.draw&&SVK.draw.pts.length>1){svDrawItem(c,{k:SVK.draw.k,type:SVK.draw.type,pts:SVK.draw.pts,col:SVK.draw.col,w:SVK.draw.w},Pp,true);}
+ if(SVK.cutDraw){var ca=w2s(SVK.cutDraw.a),cb=w2s(SVK.cutDraw.b);c.save();c.strokeStyle=SVA;c.lineWidth=2.5;c.setLineDash([7,5]);c.beginPath();c.moveTo(ca[0],ca[1]);c.lineTo(cb[0],cb[1]);c.stroke();c.setLineDash([]);c.fillStyle=SVA;c.beginPath();c.arc(cb[0],cb[1],5,0,7);c.fill();c.restore();}
  if(SVK.rub)svDrawRub(c);
  svScaleBar(c,W,H);
  if(SVK.view=='plan'){c.fillStyle='#1d2a22';c.font='700 13px system-ui';c.fillText('N ↑',W-36,22);}else{c.fillStyle='#1d2a22';c.font='600 12px system-ui';c.fillText('Extended profile',W-110,20);}}
@@ -1931,7 +1932,9 @@ function svLrudAt(st){var o={L:0,R:0,U:0,D:0},any=false;SV.shots.forEach(functio
 function svXsBounds(sh){var b=[1e9,-1e9,1e9,-1e9];sh.lines.forEach(function(l){l.forEach(function(p){b[0]=Math.min(b[0],p[0]);b[1]=Math.max(b[1],p[0]);b[2]=Math.min(b[2],p[1]);b[3]=Math.max(b[3],p[1]);});});if(b[0]>b[1])b=[-0.5,0.5,-0.5,0.5];return b;}
 // how the cut lies in the view: cr along the cut, vd the way it looks (both in the view's world coordinates), and the cut's extent along cr
 function svXsCut(x,R,Pp){var view=x.view||'plan',sh=svXsShape(x),b=svXsBounds(sh),w=b[1]-b[0],pad,lo,hi,cr,vd;
- if(view=='plan'){var fr=svXsFrame(x.at,R);cr=fr.r;vd=fr.f;if(x.src=='unit'&&x.az!=null){var a=(x.az+(SV.decl||0))*Math.PI/180;vd=[Math.sin(a),Math.cos(a)];cr=[vd[1],-vd[0]];}lo=b[0];hi=b[1];}
+ if(view=='plan'){var fr=svXsFrame(x.at,R);cr=fr.r;vd=fr.f;if(x.src=='unit'&&x.az!=null){var a=(x.az+(SV.decl||0))*Math.PI/180;vd=[Math.sin(a),Math.cos(a)];cr=[vd[1],-vd[0]];}
+  if(x.cr){cr=x.cr;vd=[x.cr[1],-x.cr[0]];if(vd[0]*fr.f[0]+vd[1]*fr.f[1]<0)vd=[-vd[0],-vd[1]];}   // 17 Nov: the cut drawn across the passage by hand (Receive a cross section)
+  lo=b[0];hi=b[1];}
  else{var dir=svProfDir(x.at,R)||[1,0,1];if(x.hz){cr=[1,0];vd=[0,-1];var pd=[dir[0]*dir[2],dir[1]*dir[2]],s=[];sh.lines.forEach(function(l){l.forEach(function(p){s.push(p[0]*pd[0]+p[1]*pd[1]);});});lo=Math.min.apply(null,s.length?s:[-0.5]);hi=Math.max.apply(null,s.length?s:[0.5]);w=hi-lo;}
   else{cr=[0,1];vd=[dir[2]||1,0];lo=b[2];hi=b[3];w=hi-lo;}}
  if(x.flip){vd=[-vd[0],-vd[1]];}
@@ -1987,7 +1990,7 @@ function svXsArt(c,x,sh,cx,cy,k){var b=svXsBounds(sh),mx=(b[0]+b[1])/2,my=(b[2]+
  // the height bar on the right, the station's name above
  var bx=X1+band+3.5*P;c.lineWidth=0.54*P;c.beginPath();c.moveTo(bx,Y0);c.lineTo(bx,Y1);c.moveTo(bx-1.9*P,Y0);c.lineTo(bx+1.9*P,Y0);c.moveTo(bx-1.9*P,Y1);c.lineTo(bx+1.9*P,Y1);c.stroke();
  var fs=Math.round(6.5*P),hgt=b[3]-b[2];c.fillStyle='#1d2a22';c.font=fs+'px system-ui,sans-serif';c.textAlign='left';c.textBaseline='alphabetic';c.fillText(svL(hgt,hgt*(SV.units=='m'?1:1/FT)<10?1:0),bx+2.5*P,(Y0+Y1)/2+0.358*fs);
- c.textAlign='center';c.font='600 '+Math.round(7*P)+'px system-ui,sans-serif';c.fillText(x.at+(x.hz?' (looking down)':''),cx,Y0-band-3*P);c.textAlign='left';
+ c.textAlign='center';c.font='600 '+Math.round(7*P)+'px system-ui,sans-serif';c.fillText(x.at+(x.hz?' (looking down)':'')+(x.src=='wait'?' - waiting for the Tacheo':''),cx,Y0-band-3*P);c.textAlign='left';
  c.restore();return[X0-band,X1+band+3.5*P+fs*2,Y0-band-10*P,Math.max(bot,Y1)];}
 // a straight piece drawn only where it is outside the passage polygon
 function svClipSeg(c,a,b,poly){if(poly.length<3){c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);return;}var ts=[0,1],dx=b[0]-a[0],dy=b[1]-a[1];
@@ -2056,14 +2059,55 @@ function svUndoShot(){var s=SV.shots.pop();if(!s)return;if(s.grp&&(s.kind=='leg'
  svSaveSoon();svRefresh();toast('Reading taken back',1500);}
 function svCompass(cb){var on=true;function h(e){if(!on)return;var v=e.webkitCompassHeading!=null?e.webkitCompassHeading:e.absolute||e.type=='deviceorientationabsolute'?360-(e.alpha||0):null;if(v!=null)cb((v+360)%360);}
  window.addEventListener('deviceorientationabsolute',h);window.addEventListener('deviceorientation',h);return function(){on=false;window.removeEventListener('deviceorientationabsolute',h);window.removeEventListener('deviceorientation',h);};}
+// ======================================================================= Receive a cross section from the Tacheo (17 Nov 2026)
+// Sully: "tap on a station, click Receive Cross Section ... draw a leader line across a passage (have it automatically standardize the leader
+// lines directional indicator size and space between the wall and the edge of the sliced leader line), then the app will say 'waiting to
+// receive cross section from Tacheo' ... when the app receives ... the cross section it'll auto paste the cross section on the sketch".
+// The drawn line sets only the cut's direction and the side the section goes (where the finger is lifted); the cut itself is drawn the
+// standard way (svDrawXs: a gap of max(0.3 m, 15 %) past the walls, the 4.5 pt corner tick looking up the survey, the 4 pt leader stub).
+// While waiting the unit's list (XSEC?) is read every 2.5 s; the first section that wasn't there before is fetched (XSEC=id) and put in.
+var SVRX=null;
+function svXsRxStart(st){if(SVK.view!='plan')svView('plan');svXsRxStop(true);
+ SVRX={st:st,known:null,prevTool:SVK.tool,x:null,timer:null};SVK.tool='cut';svToolsOn();svRxPoll();
+ svRxBar('✏ Drag across the passage at <b>'+esc(st)+'</b> - lift your finger on the side the section should go',true);svDraw();}
+function svXsRxCut(cd){if(!SVRX||SVRX.x)return;var st=SVRX.st,R=svReduce(),p=R.P[st];if(!p){svXsRxStop();return;}
+ var dx=cd.b[0]-cd.a[0],dy=cd.b[1]-cd.a[1],L=Math.hypot(dx,dy);if(L*SVK.sc<25){toast('Drag a line across the passage at '+esc(st),2200);return;}
+ var cr=[dx/L,dy/L],t=(cd.b[0]-p[0])*cr[0]+(cd.b[1]-p[1])*cr[1];
+ var x={id:'r'+Date.now().toString(36),src:'wait',at:st,view:'plan',cr:cr,side:t>=0?1:-1,sk:[],t:Date.now()};
+ SV.xs.push(x);svXsPlace(x);svOp({xsadd:x});SVRX.x=x;SVK.tool=SVRX.prevTool||'move';svToolsOn();svRxStatus();svDraw();}
+function svRxStatus(){if(!SVRX||!SVRX.x)return;var u=svPrimary();
+ svRxBar(u?'📡 Waiting for a cross section from <b>'+esc(svShort(u))+'</b> for '+esc(SVRX.st)+' - take it on the Tacheo (Tools → Cross section)':'📡 Waiting for a cross section for '+esc(SVRX.st)+' - connect a Tacheo with 📡, then take it on the unit',true);}
+function svRxPoll(){if(!SVRX)return;clearTimeout(SVRX.timer);if(!SV||(SVRX.x&&SV.xs.indexOf(SVRX.x)<0)){SVRX=null;svRxBar(null);return;}var u=svPrimary();
+ if(!u){if(SVRX.x)svRxStatus();SVRX.timer=setTimeout(svRxPoll,3000);return;}
+ svAsk1('XSEC?',/^XSEC end/,6000,u).then(function(l){if(!SVRX)return;
+  var ids=(l||[]).filter(function(x){return /^XS /.test(x);}).map(function(x){var m=x.match(/\bid=(\S+)/);return m?m[1]:null;}).filter(function(v){return v!=null;});
+  var key=(u.info&&u.info.sn)||u.addr||'';
+  if(l&&(!SVRX.known||SVRX.known.key!==key)){SVRX.known={key:key,ids:ids};}
+  else if(l&&SVRX.x){var fresh=ids.filter(function(i){return SVRX.known.ids.indexOf(i)<0;});if(fresh.length){svRxFetch(fresh[fresh.length-1],u);return;}}
+  if(SVRX.x)svRxStatus();SVRX.timer=setTimeout(svRxPoll,2500);});}
+function svRxFetch(id,u){var x=SVRX&&SVRX.x;if(!x)return;svRxBar('📡 Receiving the cross section…',false);
+ svAsk1('XSEC='+id,/^XSEC (end|none)/,15000,u).then(function(l){if(!SVRX||SVRX.x!==x)return;
+  if(!l||l.some(function(v){return /^XSEC none/.test(v);})){SVRX.known.ids.push(id);svRxStatus();SVRX.timer=setTimeout(svRxPoll,2500);return;}
+  var hd={},pts=[];l.forEach(function(v){if(/^XSH /.test(v))v.slice(4).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)hd[kv.slice(0,i)]=kv.slice(i+1);});else if(/^XP /.test(v)){var f=v.slice(3).split(',');if(f.length>=9)pts.push([+f[3],+f[4],f[8]=='1'?1:0]);}});
+  if(pts.length<3){SVRX.known.ids.push(id);toast('That section came without its outline - take it again',3000);svRxStatus();SVRX.timer=setTimeout(svRxPoll,2500);return;}
+  var before=svClone(x),sn=u&&u.info&&u.info.sn;
+  x.id=id;x.sn=sn;x.src='unit';x.w=+hd.w||0;x.h=+hd.h||0;x.closed=hd.closed=='1';x.pts=pts;x.off=null;svXsPlace(x);svXsOp(x,before);
+  if(navigator.vibrate)navigator.vibrate([30,60,30]);toast('📡 Cross section from '+esc(svShort(u))+' put in at '+esc(x.at),2600);svXsRxStop(true);svDraw();});}
+function svXsRxStop(quiet){if(!SVRX)return;clearTimeout(SVRX.timer);var x=SVRX.x;
+ if(x&&x.src=='wait'){var i=SV.xs.indexOf(x);if(i>=0){SV.xs.splice(i,1);svOp({xsdel:x,at:i});}}
+ if(SVK.tool=='cut')SVK.tool=SVRX.prevTool||'move';SVRX=null;svRxBar(null);try{svToolsOn();}catch(e){}if(!quiet)toast('Stopped waiting for the cross section',1800);svDraw();}
+function svRxBar(html,cancel){var e=$('svRxBar');if(!html){if(e)e.remove();return;}
+ if(!e){e=document.createElement('div');e.id='svRxBar';e.style.cssText='position:fixed;left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top));z-index:40;background:#14301f;color:#fff;border:1px solid '+SVA+';border-radius:12px;padding:9px 12px;font-size:14px;max-width:calc(100% - 24px);display:flex;gap:10px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)';document.body.appendChild(e);}
+ e.innerHTML='<span style="flex:1">'+html+'</span>'+(cancel?'<button class="btn alt" id="svRxNo" style="margin:0;padding:6px 10px;width:auto">Cancel</button>':'');
+ if(cancel)$('svRxNo').onclick=function(){svXsRxStop();};}
 // ======================================================================= the station menu (tap a station with ✋)
 function svStnMenu(st){var sp=SV.shots.filter(function(s){return s.from==st&&(s.kind=='splay'||s.kind=='lrud');});
  svDlg('<div class="big">Station '+esc(st)+(st==SV.cur?' <span class="tg g" style="font-size:12px">active</span>':'')+'</div>'+
-  (st!=SV.cur?'<button class="btn" id="smAct">📍 Make it the active station (new shots go from here)</button>':'')+'<button class="btn alt" id="smCen">⌖ Centre here</button><button class="btn alt" id="smXs">✚ Cross section here</button>'+
+  (st!=SV.cur?'<button class="btn" id="smAct">📍 Make it the active station (new shots go from here)</button>':'')+'<button class="btn alt" id="smCen">⌖ Centre here</button><button class="btn alt" id="smXs">✚ Cross section here</button><button class="btn alt" id="smRx">📡 Receive a cross section from the Tacheo</button>'+
   (sp.length?'<div class="k">Splays at '+esc(st)+'</div><p class="mut" style="font-size:12px;margin:2px 0 6px">To wall: used for its cross section. Off: left out of the sketch, the sections and the exports.</p>'+sp.map(function(s){return'<div class="row" style="display:flex;align-items:center;gap:6px;cursor:default"><span style="flex:1;font-variant-numeric:tabular-nums">'+(s.kind=='lrud'?'<span class="tg">'+esc(s.lrud)+'</span> ':'')+svL(s.d)+' '+svUn()+' · '+n1(s.az)+'° · '+n1(s.cl)+'°</span><button class="chip" data-w="'+s.id+'" style="cursor:pointer;background:'+(s.wall?SVA:'#2a3542')+';color:#fff">to wall</button><button class="chip" data-o="'+s.id+'" style="cursor:pointer;background:'+(s.cmt?'#b7791f':'#2a3542')+';color:#fff">off</button></div>';}).join(''):'')+
   '<button class="btn alt" id="smNo">Close</button>');
  if($('smAct'))$('smAct').onclick=function(){SV.cur=st;svTellStation();svSaveSoon();svDlgClose();var a=$('svAt');if(a)a.textContent='📍 '+st;svDraw();toast('New shots go from '+esc(st),1600);};
- $('smCen').onclick=function(){svDlgClose();svCentre(st);};$('smXs').onclick=function(){svDlgClose();svXsNew(st);};$('smNo').onclick=svDlgClose;
+ $('smCen').onclick=function(){svDlgClose();svCentre(st);};$('smXs').onclick=function(){svDlgClose();svXsNew(st);};$('smRx').onclick=function(){svDlgClose();svXsRxStart(st);};$('smNo').onclick=svDlgClose;
  Array.prototype.forEach.call(document.querySelectorAll('[data-w],[data-o]'),function(b){b.onclick=function(){var id=b.getAttribute('data-w')||b.getAttribute('data-o'),s=SV.shots.filter(function(x){return x.id==id;})[0];if(!s)return;if(b.hasAttribute('data-w'))s.wall=!s.wall;else s.cmt=!s.cmt;svSaveSoon();svStnMenu(st);svDraw();};});}
 // ======================================================================= an item's menu (hold it, or tap it twice with ⬚)
 function svItemMenu(it){var kind=it.k,list=kind=='line'?SVLINES:kind=='area'?SVAREAS:kind=='point'?SVPOINTS:null,before=svClone(it);
@@ -2110,6 +2154,7 @@ function svHook(){var cv=SVK.cv,P=SVK.ptr;
   if(t=='move'){var xs=SVK.view!='xs'&&svHitXs(e.offsetX,e.offsetY);if(xs){SVK.drag={xs:xs,before:svClone(xs),w0:w,off0:(xs.off||[0,0]).slice()};}else SVK.pan={x:e.offsetX,y:e.offsetY,ox:SVK.ox,oy:SVK.oy};}
   else if(t=='line'||t=='area'||t=='pen'){var w1=t=='pen'?w:svSnapPt(w);SVK.draw={k:t,type:t=='pen'?'pen':SVK.type||(t=='line'?'wall':'water'),pts:[w1],col:SVK.pen&&SVK.pen.col,w:SVK.pen&&SVK.pen.w};
    SVK.hold=setTimeout(function(){if(SVK.down&&!SVK.down.moved){var it=svHit(SVK.down.x,SVK.down.y,16);if(it){SVK.draw=null;SVK.sel=it;svDraw();svItemMenu(it);}}},550);}
+  else if(t=='cut'){SVK.cutDraw={a:w,b:w};}
   else if(t=='point'){SVK.draw={k:'point',type:SVK.type,pts:[w],x0:e.offsetX,y0:e.offsetY};}
   else if(t=='select'){var sel=SVK.sel,Pp=svPts();if(sel&&sel.k!='point'){var wp=svWorldPts(sel,Pp).map(w2s),ni=-1,nd=16;wp.forEach(function(p,i){var d=Math.hypot(p[0]-e.offsetX,p[1]-e.offsetY);if(d<nd){nd=d;ni=i;}});if(ni>=0){SVK.drag={it:sel,node:ni,before:svClone(sel),w0:w};return;}}
    var it=svHit(e.offsetX,e.offsetY,16);if(it){var again=it===SVK.sel;SVK.sel=it;SVK.drag={it:it,before:svClone(it),w0:w,again:again};SVK.hold=setTimeout(function(){if(SVK.down&&!SVK.down.moved&&SVK.drag){SVK.drag=null;svItemMenu(it);}},550);}else SVK.sel=null;svDraw();}
@@ -2119,6 +2164,7 @@ function svHook(){var cv=SVK.cv,P=SVK.ptr;
   if(SVK.down&&Math.hypot(e.offsetX-SVK.down.x,e.offsetY-SVK.down.y)>6)SVK.down.moved=true;
   if(SVK.pinch&&ids.length>=2){var a=P[ids[0]],b=P[ids[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),m=[(a[0]+b[0])/2,(a[1]+b[1])/2],k=d/Math.max(10,SVK.pinch.d),pi=SVK.pinch;
    var ns=Math.max(1,Math.min(800,pi.sc*k));var wx=(pi.m[0]-pi.ox)/pi.sc,wy=(pi.oy-pi.m[1])/pi.sc;SVK.sc=ns;SVK.ox=m[0]-wx*ns;SVK.oy=m[1]+wy*ns;svDraw();return;}
+  if(SVK.cutDraw){SVK.cutDraw.b=s2w(e.offsetX,e.offsetY);svDraw();return;}
   if(SVK.pan){if(SVK.down&&SVK.down.moved){SVK.ox=SVK.pan.ox+e.offsetX-SVK.pan.x;SVK.oy=SVK.pan.oy+e.offsetY-SVK.pan.y;svDraw();}return;}
   var w=s2w(e.offsetX,e.offsetY);
   if(SVK.drag&&SVK.down&&SVK.down.moved){clearTimeout(SVK.hold);var D=SVK.drag,dx=w[0]-D.w0[0],dy=w[1]-D.w0[1];
@@ -2131,6 +2177,7 @@ function svHook(){var cv=SVK.cv,P=SVK.ptr;
   else if(SVK.draw&&SVK.draw.k=='point'){SVK.draw.x1=e.offsetX;SVK.draw.y1=e.offsetY;}};
  cv.onpointerup=cv.onpointercancel=function(e){delete P[e.pointerId];if(Object.keys(P).length<2)SVK.pinch=null;if(Object.keys(P).length)return;clearTimeout(SVK.hold);var dn=SVK.down;SVK.down=null;
   var tap=dn&&!dn.moved&&e.type=='pointerup';
+  if(SVK.cutDraw){var cd=SVK.cutDraw;SVK.cutDraw=null;if(e.type=='pointerup')svXsRxCut(cd);svDraw();return;}
   if(SVK.pan){SVK.pan=null;if(tap&&SVK.view!='xs'){var st=svHitStation(dn.x,dn.y),xs=st?null:svHitXs(dn.x,dn.y);if(SVK.tool=='xs'){if(st)svXsNew(st);else if(xs)svXsMenu(xs);}else if(st)svStnMenu(st);else if(xs)svXsMenu(xs);}svDraw();return;}
   if(SVK.drag){var D=SVK.drag;SVK.drag=null;if(D.xs){if(tap)svXsMenu(D.xs);else{svXsSnap(D.xs);svXsOp(D.xs,D.before);}svDraw();return;}
    if(!tap)svOp({edit:D.it,before:D.before,after:svClone(D.it)});else if(D.again&&Date.now()-dn.t<400)svItemMenu(D.it);svDraw();return;}
