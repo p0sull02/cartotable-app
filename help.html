@@ -51,6 +51,7 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <li><a href="#pc">Connect to your computer</a></li>
 <li><a href="#photos">Data photos</a></li>
 <li><a href="#scan">Scan sketches and data</a></li>
+<li><a href="#gps">GPS points and your location</a></li>
 <li><a href="#view">Looking at a cave</a></li>
 <li><a href="#tabs">The tabs</a></li>
 <li><a href="#incave">In the cave mode</a></li>
@@ -96,6 +97,7 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <tr><td>Tacheo</td><td>Connect one or more units, see their batteries, fire them, and send them messages - without opening a survey (<a href="#tacheo">The Tacheo and the phone</a>).</td></tr>
 <tr><td>Data photos</td><td>Photograph book pages and sketches and send them to your computer.</td></tr>
 <tr><td>Scan sketches and data</td><td>A document scanner for cave books and sketches: it finds the page, takes it when you hold still, and makes one PDF of the lot for your computer.</td></tr>
+<tr><td>GPS points</td><td>Take a GPS point with one tap - ridge walking, a sink, a spring, a new entrance. See them all and send them to your computer (<a href="#gps">GPS points and your location</a>).</td></tr>
 <tr><td>My computer</td><td>Pair with Topside on your computer, see its caves and send it files.</td></tr>
 <tr><td>In the cave</td><td>Switch to the dark, big-button mode (or back to Topside mode).</td></tr>
 </table>
@@ -103,13 +105,13 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <h2 id="survey" class="g">Survey and sketch</h2>
 <p>A survey here is one trip. It keeps the shots, the plan and profile sketches and the cross sections together on the phone, works with no signal, and goes to Topside on your computer at the end.</p>
 <h3>Start a trip</h3>
+<p>Home → <b>Survey and sketch</b> → <b>＋ New survey</b>. It asks three things, then the survey opens. The phone remembers your answers for the next trip.</p>
 <ol class="steps">
-<li>Home → <b>Survey and sketch</b> → <b>＋ New survey</b>.</li>
-<li>Fill in the cave, the trip's name, the <b>station prefix</b> (A for A1, A2 …) and the first station's number, the date, the units you want to see, the team and the instrument. The phone remembers these for the next trip.</li>
-<li><b>Shots per leg</b>: 3 (the default) means three shots in a row that agree are one leg, as TopoDroid and the Tacheo's FSx3 do. Pick 1 if every shot you take is a leg (no splays).</li>
-<li><b>Declination</b>, east positive, if you know it. It can be changed later on the <b>Trip</b> page; the shots themselves are kept as read.</li>
-<li><b>Start the survey</b>.</li>
+<li><b>The cave.</b> Its name, whether it's a <b>known cave</b> or a <b>new cave</b>, and where the survey starts: <b>at an entrance</b> (say which one) or <b>at a station already surveyed</b> (say which - B12, say - and the survey ties in there). County, state, and the landowner or access note if you want them; they go to your computer with the trip.</li>
+<li><b>The survey.</b> The trip's name, the <b>station prefix</b> (A for A0, A1 …) and the first station's number - <b>0</b> at an entrance, so the entrance is A0 - the date, the units you want to see, the team and the instrument. <b>Shots per leg</b>: 3 (the default) means three shots in a row that agree are one leg, as TopoDroid and the Tacheo's FSx3 do; pick 1 if every shot is a leg. <b>Declination</b>, east positive, if you know it (it can be changed later; the shots are kept as read).</li>
+<li><b>GPS at the entrance station</b> (only when the survey starts at an entrance). Stand at the station - or as close as you can with open sky - and tap <b>📍 Take the GPS point at A0</b>. Hold the phone still: it averages the readings and keeps the point by itself when it's steady (usually 10 to 45 seconds), and names it <b>GPS A0</b>. No signal at the entrance? <b>Skip</b>, and take it later from the Data page or the Trip page.</li>
 </ol>
+<p>The GPS point goes into the survey files as the fix for that station (#Fix in the .srv, *fix in the .svx, fix in the .th), so the survey lands in the right place in CartoTable. Where the cave on the phone has an elevation model, the fix uses the ground's height from it; otherwise the phone's GPS height, which is rough - check it.</p>
 <h3>Take shots</h3>
 <p><b>With a Tacheo or SAP6</b> (Android app): tap the 📡 chip at the top, pick the unit from the list (on the unit: <b>Bluetooth → Phone On</b>), and shoot as normal. Each shot comes in as you take it:</p>
 <ul>
@@ -168,6 +170,16 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <tr><td>Everything (.ctsurvey)</td><td>The survey as the phone keeps it, to back it up or move it to another phone.</td></tr>
 </table>
 <p>Files saved on Android go to <b>Downloads/Topside</b>.</p>
+<h3>Close out the trip</h3>
+<p>Out of the cave, open the survey's <b>Trip</b> page. It starts with the close-out, step by step - each one goes green when it's done:</p>
+<ol class="steps">
+<li><b>GPS at A0</b> - taken, or <b>Take it now</b>.</li>
+<li><b>Shots</b> - the legs on the phone from the Tacheo or typed. None is fine when the shots are in the book.</li>
+<li><b>Scan the book pages</b> - opens the scanner (<a href="#scan">Scan sketches and data</a>); every page goes into one PDF kept with the survey.</li>
+<li><b>Scan the sketches</b> - the same, for the plan, profile and cross sections.</li>
+<li><b>Send it to your computer</b> - <b>💻 Send it all and close out</b> sends the survey files, the GPS point, a <i>trip info</i> text file (the cave, entrance, county, landowner, team and the fix) and the scans into one folder, <b>Documents\Topside\From phone\</b><i>day</i><b>\</b><i>cave - trip</i>, then closes the survey.</li>
+</ol>
+<p>A closed survey shows ✅ in the list and doesn't take shots from the Tacheo. <b>Reopen it</b> on the Trip page to add more. If something changes after it was sent, step 5 goes back to waiting so you know to send it again. No computer with you? <b>Close out now, send later</b>, and send it from the Trip page when you're back.</p>
 
 <h2 id="tacheo" class="g">The Tacheo and the phone</h2>
 <p>In the Android app, connect from the <b>Tacheo</b> tile on Home, or from the 📡 chip at the top of a survey. On the unit: <b>Bluetooth → Phone On</b>. <b>Two or more units can be connected at once</b> - the front sight and back sight Tacheos, a SAP6 - and each shot is tagged with the unit that took it.</p>
@@ -241,6 +253,19 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <div class="tip">Lay the page on something darker than the paper (a pack, a helmet, the table), with even light. A page bigger than the screen says "Move back"; one too small says "Move closer".</div>
 <p><b>When a scan is done</b> on the Scan page sets <b>Send it to my computer</b> (every time, by itself) or <b>Ask me</b>. Each scan on the phone has <b>Send</b>, <b>Save</b> (to the phone's Downloads) and ✕.</p>
 
+<h2 id="gps">GPS points and your location</h2>
+<h3>Take a point</h3>
+<ol class="steps">
+<li><b>GPS points</b> on Home (or <b>📍 Take a GPS point here</b> on a cave's <b>GIS</b> tab).</li>
+<li>Tap <b>📍 Take a GPS point</b>. The phone averages its readings for a few seconds; the circle goes green and the point keeps itself once it's better than ±16 ft over five readings. <b>Keep it</b> takes it straight away.</li>
+<li>It's named <b>GPS 1</b>, <b>GPS 2</b> … by itself. Type a name over it first if you like, or tap the point in the list later to rename it, add a note (sink, spring, blowing hole), show it on the cave map, or delete it.</li>
+</ol>
+<p>The ± is how far off the phone says it could be. Open sky helps a lot; under trees or against a bluff it can be 30 ft or more.</p>
+<h3>Send them</h3>
+<p>From the GPS points page: <b>Send them to</b> your computer (GPX, CSV and KML into <b>From phone\</b><i>day</i><b>\GPS points</b>), or save a GPX (GPS units and map apps), a CSV (spreadsheets and CartoTable) or a KML (Google Earth). Coordinates are WGS84, as latitude/longitude and UTM.</p>
+<h3>Your location on a cave map</h3>
+<p>On a cave that was sent <b>with its true coordinates</b>, tap <b>◎</b> under the N on the map, or tick <b>Show my location on the map</b> on the <b>GIS</b> tab. A blue dot shows where you are, with a circle for how sure the phone is, and the map follows you; drag the map to look around, tap ◎ to follow again, and tap it once more to switch it off. The GIS tab then shows your coordinates, the surveyed passage under you (and how far below the ground it is, where there's an elevation model), and the nearest entrance with its distance and direction. GPS points show on the map as orange diamonds. <b>In the cave</b> mode switches the location off to save the battery.</p>
+
 <h2 id="view">Looking at a cave</h2>
 <ul>
 <li><b>Move:</b> drag. <b>Zoom:</b> pinch. <b>Turn the plan:</b> twist with two fingers; it turns round the station you tapped.</li>
@@ -256,7 +281,7 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <tr><td>Leads</td><td>Leads nearest first, with their notes and how to get there. Show it on the plot.</td></tr>
 <tr><td>Trip plan</td><td>Pick a start and a destination: travel time by how you're moving (walking, stooping, crawling, belly crawl, breakdown, climbing, on rope), leads on the way, and a brief to share.</td></tr>
 <tr><td>Books</td><td>Every trip's book and trip report, sorted as filed, newest, longest or weakest.</td></tr>
-<tr><td>Layers</td><td>Map imagery, the ground's shading and contours, sinks, drafted maps, station names and prefixes. Save for offline keeps the imagery on the phone.</td></tr>
+<tr><td>GIS</td><td>Where you are (GPS) and Take a GPS point, then map imagery, the ground's shading and contours, sinks, drafted maps, station names and prefixes. Save for offline keeps the imagery on the phone.</td></tr>
 <tr><td>Export</td><td>GPX, KML, GeoJSON, CSV, a picture of the map (with a world file), and the elevation.</td></tr>
 <tr><td>About</td><td>The cave's summary and this app's version.</td></tr>
 </table>
@@ -273,7 +298,7 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 </table>
 
 <h2 id="offline">With no signal</h2>
-<p>Everything about a cave on the phone works underground: the plot, stations, the way out, leads, books, trip plans and exports, and every part of Survey and sketch (Bluetooth to the Tacheo needs no signal). Map imagery shows where it was saved with <b>Save for offline</b> (Layers). Data photos wait on the phone and go to the computer later. Connecting to your computer needs Wi-Fi or Tailscale.</p>
+<p>Everything about a cave on the phone works underground: the plot, stations, the way out, leads, books, trip plans and exports, and every part of Survey and sketch (Bluetooth to the Tacheo needs no signal). Map imagery shows where it was saved with <b>Save for offline</b> (GIS tab). Data photos wait on the phone and go to the computer later. Connecting to your computer needs Wi-Fi or Tailscale.</p>
 
 <h2 id="trouble">When something's wrong</h2>
 <h3>There's no download button</h3>
@@ -290,8 +315,15 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 <h3>The Tacheo isn't in the list</h3>
 <ul>
 <li>On the unit: <b>Bluetooth → Phone On</b>. It shows the Bluetooth sign when the phone has it.</li>
-<li>The phone's Bluetooth is on, and the app was allowed <b>Nearby devices</b> when it asked (Settings → Apps → Topside → Permissions). Android 11 and older ask for location instead - Bluetooth scanning needed it then; the app doesn't use where you are.</li>
+<li>The phone's Bluetooth is on, and the app was allowed <b>Nearby devices</b> when it asked (Settings → Apps → Topside → Permissions). Android 11 and older ask for location instead - Bluetooth scanning needed it then.</li>
 <li>Only one phone can have the unit at a time: disconnect it in SexyTopo, TopoDroid or another phone first.</li>
+</ul>
+<h3>GPS doesn't work</h3>
+<ul>
+<li>Location is switched on in the phone's settings, and the app (or the browser) was allowed to use it.</li>
+<li>On the Android app, location needs <b>app 1.8</b>. On an older app it says so; open <b>p0sull02.github.io/cartotable-app</b> in Chrome until the update is installed.</li>
+<li>"No fix yet": go where the phone can see more sky. The first fix after the phone has been off or underground can take a minute.</li>
+<li>No ◎ on the map: the cave was sent without its true coordinates. Send it again from the computer with them.</li>
 </ul>
 <h3>Shots come in as splays, not legs</h3>
 <p>The leg's shots didn't agree closely enough, or there were fewer than <b>Shots per leg</b>. Tap one of them → give it a <b>To</b> station, or loosen <b>Agree within</b> on the Trip page.</p>

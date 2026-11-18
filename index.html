@@ -73,6 +73,8 @@ input[type=range]{width:100%}
 #legend.folded{padding:7px 12px;font-weight:600}
 #scale{position:absolute;right:10px;bottom:10px;background:rgba(14,20,27,.92);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;pointer-events:none}
 #north{position:absolute;right:10px;top:10px;width:40px;height:40px;border-radius:50%;background:rgba(14,20,27,.85);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700}
+#locBtn{position:absolute;right:10px;top:58px;width:40px;height:40px;border-radius:50%;background:rgba(14,20,27,.85);border:1px solid var(--line);display:none;align-items:center;justify-content:center;cursor:pointer;color:#c9d2dc}
+#locBtn.on{color:#4285f4;border-color:#4285f4}#locBtn.fol{background:#4285f4;color:#fff}#locBtn.wait svg{animation:locw 1.2s infinite}@keyframes locw{50%{opacity:.35}}   /* 18 Nov 2026: the phone's location */
 #banner{position:absolute;left:50%;transform:translateX(-50%);top:10px;background:rgba(14,20,27,.95);border:1px solid var(--amber);border-radius:10px;padding:6px 12px;font-size:13px;display:none;max-width:calc(100% - 80px);text-align:center}
 #attr{position:absolute;right:10px;bottom:42px;font-size:10px;color:#aab6c2;background:rgba(14,20,27,.7);padding:2px 6px;border-radius:5px;pointer-events:none;max-width:60%}
 .over{position:absolute;inset:0;background:var(--bg);z-index:20;overflow:auto;padding:calc(24px + env(safe-area-inset-top)) 18px 30px;display:none}
@@ -124,7 +126,7 @@ body.cave .tile .tt{font-size:16px}
  <select id="colour" title="Colour the passages by"><option value="travel">Travel time</option><option value="grade">Precision</option><option value="depth">Depth</option><option value="trip">Trip</option><option value="plain">One colour</option></select>
  <input type="search" id="find" placeholder="Find a station" style="width:140px">
 </div>
-<div id="wrap"><canvas id="cv"></canvas><canvas id="gl"></canvas><div id="banner"></div><div id="north" title="North up">N</div><div id="legend"></div><div id="attr"></div><div id="scale"></div></div>
+<div id="wrap"><canvas id="cv"></canvas><canvas id="gl"></canvas><div id="banner"></div><div id="north" title="North up">N</div><div id="locBtn" title="Show where I am"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12H5M19 12h3.5"/></svg></div><div id="legend"></div><div id="attr"></div><div id="scale"></div></div>
 <div id="side"><div id="grip"></div><div id="tabs"></div><div id="pane"></div></div>
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
 <div id="modePick" class="over"><div class="in" id="modeIn"></div></div>
@@ -322,8 +324,8 @@ function paint(){LB={};try{keyCheck();}catch(e){}
    if(!room(x+4,y-3-fs,w,fs+3)&&!room(x-4-w,y-3-fs,w,fs+3)&&!room(x+4,y+2,w,fs+3))continue;n++;g.strokeText(t,LX,LY+fs);g.fillText(t,LX,LY+fs);}}
  if(sel>=0){var sx=P2[2*sel],sy=P2[2*sel+1];g.strokeStyle='#fbbf24';g.lineWidth=2.5;g.beginPath();g.arc(sx,sy,9,0,7);g.stroke();
   var h95=S[sel][5];if(h95>0&&mode=='plan'){g.setLineDash([4,4]);g.lineWidth=1.5;g.beginPath();g.arc(sx,sy,Math.max(12,h95*view.ppm),0,7);g.stroke();g.setLineDash([]);}}
- drawMeasure();
- scaleBar(view.ppm);$('attr').textContent=attr.join(' · ');$('attr').style.display=attr.length?'':'none';
+ try{gpsDraw();}catch(e){}drawMeasure();
+ scaleBar(view.ppm);locBtnSet();$('attr').textContent=attr.join(' · ');$('attr').style.display=attr.length?'':'none';
  $('north').style.display=mode=='plan'?'flex':'none';$('north').style.transform='rotate('+(-view.az)+'deg)';}
 function scaleBar(ppm){var target=110/ppm/FT,steps=[1,2,5,10,20,25,50,100,200,250,500,1000,2000,2500,5000,10000,20000],v=steps[0];for(var i=0;i<steps.length;i++)if(steps[i]<=target)v=steps[i];
  $('scale').innerHTML='<span style="display:inline-block;width:'+Math.round(v*FT*ppm)+'px;border-bottom:2px solid #e6ecf2;margin-right:6px"></span>'+v.toLocaleString('en-US')+' ft';}
@@ -357,7 +359,7 @@ cv.addEventListener('pointermove',function(e){if(!ptrs[e.pointerId])return;ptrs[
  if(pinch&&ks.length==2){var a=ptrs[ks[0]],b=ptrs[ks[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;shiftScreen(mx-pinch.mx,my-pinch.my);pinch.mx=mx;pinch.my=my;
   zoomAt(mx,my,pinch.ppm*d/pinch.d/view.ppm);if(mode=='plan'){var ang=Math.atan2(b[1]-a[1],b[0]-a[0]),da=(ang-pinch.ang)*180/Math.PI;if(Math.abs(da)>10||pinch.rot){pinch.rot=true;var pv=pivotPx();rotateAbout(pv?pv[0]:mx,pv?pv[1]:my,pinch.az-da-view.az);}}moved=true;return;}
  if(!drag)return;var dx=e.offsetX-drag.x,dy=e.offsetY-drag.y;if(Math.abs(dx)+Math.abs(dy)>3)moved=true;drag.x=e.offsetX;drag.y=e.offsetY;
- if(drag.rot){var pv=pivotPx()||[W/2,H/2];rotateAbout(pv[0],pv[1],dx*0.4);}else shiftScreen(dx,dy);draw();});
+ if(drag.rot){var pv=pivotPx()||[W/2,H/2];rotateAbout(pv[0],pv[1],dx*0.4);}else{shiftScreen(dx,dy);if(GPS.fol&&moved){GPS.fol=false;locBtnSet();}}draw();});
 function pivotPx(){if(sel<0||!P2)return null;var x=P2[2*sel],y=P2[2*sel+1];return x>=0&&y>=0&&x<=W&&y<=H?[x,y]:null;}
 function up(e){var had=!!ptrs[e.pointerId];delete ptrs[e.pointerId];if(Object.keys(ptrs).length<2)pinch=null;if(had&&Object.keys(ptrs).length==0){if(!moved)tap(e.offsetX,e.offsetY);drag=null;}}
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',function(e){delete ptrs[e.pointerId];pinch=null;drag=null;});cv.addEventListener('contextmenu',function(e){e.preventDefault();});
@@ -365,6 +367,7 @@ cv.addEventListener('wheel',function(e){e.preventDefault();zoomAt(e.offsetX,e.of
 function zoomAt(x,y,f){var dx=x-W/2,dy=y-H/2;shiftScreen(-dx,-dy);view.ppm=Math.max(0.002,Math.min(400,view.ppm*f));shiftScreen(dx,dy);draw();}
 function rotateAbout(x,y,dAz){var m=unproj(x,y);view.az=(view.az+dAz+360)%360;var p=proj(m[0],m[1],view.cz);shiftScreen(x-p[0],y-p[1]);draw();}
 $('north').onclick=function(){view.az=0;draw();};
+$('locBtn').onclick=locTap;
 function tap(x,y){if(measure.on){measureTap(x,y);return;}var best=-1,bd=(CAVE?28:20);bd*=bd;for(var i=0;i<N;i++){var d=(P2[2*i]-x)*(P2[2*i]-x)+(P2[2*i+1]-y)*(P2[2*i+1]-y);if(d<bd){bd=d;best=i;}}
  if(best>=0)select(best,false);else if(mode=='plan'&&lay.sinks){var m=unproj(x,y),hit=null,hd=1e9;sinks.forEach(function(k){var dd=Math.hypot(k[0]-m[0],k[1]-m[1]);if(dd<Math.max(k[4]/2,14/view.ppm)&&dd<hd){hd=dd;hit=k;}});
   if(hit)showTab('station','<div class="k">Sink</div><div class="big">'+ft1(hit[3])+' deep</div><div>'+ft(hit[4])+' across · bottom at '+ft(hit[2]+D.z0)+'</div>');}}
@@ -372,7 +375,7 @@ function select(i,zoom){sel=i;if(!measure.on)route=null;if(zoom){if(mode=='3d'){
  if(tab=='two'){two[two.next||'a']=i;two.next=two.next=='b'?'a':'b';showTab('two');}else if(tab=='plan'){plan.to=i;showTab('plan');}else showTab(CAVE?'here':'station');draw();openSheet();}
 // ======================================================================= the panel
 var tab='station';
-var TABS_TOP=[['station','Station'],['leads','Leads'],['plan','Trip plan'],['books','Books'],['layers','Layers'],['export','Export'],['about','About']];
+var TABS_TOP=[['station','Station'],['leads','Leads'],['plan','Trip plan'],['books','Books'],['layers','GIS'],['export','Export'],['about','About']];
 var TABS_CAVE=[['here','Here'],['out','Way out'],['two','Two stations'],['plan','Trip plan'],['leads','Leads'],['books','Books']];
 function setTabs(){var T=CAVE?TABS_CAVE:TABS_TOP;$('tabs').innerHTML=T.map(function(t){return'<button data-t="'+t[0]+'">'+t[1]+'</button>';}).join('');
  [].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){if(sheetDragged)return;showTab(b.dataset.t);openSheet();};});
@@ -465,7 +468,7 @@ function bookHtml(i){var t=D.trips[i],gr=t.g!=null?D.grades[t.g]:null;
  h+='<div class="k">Shots ('+t.b.length+')</div><table class="sh"><tr><th>From</th><th>To</th><th class="r">Length</th><th class="r">Bearing</th><th class="r">Incl.</th><th></th></tr>'+t.b.map(function(r){return'<tr data-shot="'+esc(r[0])+'|'+esc(r[1])+'"><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td class="r">'+ft1(r[2])+'</td><td class="r">'+r[3].toFixed(1)+'°</td><td class="r">'+(r[4]>=0?'+':'')+r[4].toFixed(1)+'°</td><td><span class="dot" title="'+esc(D.grades[r[5]].n)+'" style="background:'+D.grades[r[5]].c+'"></span>'+esc(r[6]||'')+'</td></tr>';}).join('')+'</table>';
  return h;}
 // ---- layers
-function layersHtml(){var h='<div class="k">Base map</div>';
+function layersHtml(){var h=gpsSectionHtml()+'<div class="k">Base map</div>';
  var opts=[['none','None']];if(D.ground)opts.push(['hillshade','Hillshade (from the elevation)']);D.rasters.forEach(function(r,i){if(r.base)opts.push([String(i),r.name]);});
  if(D.coords&&HOSTED)LIVE.forEach(function(l,i){if(!l.over)opts.push(['live'+i,l.name+' (online)']);});
  var cur=lay.base==null?'none':lay.base=='live'?'live'+lay.live:String(lay.base);
@@ -553,7 +556,7 @@ function bind(){var q=function(s){return document.querySelectorAll('#pane '+s);}
  if(e=$('bShow'))e.onclick=function(){trip=openBook;if(gl3)gl3.colours();fitTrip();};
  [].forEach.call(q('input[name=base]'),function(r){r.onchange=function(){var v=r.value;if(v=='none')lay.base=null;else if(v=='hillshade')lay.base='hillshade';else if(v.indexOf('live')==0){lay.base='live';lay.live=+v.slice(4);}else lay.base=+v;draw();if(gl3)gl3.texture();};});
  if(e=$('baseOp'))e.oninput=function(){lay.baseOp=+e.value;draw();};
- bindOnline(q);
+ bindOnline(q);gpsBind();
  if(e=$('lyC'))e.onchange=function(){lay.contours=e.checked;draw();};if(e=$('cint'))e.onchange=function(){lay.cint=+e.value;lay.contours=true;$('lyC').checked=true;draw();};
  if(e=$('lyS'))e.onchange=function(){lay.sinks=e.checked;draw();};
  if(e=$('lyN'))e.onchange=function(){lay.names=e.checked;draw();};if(e=$('lyP'))e.onchange=function(){lay.prefix=e.checked;store('ct-prefix',e.checked?'1':'');draw();};if(e=$('lyL'))e.onchange=function(){lay.leads=e.checked;draw();};if(e=$('lyE'))e.onchange=function(){lay.ents=e.checked;draw();};
@@ -630,11 +633,11 @@ function utmInv(E,Nn,zone,south){var a=6378137,f=1/298.257223563,k0=0.9996,e2=f*
  var n1=a/Math.sqrt(1-e2*Math.sin(p1)*Math.sin(p1)),t1=Math.tan(p1)*Math.tan(p1),c1=ep2*Math.cos(p1)*Math.cos(p1),r1=a*(1-e2)/Math.pow(1-e2*Math.sin(p1)*Math.sin(p1),1.5),d=x/(n1*k0);
  var lat=p1-(n1*Math.tan(p1)/r1)*(d*d/2-(5+3*t1+10*c1-4*c1*c1-9*ep2)*Math.pow(d,4)/24+(61+90*t1+298*c1+45*t1*t1-252*ep2-3*c1*c1)*Math.pow(d,6)/720);
  var lon=(d-(1+2*t1+c1)*Math.pow(d,3)/6+(5-2*c1+28*t1-3*c1*c1+8*ep2+24*t1*t1)*Math.pow(d,5)/120)/Math.cos(p1);return[lat*180/Math.PI,(zone*6-183)+lon*180/Math.PI];}
-function utmFwd(lat,lon,zone){var a=6378137,f=1/298.257223563,k0=0.9996,e2=f*(2-f),ep2=e2/(1-e2),phi=lat*Math.PI/180,lam=(lon-(zone*6-183))*Math.PI/180;
+function utmFwd(lat,lon,zone,south){var a=6378137,f=1/298.257223563,k0=0.9996,e2=f*(2-f),ep2=e2/(1-e2),phi=lat*Math.PI/180,lam=(lon-(zone*6-183))*Math.PI/180;
  var n=a/Math.sqrt(1-e2*Math.sin(phi)*Math.sin(phi)),t=Math.tan(phi)*Math.tan(phi),c=ep2*Math.cos(phi)*Math.cos(phi),A=Math.cos(phi)*lam;
  var m=a*((1-e2/4-3*e2*e2/64-5*e2*e2*e2/256)*phi-(3*e2/8+3*e2*e2/32+45*e2*e2*e2/1024)*Math.sin(2*phi)+(15*e2*e2/256+45*e2*e2*e2/1024)*Math.sin(4*phi)-(35*e2*e2*e2/3072)*Math.sin(6*phi));
  var E=k0*n*(A+(1-t+c)*Math.pow(A,3)/6+(5-18*t+t*t+72*c-58*ep2)*Math.pow(A,5)/120)+500000,Nn=k0*(m+n*Math.tan(phi)*(A*A/2+(5-t+9*c+4*c*c)*Math.pow(A,4)/24+(61-58*t+t*t+600*c-330*ep2)*Math.pow(A,6)/720));
- if(D.coords.south)Nn+=10000000;return[E,Nn];}
+ if(south!=null?south:(D&&D.coords&&D.coords.south))Nn+=10000000;return[E,Nn];}
 function toLatLon(x,y){if(!D.coords)return null;var ll=utmInv(x+D.coords.e0,y+D.coords.n0,D.coords.zone,D.coords.south);if(D.coords.nad27){ll[0]+=0.0001;ll[1]-=0.0007;}return ll;}
 function fromLatLon(lat,lon){if(D.coords.nad27){lat-=0.0001;lon+=0.0007;}var u=utmFwd(lat,lon,D.coords.zone);return[u[0]-D.coords.e0,u[1]-D.coords.n0];}
 // ======================================================================= live online base maps (the app's own site, with true coordinates; tiles saved for offline are used with no signal)
@@ -853,9 +856,9 @@ function placeDrafted(pageCanvas,vt,fit,name){ // turn and scale the page onto t
  out.toBlob(function(blob){blob.arrayBuffer().then(function(ab){var file='data/drafted'+Date.now()+'.png',u=new Uint8Array(ab),bin='';for(var i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
   D.files[file]=btoa(bin);files[file]=ab;var r={name:'Drafted map: '+name.replace(/\.[^.]+$/,''),kind:'drafted',file:file,mime:'image/png',x0:x0,y0:y1,mpp:mpp,w:w,h:h,base:false,on:true,op:0.85,attr:''};
   D.rasters.push(r);var ix=D.rasters.length-1;lay.extra[ix]=0.85;getImage(r).then(function(){draw();saveDrafted();
-   toast('Lined up: '+fit.matched+' of '+fit.stations+' stations on its line plot. It\'s in Layers.',6000);if(tab=='station'||tab=='layers')showTab(tab);});});},'image/png');}
+   toast('Lined up: '+fit.matched+' of '+fit.stations+' stations on its line plot. It\'s on the GIS tab.',6000);if(tab=='station'||tab=='layers')showTab(tab);});});},'image/png');}
 // ======================================================================= views, find, sheet, modes
-function setMode(m){mode=m;[].forEach.call(document.querySelectorAll('#views button'),function(b){b.classList.toggle('on',b.dataset.v==m);});
+function setMode(m){mode=m;setTimeout(locBtnSet,0);[].forEach.call(document.querySelectorAll('#views button'),function(b){b.classList.toggle('on',b.dataset.v==m);});
  $('gl').style.display=m=='3d'?'block':'none';cv.style.display=m=='3d'?'none':'block';$('measureBtn').style.display=CAVE||m=='3d'?'none':'';
  if(m=='3d'){if(measure.on)setMeasure(false);if(!gl3){try{gl3=make3D();}catch(e){toast('3-D failed: '+esc(e.message));gl3=null;}}else gl3.resize();}
  else{view.tilt=m=='plan'?90:0;fit();}draw();}
@@ -894,7 +897,7 @@ var sheetDragged=false;(function(){var st=null;function H(){return window.innerH
  $('grip').style.touchAction='none';$('grip').style.padding='12px 0';$('grip').style.margin='0 auto';$('grip').style.width='100%';$('grip').style.height='6px';$('grip').style.background='linear-gradient(#3a4756,#3a4756) center/44px 5px no-repeat';$('grip').style.backgroundClip='';$('grip').style.borderRadius='0';$('grip').style.cursor='grab';
  sheetSet=setH;window.addEventListener('resize',function(){if(window.innerWidth>760){side.style.height='';wrap.style.bottom='';}});})();
 window.addEventListener('resize',resize);
-function setCave(on){CAVE=on;store('ct-mode',on?'cave':'top');setTabs();if(on&&lay.base=='live')lay.base=D&&D.ground?'hillshade':null;if(D&&S){showTab(on?'here':'station');draw();}}
+function setCave(on){CAVE=on;store('ct-mode',on?'cave':'top');if(on&&GPS.on){GPS.on=false;GPS.fol=false;gpsStop();}setTabs();if(on&&lay.base=='live')lay.base=D&&D.ground?'hillshade':null;if(D&&S){showTab(on?'here':'station');draw();}}
 $('modeBtn').onclick=function(){setCave(!CAVE);toast(CAVE?'In the cave: big buttons, dark screen, nothing online':'Topside: maps, layers, 3-D, exports');};
 function pickMode(){$('modeIn').innerHTML=installHtml('mInstall')+'<div class="big" style="font-size:24px">Where are you?</div><p class="mut">You can switch any time with the button at the top.</p>'+
  '<button class="choice" id="mTop"><b>☀ Topside</b><span class="mut">Plan trips, look over the maps, imagery, 3-D and the books, save things for offline and export.</span></button>'+
@@ -914,13 +917,14 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  h+=tileHtml('tTacheo','📡','#0f766e','Tacheo',window.svTacheoSub?svTacheoSub():'Connect, battery, laser, messages');   // 16 Nov 2026 (Sully: "I don't see a tile regarding connecting to a Tacheo. Idk where the message function would be")
  h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages read into data on your computer');
  h+=tileHtml('tScan','📄','#0e7490','Scan sketches and data','Cave book pages and sketches, one PDF for your computer');   // 17 Nov 2026 (Sully: "Have the app record cave data picture like Google Pixel does its scans" / "Label it 'scan cave sketch and data'")   // 16 Nov 2026 (Sully: "a short description under it saying it automatically transcribes data from photos")
+ h+=tileHtml('tGps','📍','#4285f4','GPS points','Take one with a tap - ridge walking, sinks, entrances');   // 18 Nov 2026 (Sully: "a button to take gps coords whenever, as in during ridge walking")
  if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer');
- h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!(HOSTED||LOCALPC));   // wide when it would sit alone (17 Nov: the Scan tile made the rest even)
+ h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!!(HOSTED||LOCALPC));   // 18 Nov: the GPS tile made it odd again   // wide when it would sit alone (17 Nov: the Scan tile made the rest even)
  h+='</div>';
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tTacheo'))e.onclick=function(){window.svUnitsShow&&window.svUnitsShow();};if(e=$('tPc'))e.onclick=pcSheet;
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tTacheo'))e.onclick=function(){window.svUnitsShow&&window.svUnitsShow();};if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;
  $('hMode').onclick=function(){setCave(!CAVE);homeShow();};
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
@@ -1182,13 +1186,13 @@ function scanMake(pages,m){var base=clean(m.cave)||'Cave',trip=clean(m.trip)||to
  var t=new Date(),hm=String(t.getHours()).padStart(2,'0')+String(t.getMinutes()).padStart(2,'0'),name=base+' - '+trip+' - '+(m.kind=='sketch'?'sketches':m.kind=='page'?'book pages':'scan')+' '+String(n).padStart(2,'0')+' ('+pages.length+(pages.length==1?' page':' pages')+').pdf';
  toast('Making the PDF ('+pages.length+(pages.length==1?' page':' pages')+')…',2000);
  var thumbP=window.createImageBitmap?createImageBitmap(pages[0].blob).then(function(bm){var k=160/Math.max(bm.width,bm.height),c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);bm.close&&bm.close();return new Promise(function(ok){c.toBlob(ok,'image/jpeg',0.7);});}).catch(function(){return null;}):Promise.resolve(null);
- Promise.all([pdfFromJpegs(pages,base+' - '+trip),thumbP]).then(function(r){var rec={scan:true,cave:base,trip:trip,kind:m.kind,n:n,when:Date.now(),blob:r[0],thumb:r[1],pages:pages.length,sent:false,name:name,folder:base+' - '+trip};
+ Promise.all([pdfFromJpegs(pages,base+' - '+trip),thumbP]).then(function(r){var rec={scan:true,cave:base,trip:trip,kind:m.kind,n:n,when:Date.now(),blob:r[0],thumb:r[1],pages:pages.length,sent:false,name:name,folder:base+' - '+trip,sv:m.sv||null};
   return pdo('readwrite',function(s){return s.add(rec);}).then(function(id){rec.id=id;return rec;});})
- .then(function(rec){scanShow();var pref=scanPrefs();
+ .then(function(rec){if(m.after){m.after(rec);return;}scanShow();var pref=scanPrefs();
   if(PC&&pref.send=='auto')scanSend(rec,false);
   else if(PC)askBox('<b>Send it to '+esc(PC.name)+'?</b><div class="mut" style="margin-top:4px">'+esc(rec.name)+' · '+kb(rec.blob.size)+'</div>',[['Send now',function(){scanSend(rec,false);}],['Always send by itself',function(){pref.send='auto';scanPrefsSave(pref);scanSend(rec,false);}],['Not now',null]]);
   else askBox('<b>Kept on this phone</b><div class="mut" style="margin-top:4px">'+esc(rec.name)+'. Connect to Topside on your computer to send it - it waits here until then.</div>',(HOSTED||LOCALPC)?[['Connect to my computer',pcSheet],['OK',null]]:[['OK',null]]);
- },function(x){toast('Couldn\'t make the PDF: '+esc(x.message),5000);scanShow();});}
+ },function(x){toast('Couldn\'t make the PDF: '+esc(x.message),5000);if(m.after)svTripShow();else scanShow();});}
 function scanSend(rec,show){if(!PC){toast('Connect to your computer first');return;}var mm=$('scMsg');if(mm)mm.textContent='Sending '+rec.name+'…';toast('Sending to '+esc(PC.name)+'…',1500);
  pcJson('POST','/api/upload?name='+encodeURIComponent(rec.name)+'&folder='+encodeURIComponent(rec.folder),rec.blob,300000).then(function(){rec.sent=true;rec.sentTo=PC.name;
   return pdo('readwrite',function(s){return s.put(rec);}).then(function(){toast('✓ '+esc(rec.name)+' is on '+esc(PC.name),3500);if($('scMsg'))scanShow();});},
@@ -1422,6 +1426,165 @@ function pcScreen(){var o=$('scr'),img=$('scrImg'),wrap=$('scrWrap'),st={on:true
  B('scrFind',function(){send({t:'find'});setTimeout(function(){kb.focus();},200);});B('scrX',function(){send({t:'close'});});
  window.addEventListener('resize',layout);frame();}
 
+// ======================================================================= GPS: where the phone is, and GPS points
+// Sully, 18 Nov 2026: "add to the GIS tab, an ability for the app to show the cell phone's location and to grab GPS coordinates with a
+// click" / "a button to take gps coords whenever, as in during ridge walking" / "you go to a cave, take a gps point at station 0, program
+// can name it gps, or whatever automatically".
+//   The fix comes from the phone (navigator.geolocation, WGS84). A point is the average of the readings over a few seconds, each weighted
+//   by its own reported accuracy. The ± shown is the readings' typical accuracy, NOT divided down by the number of readings: GPS error
+//   drifts slowly, so readings a second apart are not independent and averaging them doesn't shrink it much.
+//   Points are named by themselves (GPS 1, GPS 2 ...; a survey's is "GPS <station>"), kept on this phone (localStorage ct-gps), drawn on any
+//   cave map that has true coordinates, and go to the computer as GPX + CSV + KML.
+//   Heights: Android gives height above the WGS84 ellipsoid, iPhone above sea level, so a phone's GPS height is only a rough number; a
+//   cave with an elevation model gives the ground height there instead, and that is what a survey's fix uses when it has it.
+var GPS={watch:null,fix:null,err:null,on:false,fol:false,ls:[]};
+function gpsHas(){return!!(navigator.geolocation);}
+function gpsAppOld(){var m=navigator.userAgent.match(/TopsideApp\/(\d+)\.(\d+)/);return!!(m&&(+m[1]<1||(+m[1]==1&&+m[2]<8)));}   // the Android app before 1.8 doesn't pass location to the page
+function gpsStart(){if(GPS.watch!=null||!gpsHas())return;GPS.err=null;
+ try{GPS.watch=navigator.geolocation.watchPosition(function(p){var c=p.coords;GPS.err=null;
+   GPS.fix={lat:c.latitude,lon:c.longitude,acc:c.accuracy,alt:c.altitude,altAcc:c.altitudeAccuracy,hd:c.heading,spd:c.speed,t:p.timestamp||Date.now(),at:Date.now()};gpsTell();},
+  function(e){GPS.err={code:e.code,message:e.message};gpsTell();},{enableHighAccuracy:true,maximumAge:0,timeout:60000});}
+ catch(e){GPS.err={code:2,message:e.message};gpsTell();}}
+function gpsStop(){if(GPS.watch!=null&&!GPS.on&&!GPS.ls.length){try{navigator.geolocation.clearWatch(GPS.watch);}catch(e){}GPS.watch=null;GPS.fix=null;}}
+function gpsTell(){if(GPS.fix&&$('toast').style.display!='none'&&/^Finding where you are/.test($('toast').textContent))$('toast').style.display='none';GPS.ls.slice().forEach(function(f){try{f(GPS.fix,GPS.err);}catch(e){}});
+ if(GPS.on){if(GPS.fol&&GPS.fix&&D&&D.coords&&!CAVE)gpsCentre();draw();locBtnSet();}
+ var p=$('gpsHere');if(p)p.innerHTML=gpsHereHtml();var q=$('gpLive');if(q)q.innerHTML=gpsLiveHtml();}
+function gpsListen(f){GPS.ls.push(f);gpsStart();if(GPS.fix||GPS.err)setTimeout(function(){f(GPS.fix,GPS.err);},0);return function(){var i=GPS.ls.indexOf(f);if(i>=0)GPS.ls.splice(i,1);gpsStop();};}
+function gpsWhy(e){if(!gpsHas())return'This browser can\'t give a location.';if(!e)return'';
+ if(e.code==1)return gpsAppOld()?'This version of the Topside app can\'t pass the phone\'s location to the page - app 1.8 can. Until then, open p0sull02.github.io/cartotable-app in Chrome or Safari to use GPS.':'Location is blocked for this app. Allow it in the phone\'s settings (Location for this app or browser), then try again.';
+ if(e.code==3)return'No fix yet. Get where the phone can see the sky - out from under the trees and away from the bluff helps.';
+ return'The phone can\'t get a location right now'+(e.message?' ('+esc(e.message)+')':'')+'. Is Location switched on?';}
+// ---- numbers
+function gpsUtm(lat,lon){var z=Math.floor((lon+180)/6)+1,u=utmFwd(lat,lon,z,lat<0);return{z:z,s:lat<0,e:u[0],n:u[1]};}
+function gpsUtmTxt(lat,lon){var u=gpsUtm(lat,lon);return'UTM '+u.z+(u.s?'S':'N')+' '+u.e.toFixed(1)+' E · '+u.n.toFixed(1)+' N';}
+function gpsDeg(lat,lon){return lat.toFixed(6)+', '+lon.toFixed(6);}
+function gpsAccTxt(m){return m==null||!isFinite(m)?'?':'±'+Math.round(m/FT)+' ft';}
+// the cave's ground height there (metres, sea level) when the open cave has true coordinates and an elevation model
+function gpsGround(lat,lon){if(!D||!D.coords||!D.ground||!ground)return null;var p=fromLatLon(lat,lon),z=groundAt(p[0],p[1]);return isNaN(z)?null:z+D.z0;}
+// ---- the points kept on this phone
+function gpsPts(){var l=load2('ct-gps');return Array.isArray(l)?l:[];}
+function gpsPtsSave(l){try{localStorage.setItem('ct-gps',JSON.stringify(l));return true;}catch(e){toast('Couldn\'t keep it: the phone\'s storage for this app is full');return false;}}
+function gpsAutoName(){var have={};gpsPts().forEach(function(p){have[p.name]=1;});var n=(+store('ct-gps-n')||0)+1;while(have['GPS '+n])n++;return'GPS '+n;}
+function gpsAdd(pt){var l=gpsPts();l.push(pt);if(!gpsPtsSave(l))return false;var m=String(pt.name).match(/^GPS (\d+)$/);if(m&&+m[1]>(+store('ct-gps-n')||0))store('ct-gps-n',m[1]);if(D)draw();return true;}
+// ---- taking a point: the readings averaged, kept by itself once it's good (o.best), or with Keep it at any time
+//   o: {title, sub, name, best:{acc metres, n readings, secs}, minSecs, ask:extra html, keep(pt), cancel()}
+function gpsTake(o){o=o||{};var best=o.best||{acc:5,n:5,secs:15},R=[],t0=Date.now(),done=false,stop=null,tick=null;
+ var el=$('gpsO');if(!el){el=document.createElement('div');el.id='gpsO';el.style.cssText='position:fixed;inset:0;z-index:46;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center';document.body.appendChild(el);}
+ el.innerHTML='<div class="card" style="width:100%;max-width:560px;margin:0;border-radius:16px 16px 0 0;background:var(--panel);padding:16px 16px calc(18px + env(safe-area-inset-bottom));border-top:2px solid #4285f4">'+
+  '<div class="big" style="margin:0">'+esc(o.title||'Take a GPS point')+'</div>'+(o.sub?'<div class="mut" style="font-size:13px;margin-top:2px">'+o.sub+'</div>':'')+
+  '<div style="display:flex;align-items:center;gap:14px;margin:14px 0 6px"><svg id="gpR" width="76" height="76" viewBox="0 0 76 76" style="flex:none"></svg><div style="min-width:0"><div id="gpA" style="font-size:22px;font-weight:700">Looking for the satellites…</div><div id="gpN" class="mut" style="font-size:13px"></div><div id="gpC" style="font-size:13px;margin-top:3px;font-variant-numeric:tabular-nums"></div></div></div>'+
+  '<label class="mut" style="font-size:12px">Name</label><input id="gpName" class="fld" value="'+esc(o.name||gpsAutoName())+'" autocapitalize="words">'+(o.ask||'')+
+  '<div id="gpMsg" class="mut" style="font-size:13px;margin-top:6px">'+esc(o.auto===false?'Keep it when the number stops getting smaller.':'It keeps itself once it\'s steady (better than '+gpsAccTxt(best.acc)+'), or tap Keep it.')+'</div>'+
+  '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="gpKeep" style="flex:2;padding:14px;font-size:17px" disabled>Keep it</button><button class="btn alt" id="gpNo" style="flex:1">Cancel</button></div></div>';
+ el.style.display='flex';
+ function avg(){var sw=0,la=0,lo=0,aw=0,al=0,an=0;R.forEach(function(r){var w=1/Math.max(1,r.acc*r.acc);sw+=w;la+=w*r.lat;lo+=w*r.lon;if(r.alt!=null&&isFinite(r.alt)){var w2=r.altAcc?1/Math.max(1,r.altAcc*r.altAcc):1;aw+=w2;al+=w2*r.alt;an++;}});
+  if(!sw)return null;var acc=Math.sqrt(R.length/sw),altAcc=null;R.forEach(function(r){if(r.altAcc!=null)altAcc=altAcc==null?r.altAcc:Math.min(altAcc,r.altAcc);});
+  return{lat:la/sw,lon:lo/sw,acc:acc,alt:an?al/aw:null,altAcc:altAcc,n:R.length,secs:Math.round((Date.now()-t0)/1000)};}
+ function ring(acc){var r=acc==null?34:Math.max(6,Math.min(34,6+acc*1.4)),c=acc==null?'#64748b':acc<=best.acc?'#22c55e':acc<=15?'#f59e0b':'#ef4444';
+  $('gpR').innerHTML='<circle cx="38" cy="38" r="36" fill="none" stroke="#2a3542" stroke-width="2"/><circle cx="38" cy="38" r="'+r+'" fill="'+c+'" fill-opacity=".22" stroke="'+c+'" stroke-width="2"/><circle cx="38" cy="38" r="5" fill="#4285f4" stroke="#fff" stroke-width="2"/>';}
+ function show(){var a=avg();if(!a){ring(null);return;}ring(a.acc);$('gpA').textContent=gpsAccTxt(a.acc);
+  $('gpN').textContent=a.n+(a.n==1?' reading':' readings')+' · '+a.secs+' s'+(a.acc<=best.acc?' · good':a.acc<=15?' · fair':' · poor - more sky helps');
+  $('gpC').innerHTML=gpsDeg(a.lat,a.lon)+'<br><span class="mut">'+gpsUtmTxt(a.lat,a.lon)+' · WGS84</span>';$('gpKeep').disabled=false;}
+ function finish(){var a=avg();if(!a||done)return;done=true;close();var nm=$('gpName')?$('gpName').value.trim():'';
+  var pt={id:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:nm||o.name||gpsAutoName(),lat:a.lat,lon:a.lon,acc:a.acc,alt:a.alt,altAcc:a.altAcc,n:a.n,secs:a.secs,t:Date.now(),
+   ground:gpsGround(a.lat,a.lon),cave:o.cave!=null?o.cave:(D&&D.name)||''};
+  if(o.form)o.form(pt);if(o.keep)o.keep(pt);}
+ function close(){if(stop){stop();stop=null;}clearInterval(tick);el.style.display='none';}
+ $('gpNo').onclick=function(){done=true;close();if(o.cancel)o.cancel();};
+ $('gpKeep').onclick=finish;
+ if(!gpsHas()){$('gpA').textContent='No location here';$('gpMsg').textContent=gpsWhy(null);return;}
+ tick=setInterval(function(){var a=avg();if(a)show();else{var s=Math.round((Date.now()-t0)/1000);$('gpN').textContent=s+' s';}
+  if(a&&o.auto!==false){var s2=(Date.now()-t0)/1000;if(s2>=(o.minSecs||0)&&((a.n>=best.n&&a.acc<=best.acc)||(s2>=best.secs&&a.acc<=Math.max(15,best.acc*2))))finish();}},500);
+ stop=gpsListen(function(f,e){if(done)return;if(e&&!f){$('gpA').textContent=e.code==3?'Still looking…':'No location';$('gpMsg').textContent=gpsWhy(e);ring(null);return;}
+  if(!f||f.at<t0-1500||f.acc==null||f.acc>500)return;if(R.length&&R[R.length-1].t==f.t)return;R.push(f);show();});}
+// ---- the location on the cave map (plan view)
+function gpsCentre(){if(!GPS.fix||!D||!D.coords)return;var p=fromLatLon(GPS.fix.lat,GPS.fix.lon);view.cx=p[0];view.cy=p[1];draw();}
+function gpsDraw(){if(mode!='plan'||!D||!D.coords||CAVE)return;var pts=gpsPts();
+ if(lay.gps!==false&&pts.length){g.font='600 11.5px system-ui,sans-serif';pts.forEach(function(pt){var w=fromLatLon(pt.lat,pt.lon),p=proj(w[0],w[1],view.cz);if(p[0]<-30||p[1]<-30||p[0]>W+30||p[1]>H+30)return;
+   g.fillStyle='#f97316';g.strokeStyle='#0e141b';g.lineWidth=1.6;g.beginPath();g.moveTo(p[0],p[1]-7);g.lineTo(p[0]+6,p[1]);g.lineTo(p[0],p[1]+7);g.lineTo(p[0]-6,p[1]);g.closePath();g.fill();g.stroke();
+   var t=pt.name;if(room(p[0]+8,p[1]-16,g.measureText(t).width,14)){g.strokeStyle='rgba(8,12,18,.85)';g.lineWidth=3;g.strokeText(t,p[0]+8,p[1]-4);g.fillStyle='#fed7aa';g.fillText(t,p[0]+8,p[1]-4);}});}
+ if(GPS.on&&GPS.fix){var f=GPS.fix,w2=fromLatLon(f.lat,f.lon),q=proj(w2[0],w2[1],view.cz),r=Math.max(8,f.acc*view.ppm);
+  g.fillStyle='rgba(66,133,244,.16)';g.strokeStyle='rgba(66,133,244,.55)';g.lineWidth=1;g.beginPath();g.arc(q[0],q[1],r,0,7);g.fill();g.stroke();
+  if(f.hd!=null&&isFinite(f.hd)&&f.spd>0.5){var a=(f.hd-view.az-90)*Math.PI/180;g.fillStyle='rgba(66,133,244,.45)';g.beginPath();g.moveTo(q[0],q[1]);g.arc(q[0],q[1],26,a-0.45,a+0.45);g.closePath();g.fill();}
+  g.fillStyle='#4285f4';g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();g.arc(q[0],q[1],7.5,0,7);g.fill();g.stroke();}}
+function locBtnSet(){var b=$('locBtn');if(!b)return;var ok=D&&D.coords&&!CAVE&&mode=='plan';b.style.display=ok?'flex':'none';
+ b.classList.toggle('on',GPS.on);b.classList.toggle('fol',GPS.on&&GPS.fol);b.classList.toggle('wait',GPS.on&&!GPS.fix);}
+// ◎: off -> on and follow; on but moved away -> follow again; following -> off
+function locTap(){if(!D||!D.coords){toast('This copy of the cave has no true coordinates, so the phone\'s location can\'t be put on it');return;}
+ if(!GPS.on){GPS.on=true;GPS.fol=true;gpsStart();if(GPS.fix)gpsCentre();else toast('Finding where you are…',2500);if(GPS.err)toast(gpsWhy(GPS.err),6000);}
+ else if(!GPS.fol){GPS.fol=true;if(GPS.fix)gpsCentre();else if(GPS.err)toast(gpsWhy(GPS.err),6000);}
+ else{GPS.on=false;GPS.fol=false;gpsStop();}
+ locBtnSet();draw();if(tab=='layers')showTab('layers');}
+// "Where you are" on the GIS tab: the fix, and what it means for this cave
+function gpsHereHtml(){if(!GPS.on)return'';var f=GPS.fix;if(!f)return'<div class="mut">'+(GPS.err?gpsWhy(GPS.err):'Finding where you are…')+'</div>';
+ var h='<div style="font-variant-numeric:tabular-nums"><b>'+gpsDeg(f.lat,f.lon)+'</b> <span class="mut">'+gpsAccTxt(f.acc)+'</span><div class="mut" style="font-size:12.5px">'+gpsUtmTxt(f.lat,f.lon)+' · WGS84</div></div>';
+ if(D&&D.coords&&N){var p=fromLatLon(f.lat,f.lon),bi=-1,bd=1e18;for(var i=0;i<N;i++){var d=(X[i]-p[0])*(X[i]-p[0])+(Y[i]-p[1])*(Y[i]-p[1]);if(d<bd){bd=d;bi=i;}}bd=Math.sqrt(bd);
+  var gz=groundAt(p[0],p[1]);
+  if(bi>=0)h+='<div style="margin-top:6px">'+(bd<Math.max(15,f.acc)?'Over the cave: <b>'+esc(lbl(S[bi][0]))+'</b>'+(isNaN(gz)?'':', '+ft(gz-S[bi][3])+' below the ground'):'Nearest surveyed passage: <b>'+esc(lbl(S[bi][0]))+'</b>, '+ft(bd)+' '+compass(p,[X[bi],Y[bi]]))+'</div>';
+  if(D.ent&&D.ent.length){var be=-1,bed=1e18;D.ent.forEach(function(e){var d=Math.hypot(X[e]-p[0],Y[e]-p[1]);if(d<bed){bed=d;be=e;}});
+   if(be>=0)h+='<div>Nearest entrance: <b>'+esc(lbl(S[be][0]))+'</b>, '+ft(bed)+' '+compass(p,[X[be],Y[be]])+'</div>';}
+  if(!isNaN(gz))h+='<div class="mut" style="font-size:12.5px">Ground here: '+ft(gz+D.z0)+' (the cave\'s elevation model)</div>';}
+ return h;}
+function compass(a,b){var brg=(Math.atan2(b[0]-a[0],b[1]-a[1])*180/Math.PI+360)%360,w=['N','NE','E','SE','S','SW','W','NW'][Math.round(brg/45)%8];return w+' ('+Math.round(brg)+'° grid)';}
+function gpsSectionHtml(){var h='<div class="k">Where you are (GPS)</div>';
+ if(!D.coords)return h+'<div class="card" style="margin:4px 0 8px"><b>Not on this copy of the cave</b><div class="mut">It was sent without true coordinates, so the phone\'s location can\'t be lined up with it. GPS points can still be taken from <b>GPS points</b> on Home.</div></div>';
+ h+='<label class="lab"><input type="checkbox" id="lyMe"'+(GPS.on?' checked':'')+'> Show my location on the map</label><div id="gpsHere" class="card" style="margin:4px 0 8px;'+(GPS.on?'':'display:none')+'">'+gpsHereHtml()+'</div>';
+ h+='<button class="btn" id="gpsTakeB" style="width:100%;padding:14px;font-size:17px;background:#4285f4">📍 Take a GPS point here</button>';
+ var pts=gpsPts();h+='<label class="lab" style="margin-top:6px"><input type="checkbox" id="lyGps"'+(lay.gps!==false?' checked':'')+'> GPS points on the map ('+pts.length+')</label>';
+ h+='<div class="mut" style="font-size:12.5px"><a href="#" id="gpsAllB" style="color:#7fb0ff">All GPS points, send to the computer →</a></div>';
+ return h;}
+function gpsBind(){var e;
+ if(e=$('lyMe'))e.onchange=function(){if(e.checked!=GPS.on)locTap();};
+ if(e=$('lyGps'))e.onchange=function(){lay.gps=e.checked;draw();};
+ if(e=$('gpsTakeB'))e.onclick=function(){gpsTake({keep:function(pt){if(gpsAdd(pt)){toast('📍 '+esc(pt.name)+' kept · '+gpsAccTxt(pt.acc),3500);if(tab=='layers')showTab('layers');}}});};
+ if(e=$('gpsAllB'))e.onclick=function(ev){ev.preventDefault();gpsPage();};}
+// ---- GPS points on Home: take one any time (ridge walking), the list, send to the computer
+function gpsLiveHtml(){var f=GPS.fix;if(!f)return'<span class="mut">'+(GPS.err?gpsWhy(GPS.err):'Finding where you are…')+'</span>';
+ return'<b style="font-variant-numeric:tabular-nums">'+gpsDeg(f.lat,f.lon)+'</b> <span class="mut">'+gpsAccTxt(f.acc)+'</span><div class="mut" style="font-size:12.5px">'+gpsUtmTxt(f.lat,f.lon)+'</div>';}
+var gpsPageStop=null;
+function gpsPage(){var pts=gpsPts().slice().sort(function(a,b){return b.t-a.t;});
+ var h='<p class="mut" style="margin-top:0">One tap takes a point where you\'re standing - for ridge walking, a sink, a spring, a new entrance. It\'s named by itself (rename it any time), kept on this phone, and drawn on your cave maps.</p>'+
+  '<div class="card" id="gpLive" style="margin:0 0 8px">'+gpsLiveHtml()+'</div>'+
+  '<button class="btn" id="gpGo" style="width:100%;padding:16px;font-size:18px;background:#4285f4">📍 Take a GPS point</button>'+
+  '<div class="k">On this phone ('+pts.length+')</div>';
+ if(!pts.length)h+='<div class="mut">None yet.</div>';
+ pts.forEach(function(p){var d=new Date(p.t);h+='<div class="row" data-gp="'+esc(p.id)+'"><div class="t">📍 '+esc(p.name)+(p.st?' <span class="mut">· station '+esc(p.st)+'</span>':'')+'</div><div class="s" style="font-variant-numeric:tabular-nums">'+gpsDeg(p.lat,p.lon)+' · '+gpsAccTxt(p.acc)+' · '+esc(today()==ymd(d)?hhmm(d):ymd(d)+' '+hhmm(d))+(p.cave?' · '+esc(p.cave):'')+(p.sent?' · ✓ sent':'')+'</div></div>';});
+ if(pts.length){h+='<div class="k">Take them with you</div>'+(PC?'<button class="btn" id="gpPc">💻 Send them to '+esc(PC.name)+'</button>':((HOSTED||LOCALPC)?'<button class="btn alt" id="gpConn">Connect to my computer to send them</button>':''))+
+  '<button class="btn alt" id="gpGpx">GPX (GPS units, phone map apps)</button><button class="btn alt" id="gpCsv">CSV (spreadsheet, CartoTable)</button><button class="btn alt" id="gpKml">KML (Google Earth)</button>';}
+ sheet('📍 GPS points',h);
+ if(gpsPageStop)gpsPageStop();gpsPageStop=gpsListen(function(){var q=$('gpLive');if(q)q.innerHTML=gpsLiveHtml();else if(gpsPageStop){gpsPageStop();gpsPageStop=null;}});
+ $('gpGo').onclick=function(){gpsTake({keep:function(pt){if(gpsAdd(pt)){toast('📍 '+esc(pt.name)+' kept · '+gpsAccTxt(pt.acc),3500);gpsPage();}}});};
+ [].forEach.call(document.querySelectorAll('[data-gp]'),function(r){r.onclick=function(){gpsEdit(r.dataset.gp);};});
+ var e;if(e=$('gpConn'))e.onclick=pcSheet;
+ if(e=$('gpGpx'))e.onclick=function(){save('GPS points '+today()+'.gpx',gpsGpx(pts),'application/gpx+xml');};
+ if(e=$('gpCsv'))e.onclick=function(){save('GPS points '+today()+'.csv',gpsCsv(pts),'text/csv');};
+ if(e=$('gpKml'))e.onclick=function(){save('GPS points '+today()+'.kml',gpsKml(pts),'application/vnd.google-earth.kml+xml');};
+ if(e=$('gpPc'))e.onclick=function(){gpsSendPc(pts,'GPS points',function(){var l=gpsPts();l.forEach(function(p){p.sent=true;});gpsPtsSave(l);gpsPage();});};}
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function hhmm(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function gpsEdit(id){var p=gpsPts().filter(function(x){return x.id==id;})[0];if(!p)return;
+ askBox('<b>📍 '+esc(p.name)+'</b><div style="font-size:13.5px;margin-top:6px;font-variant-numeric:tabular-nums">'+gpsDeg(p.lat,p.lon)+' · '+gpsAccTxt(p.acc)+'<br>'+gpsUtmTxt(p.lat,p.lon)+' · WGS84'+
+  (p.ground!=null?'<br>Ground: '+ft(p.ground)+' (elevation model)':p.alt!=null?'<br>GPS height: '+ft(p.alt)+' (rough)':'')+'<br><span class="mut">'+p.n+' readings over '+p.secs+' s · '+esc(new Date(p.t).toLocaleString())+(p.sv?' · survey '+esc(p.svName||''):'')+'</span></div>'+
+  '<label class="mut" style="font-size:12px;display:block;margin-top:8px">Name</label><input id="geN" class="fld" value="'+esc(p.name)+'"><label class="mut" style="font-size:12px;display:block;margin-top:6px">Note</label><input id="geT" class="fld" value="'+esc(p.note||'')+'" placeholder="sink, spring, blowing hole…">',
+  [['Save',function(){var l=gpsPts();l.forEach(function(x){if(x.id==id){x.name=$('geN').value.trim()||x.name;x.note=$('geT').value.trim();}});gpsPtsSave(l);gpsPage();}]]
+  .concat(D&&D.coords?[['Show it on the cave map',function(){$('pcOver').style.display='none';$('home').style.display='none';var w=fromLatLon(p.lat,p.lon);view.cx=w[0];view.cy=w[1];view.ppm=Math.max(view.ppm,1);lay.gps=true;resize();draw();}]]:[])
+  .concat([['Delete it',function(){if(!confirm('Delete '+p.name+' from this phone?'))return;gpsPtsSave(gpsPts().filter(function(x){return x.id!=id;}));gpsPage();if(D)draw();}],['Close',null]]));}
+// ---- files
+function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function gpsElev(p){return p.ground!=null?p.ground:p.alt;}
+function gpsGpx(pts){var L=['<?xml version="1.0" encoding="UTF-8"?>','<gpx version="1.1" creator="Topside phone app" xmlns="http://www.topografix.com/GPX/1/1">'];
+ pts.forEach(function(p){var z=gpsElev(p);L.push(' <wpt lat="'+p.lat.toFixed(7)+'" lon="'+p.lon.toFixed(7)+'">'+(z!=null?'<ele>'+z.toFixed(1)+'</ele>':'')+'<time>'+new Date(p.t).toISOString()+'</time><name>'+xmlEsc(p.name)+'</name>'+
+  '<desc>'+xmlEsc([p.note,p.cave,p.st?'station '+p.st:'','±'+p.acc.toFixed(1)+' m, '+p.n+' readings',p.ground!=null?'elevation from the cave\'s elevation model':p.alt!=null?'elevation is the phone\'s GPS height (rough)':''].filter(Boolean).join('; '))+'</desc><sym>Waypoint</sym></wpt>');});
+ L.push('</gpx>');return L.join('\n')+'\n';}
+function gpsCsv(pts){var L=['name,latitude,longitude,utm_zone,easting,northing,elevation_m,elevation_from,accuracy_m,readings,seconds,time,cave,station,survey,note'];
+ pts.forEach(function(p){var u=gpsUtm(p.lat,p.lon),z=gpsElev(p);L.push([p.name,p.lat.toFixed(7),p.lon.toFixed(7),u.z+(u.s?'S':'N'),u.e.toFixed(2),u.n.toFixed(2),z==null?'':z.toFixed(1),p.ground!=null?'elevation model':p.alt!=null?'GPS (rough)':'',p.acc.toFixed(1),p.n,p.secs,new Date(p.t).toISOString(),p.cave||'',p.st||'',p.svName||'',p.note||'']
+  .map(function(v){v=String(v);return/[,"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(','));});return L.join('\n')+'\n';}
+function gpsKml(pts){var L=['<?xml version="1.0" encoding="UTF-8"?>','<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>GPS points</name>'];
+ pts.forEach(function(p){L.push('<Placemark><name>'+xmlEsc(p.name)+'</name><description>'+xmlEsc([p.note,p.cave,'±'+p.acc.toFixed(1)+' m',new Date(p.t).toLocaleString()].filter(Boolean).join(' · '))+'</description><Point><coordinates>'+p.lon.toFixed(7)+','+p.lat.toFixed(7)+'</coordinates></Point></Placemark>');});
+ L.push('</Document></kml>');return L.join('\n')+'\n';}
+function gpsSendPc(pts,folder,ok){if(!PC){pcSheet();return;}var base=clean(folder)+' '+today(),files=[[base+'.gpx',gpsGpx(pts),'application/gpx+xml'],[base+'.csv',gpsCsv(pts),'text/csv'],[base+'.kml',gpsKml(pts),'application/vnd.google-earth.kml+xml']],i=0;
+ toast('Sending to '+esc(PC.name)+'…',4000);(function next(){if(i>=files.length){toast('✓ On '+esc(PC.name)+': From phone\\'+esc(today())+'\\'+esc(clean(folder)),5000);if(ok)ok();return;}var f=files[i++];
+  pcJson('POST','/api/upload?name='+encodeURIComponent(f[0])+'&folder='+encodeURIComponent(clean(folder)),new Blob([f[1]],{type:f[2]}),60000).then(next,function(e){toast('Not sent: '+esc(e&&e.message||e)+'. They\'re kept on this phone.',6000);});})();}
 /*SURVEY:BEGIN*/
 // ======================================================================= Survey and sketch
 // Copyright (C) 2026 Phillip M. Sullivan. All rights reserved. Written from scratch for Topside (no SexyTopo / TopoDroid code: both are GPL).
@@ -1441,8 +1604,9 @@ function svDo(mode,fn){return svDb().then(function(d){return new Promise(functio
 function svAll(){return svDo('readonly',function(s){return s.getAll();}).then(function(l){return(l||[]).sort(function(a,b){return(b.t||0)-(a.t||0);});});}
 function svPut(sv){sv.t=Date.now();return svDo('readwrite',function(s){return s.put(sv);});}
 function svSaveSoon(){clearTimeout(SVSAVE);SVSAVE=setTimeout(function(){if(SV)svPut(SV).catch(function(e){toast('Couldn\'t save: '+esc(e&&e.message||e));});},400);}
-function svNew(o){var n=+o.start||1;return{id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:o.name||('Survey '+today()),cave:o.cave||'',prefix:o.prefix||'',date:o.date||today(),
-  team:o.team||'',inst:o.inst||'Tacheo',decl:+o.decl||0,units:o.units||'ft',legShots:+o.legShots||3,tolD:0.05,tolA:1.5,start:n,next:n+1,cur:(o.prefix||'')+n,first:(o.prefix||'')+n,
+function svNew(o){var n=(o.start===''||o.start==null||isNaN(+o.start))?1:+o.start,tie=o.startAt=='tie'&&o.tie?String(o.tie).toUpperCase():null;return{id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:o.name||('Survey '+today()),cave:o.cave||'',prefix:o.prefix||'',date:o.date||today(),
+  team:o.team||'',inst:o.inst||'Tacheo',decl:+o.decl||0,units:o.units||'ft',legShots:+o.legShots||3,tolD:0.05,tolA:1.5,start:n,next:tie?n:n+1,cur:tie||(o.prefix||'')+n,first:tie||(o.prefix||'')+n,
+  entrance:o.entrance||'',county:o.county||'',state:o.state||'',owner:o.owner||'',newCave:!!o.newCave,startAt:tie?'tie':'entrance',fix:null,closed:null,sentAt:null,
   shots:[],plan:[],prof:[],xs:[],ext:{},comment:o.comment||'',t:Date.now()};}
 // ---- units and numbers
 function svU(){return SV&&SV.units=='m'?1:FT;}
@@ -1547,23 +1711,143 @@ function svListShow(){svOpenUi();SV=null;SVVIEW='list';
   h+='<div class="card"><b>Survey with a Tacheo, take shots and sketch as you go.</b><div class="mut" style="font-size:13px;margin-top:3px">Shots come in over Bluetooth'+(window.TopsideAndroid&&TopsideAndroid.bleScan?'':' in the Android app')+' or are typed; legs and splays are sorted as they arrive, and the plan and profile draw themselves. Sketch over them in NSS symbols, then send the trip to Topside.</div></div>';
   if(!l.length)h+='<p class="mut">No surveys on this phone yet.</p>';
   l.forEach(function(s){var legs=s.shots.filter(function(x){return x.kind=='leg';}).length,sp=s.shots.filter(function(x){return x.kind=='splay'||x.kind=='lrud';}).length;
-   h+='<div class="row" data-id="'+esc(s.id)+'"><div class="t">'+esc(s.name)+(s.cave?' <span class="mut">· '+esc(s.cave)+'</span>':'')+'</div><div class="s">'+esc(s.date)+' · '+s.shots.length+' shots · at '+esc(s.cur)+((s.plan||[]).length+(s.prof||[]).length?' · sketched':'')+'</div></div>';});
+   h+='<div class="row" data-id="'+esc(s.id)+'"><div class="t">'+esc(s.name)+(s.cave?' <span class="mut">· '+esc(s.cave)+'</span>':'')+'</div><div class="s">'+esc(s.date)+' · '+s.shots.length+' shots · at '+esc(s.cur)+((s.plan||[]).length+(s.prof||[]).length?' · sketched':'')+(s.fix?' · 📍':'')+(s.closed?' · ✅ closed out':'')+'</div></div>';});
   $('svList').innerHTML=h;
   Array.prototype.forEach.call(document.querySelectorAll('#svList .row'),function(r){r.onclick=function(){var id=r.getAttribute('data-id');l.forEach(function(s){if(s.id==id)svOpen(s);});};});
  }).catch(function(e){$('svList').innerHTML='<p>Couldn\'t read the surveys: '+esc(e&&e.message||e)+'</p>';});}
 function svDlg(html){var d=$('svDlg');$('svDlgIn').innerHTML=html;d.style.display='flex';d.onclick=function(ev){if(ev.target==d)svDlgClose();};}
 function svDlgClose(){$('svDlg').style.display='none';}
+// ---- a new survey: the cave, the survey, the GPS at the first station (Sully, 18 Nov 2026: "to start a new survey, it'll ask some
+// info about the cave and the survey" / "you go to a cave, take a gps point at station 0" / "when you get out of the cave you'll upload the
+// sketch and physical data, and then it's sent off to your computer and the survey is closed out")
 function svNewDlg(){var last=load2('ct-sv-last')||{};
- svDlg('<div class="big">New survey</div><label>Cave</label><input id="nCave" value="'+esc(last.cave||(D&&D.name)||'')+'"><label>Survey name (the trip)</label><input id="nName" value="'+esc(today())+'">'+
-  '<div class="two"><div><label>Station prefix</label><input id="nPre" value="'+esc(last.prefix||'A')+'" autocapitalize="characters"></div><div><label>First station number</label><input id="nStart" type="number" value="1"></div></div>'+
-  '<div class="two"><div><label>Date</label><input id="nDate" type="date" value="'+today()+'"></div><div><label>Units shown</label><select id="nUnits"><option value="ft"'+(last.units!='m'?' selected':'')+'>Feet</option><option value="m"'+(last.units=='m'?' selected':'')+'>Metres</option></select></div></div>'+
-  '<label>Team</label><input id="nTeam" value="'+esc(last.team||'')+'" placeholder="Book, instrument, point">'+
+ var o={cave:last.cave||(D&&D.name)||'',newCave:false,startAt:'entrance',tie:'',entrance:'',county:last.county||'',state:last.state||'',owner:'',
+  name:today(),prefix:last.prefix||'A',start:0,date:today(),units:last.units||'ft',team:last.team||'',inst:last.inst||'Tacheo',legShots:last.legShots||3,decl:last.decl||0};
+ savedCaves().then(function(k){svNew1(o,k||[]);},function(){svNew1(o,[]);});}
+function svSeg(id,val,opts){return'<div class="seg" id="'+id+'" style="display:flex;margin-top:2px">'+opts.map(function(x){return'<button type="button" data-v="'+esc(x[0])+'" style="flex:1"'+(String(val)==x[0]?' class="on"':'')+'>'+x[1]+'</button>';}).join('')+'</div>';}
+function svSegBind(id,f){[].forEach.call($(id).querySelectorAll('button'),function(b){b.onclick=function(){[].forEach.call($(id).querySelectorAll('button'),function(x){x.classList.toggle('on',x==b);});f(b.dataset.v);};});}
+function svNew1(o,keys){
+ svDlg('<div class="mut" style="font-size:12px">New survey · 1 of '+(o.startAt=='entrance'?3:2)+'</div><div class="big">The cave</div>'+
+  '<label>Cave</label><input id="nCave" value="'+esc(o.cave)+'" list="nCaveL" autocapitalize="words"><datalist id="nCaveL">'+keys.map(function(k){return'<option value="'+esc(k)+'">';}).join('')+'</datalist>'+
+  svSeg('nNew',o.newCave?'1':'0',[['0','Known cave'],['1','New cave']])+
+  '<label>Where does the survey start?</label>'+svSeg('nAt',o.startAt,[['entrance','At an entrance'],['tie','At a station already surveyed']])+
+  '<div id="nEntW"'+(o.startAt=='entrance'?'':' style="display:none"')+'><label>Which entrance</label><input id="nEnt" value="'+esc(o.entrance)+'" placeholder="Main entrance, upper entrance, the sink…" autocapitalize="sentences"></div>'+
+  '<div id="nTieW"'+(o.startAt=='tie'?'':' style="display:none"')+'><label>The station you tie in at</label><input id="nTie" value="'+esc(o.tie)+'" placeholder="e.g. B12" autocapitalize="characters"></div>'+
+  '<div class="two"><div><label>County</label><input id="nCty" value="'+esc(o.county)+'" autocapitalize="words"></div><div><label>State</label><input id="nSt" value="'+esc(o.state)+'" autocapitalize="characters"></div></div>'+
+  '<label>Landowner / access (optional)</label><input id="nOwn" value="'+esc(o.owner)+'" placeholder="who gave permission, where to park" autocapitalize="sentences">'+
+  '<button class="btn" id="nNext">Next: the survey</button><button class="btn alt" id="nNo">Cancel</button>');
+ svSegBind('nNew',function(v){o.newCave=v=='1';});
+ svSegBind('nAt',function(v){o.startAt=v;$('nEntW').style.display=v=='entrance'?'':'none';$('nTieW').style.display=v=='tie'?'':'none';});
+ $('nNo').onclick=svDlgClose;
+ $('nNext').onclick=function(){o.cave=$('nCave').value.trim();o.entrance=$('nEnt').value.trim();o.tie=$('nTie').value.trim().toUpperCase();o.county=$('nCty').value.trim();o.state=$('nSt').value.trim();o.owner=$('nOwn').value.trim();
+  if(!o.cave){toast('Which cave? (a working name is fine for a new one)');$('nCave').focus();return;}
+  if(o.startAt=='tie'&&!o.tie){toast('Which station do you tie in at?');$('nTie').focus();return;}
+  svNew2(o,keys);};}
+function svNew2(o,keys){var ent=o.startAt=='entrance';
+ svDlg('<div class="mut" style="font-size:12px">New survey · 2 of '+(ent?3:2)+' · '+esc(o.cave)+'</div><div class="big">The survey</div><label>Survey name (the trip)</label><input id="nName" value="'+esc(o.name)+'">'+
+  '<div class="two"><div><label>Station prefix</label><input id="nPre" value="'+esc(o.prefix)+'" autocapitalize="characters"></div><div><label>'+(ent?'First station number':'First new station number')+'</label><input id="nStart" type="number" inputmode="numeric" value="'+esc(ent?o.start:Math.max(1,+o.start||1))+'"></div></div>'+
+  '<div class="mut" style="font-size:12.5px" id="nFirst"></div>'+
+  '<div class="two"><div><label>Date</label><input id="nDate" type="date" value="'+esc(o.date)+'"></div><div><label>Units shown</label><select id="nUnits"><option value="ft">Feet</option><option value="m">Metres</option></select></div></div>'+
+  '<label>Team</label><input id="nTeam" value="'+esc(o.team)+'" placeholder="Book, instrument, point">'+
   '<div class="two"><div><label>Instrument</label><select id="nInst"><option>Tacheo</option><option>SAP6</option><option>DistoX2</option><option>BRIC</option><option>Cavway X1</option><option>Suunto and tape</option><option>Other</option></select></div><div><label>Shots per leg</label><select id="nLeg"><option value="3">3 (TopoDroid, Tacheo FSx3)</option><option value="2">2</option><option value="1">1 (every shot a leg)</option></select></div></div>'+
-  '<label>Declination (° east +)</label><input id="nDecl" type="number" step="0.1" value="'+esc(last.decl||0)+'">'+
-  '<button class="btn" id="nGo">Start the survey</button><button class="btn alt" id="nNo">Cancel</button>');
- if(last.inst)$('nInst').value=last.inst;if(last.legShots)$('nLeg').value=String(last.legShots);
- $('nNo').onclick=svDlgClose;$('nGo').onclick=function(){var o={cave:$('nCave').value.trim(),name:$('nName').value.trim(),prefix:$('nPre').value.trim().toUpperCase(),start:$('nStart').value,date:$('nDate').value,units:$('nUnits').value,team:$('nTeam').value.trim(),inst:$('nInst').value,legShots:$('nLeg').value,decl:$('nDecl').value};
-  try{localStorage.setItem('ct-sv-last',JSON.stringify(o));}catch(e){}var s=svNew(o);svPut(s).then(function(){svDlgClose();svOpen(s);});};}
+  '<label>Declination (° east +)</label><input id="nDecl" type="number" step="0.1" value="'+esc(o.decl)+'">'+
+  '<button class="btn" id="nGo">'+(ent?'Next: GPS at the entrance':'Start the survey')+'</button><button class="btn alt" id="nBk">Back</button>');
+ $('nUnits').value=o.units;$('nInst').value=o.inst;$('nLeg').value=String(o.legShots);
+ function first(){var p=$('nPre').value.trim().toUpperCase(),n=$('nStart').value;$('nFirst').textContent=ent?'The entrance station is '+p+n+'.':'Starts at '+o.tie+'; new stations are '+p+n+', '+p+((+n||0)+1)+'…';}
+ first();$('nPre').oninput=first;$('nStart').oninput=first;
+ function read(){o.name=$('nName').value.trim()||today();o.prefix=$('nPre').value.trim().toUpperCase();o.start=$('nStart').value;o.date=$('nDate').value;o.units=$('nUnits').value;o.team=$('nTeam').value.trim();o.inst=$('nInst').value;o.legShots=$('nLeg').value;o.decl=$('nDecl').value;}
+ $('nBk').onclick=function(){read();svNew1(o,keys);};
+ $('nGo').onclick=function(){read();try{localStorage.setItem('ct-sv-last',JSON.stringify({cave:o.cave,prefix:o.prefix,units:o.units,team:o.team,inst:o.inst,legShots:o.legShots,decl:o.decl,county:o.county,state:o.state}));}catch(e){}
+  if(ent)svNew3(o,keys);else svNewMake(o,null);};}
+function svNew3(o,keys){var st=o.prefix+(o.start===''?0:+o.start);
+ svDlg('<div class="mut" style="font-size:12px">New survey · 3 of 3 · '+esc(o.cave)+'</div><div class="big">📍 GPS at '+esc(st)+'</div>'+
+  '<p style="margin:6px 0">Stand at <b>'+esc(st)+'</b>'+(o.entrance?' ('+esc(o.entrance)+')':'')+' - or as close as you can with open sky - and hold the phone still. It averages the readings for about half a minute, keeps the point by itself when it\'s steady, and calls it <b>GPS '+esc(st)+'</b>.</p>'+
+  '<p class="mut" style="font-size:12.5px;margin:0 0 6px">It goes into the survey files as the fix for '+esc(st)+', so the survey lands in the right place in CartoTable.</p>'+
+  '<button class="btn" id="nFix" style="width:100%;padding:15px;font-size:17px;background:#4285f4">📍 Take the GPS point at '+esc(st)+'</button>'+
+  '<button class="btn alt" id="nSkip">Skip - no signal here, take it later</button><button class="btn alt" id="nBk">Back</button>');
+ $('nBk').onclick=function(){svNew2(o,keys);};
+ $('nSkip').onclick=function(){svNewMake(o,null);};
+ $('nFix').onclick=function(){gpsTake({title:'GPS at '+st,sub:esc(o.cave)+(o.entrance?' · '+esc(o.entrance):'')+' · hold still',name:'GPS '+st,best:{acc:4,n:10,secs:45},minSecs:10,cave:o.cave,keep:function(pt){svNewMake(o,pt);}});};}
+function svNewMake(o,fix){var s=svNew(o);if(fix)svFixSet(s,fix,s.first);svPut(s).then(function(){svDlgClose();svOpen(s);if(fix)toast('📍 GPS '+esc(s.first)+' kept · '+gpsAccTxt(fix.acc),3500);});}
+// the fix: kept in the survey, and in the phone's GPS points (one per survey and station - a retake replaces it)
+function svFixSet(s,pt,st){pt.st=st;pt.sv=s.id;pt.svName=s.name;pt.cave=s.cave;if(!/^GPS /.test(pt.name||''))pt.name='GPS '+st;if(s.entrance&&!pt.note)pt.note=s.entrance;s.fix=pt;
+ var l=gpsPts().filter(function(x){return!(x.sv==s.id&&x.st==st);});l.push(pt);gpsPtsSave(l);}
+function svTakeFix(){if(!SV)return;var st=SV.fix?SV.fix.st:SV.first;
+ gpsTake({title:'GPS at '+st,sub:esc(SV.cave||'')+(SV.entrance?' · '+esc(SV.entrance):'')+' · hold still',name:'GPS '+st,best:{acc:4,n:10,secs:45},minSecs:10,cave:SV.cave,
+  keep:function(pt){svFixSet(SV,pt,st);svPut(SV).then(function(){toast('📍 GPS '+esc(st)+' kept · '+gpsAccTxt(pt.acc),3500);svView(SVVIEW);});}});}
+function svFixLine(){if(SV.fix)return'📍 <b>GPS '+esc(SV.fix.st)+'</b> <span class="mut">'+gpsAccTxt(SV.fix.acc)+' · '+SV.fix.lat.toFixed(5)+', '+SV.fix.lon.toFixed(5)+'</span>';
+ if(SV.startAt=='tie')return'<span class="mut">Tied in at '+esc(SV.first)+' - no GPS needed</span>';
+ return'<a href="#" id="svFixB" style="color:#7fb0ff">📍 No GPS at '+esc(SV.first)+' yet - take it at the entrance</a>';}
+// the coordinates for the survey files: UTM (WGS84) and the height, with where the height came from
+function svFixUtm(){var f=SV&&SV.fix;if(!f)return null;var u=gpsUtm(f.lat,f.lon),z=f.ground!=null?f.ground:f.alt;
+ return{st:f.st,e:u.e,n:u.n,zone:u.z,south:u.s,z:z,zsrc:f.ground!=null?'the elevation model':f.alt!=null?'the phone\'s GPS (rough: check it)':'',f:f};}
+// ---- closing out: the scans of the book and sketches, everything to the computer, done
+function svScans(){return scanAll().then(function(l){return l.filter(function(x){return x.sv==SV.id;});},function(){return[];});}
+function svStep(state,n,title,sub,btns){var c=state=='ok'?SVA:state=='warn'?'#b7791f':'#2a3542';
+ return'<div class="card" style="display:flex;gap:10px;align-items:flex-start;margin:6px 0"><span style="flex:none;width:28px;height:28px;border-radius:50%;background:'+c+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">'+(state=='ok'?'✓':n)+'</span>'+
+  '<div style="flex:1;min-width:0"><b>'+title+'</b><div class="mut" style="font-size:12.5px">'+sub+'</div>'+(btns||'')+'</div></div>';}
+function svCloseHtml(sc){var legs=svLegs().filter(function(l){return l.kind=='leg';}),pg=0,sk=0;sc.forEach(function(r){if(r.kind=='sketch')sk+=r.pages;else pg+=r.pages;});
+ var h='<div class="k">Close out the trip</div>';
+ if(SV.closed)h+='<div class="card" style="border-color:'+SVA+'"><b>✅ Closed out '+esc(SV.closed)+'</b><div class="mut" style="font-size:13px">'+(SV.sentAt?'Sent to '+esc(SV.sentTo||'the computer')+' '+esc(SV.sentAt):'Not sent to a computer')+'. Shots from the Tacheo aren\'t added to a closed survey.</div><button class="btn alt" id="coReopen">Reopen it</button></div>';
+ var ent=SV.startAt!='tie';
+ h+=svStep(SV.fix?'ok':ent?'warn':'ok',1,ent?'GPS at '+esc(SV.first):'Tied in at '+esc(SV.first),SV.fix?gpsAccTxt(SV.fix.acc)+' · '+SV.fix.n+' readings · '+gpsDeg(SV.fix.lat,SV.fix.lon):ent?'Not taken yet - take it at the entrance':'No GPS needed',
+  ent&&!SV.closed?'<button class="btn alt" id="coFix" style="margin:6px 0 0">'+(SV.fix?'Take it again':'📍 Take it now')+'</button>':'');
+ h+=svStep(legs.length?'ok':'none',2,'Shots',legs.length?legs.length+' legs on this phone (Tacheo or typed)':'None on this phone - fine when they\'re in the book');
+ h+=svStep(pg?'ok':'none',3,'Scan the book pages',pg?pg+(pg==1?' page':' pages')+' scanned':'The data pages, every one',SV.closed?'':'<button class="btn alt" id="coPages" style="margin:6px 0 0">📄 Scan book pages</button>');
+ h+=svStep(sk?'ok':'none',4,'Scan the sketches',sk?sk+(sk==1?' page':' pages')+' scanned':'Plan, profile and cross sections',SV.closed?'':'<button class="btn alt" id="coSketch" style="margin:6px 0 0">✏ Scan sketches</button>');
+ var sentOk=SV.sentAt&&SV.sentSig==svSentSig(sc);
+ h+=svStep(sentOk?'ok':'none',5,'Send it to '+(PC?esc(PC.name):'your computer'),sentOk?'Sent '+esc(SV.sentAt)+' - into From phone\\'+esc(String(SV.sentAt).slice(0,10))+'\\'+esc(svFolder()):'The survey files, the GPS point and the scans, into one folder in Topside\'s From phone');
+ if(!SV.closed){if(PC)h+='<button class="btn" id="coDone" style="width:100%;padding:15px;font-size:17px;margin-top:8px">💻 Send it all and close out</button>';
+  else h+=((HOSTED||LOCALPC)?'<button class="btn" id="coConn" style="width:100%;padding:14px;margin-top:8px">💻 Connect to my computer</button>':'')+'<button class="btn alt" id="coClose">Close out now, send later</button>';}
+ else if(PC)h+='<button class="btn alt" id="coSend">💻 Send it again</button>';
+ return h;}
+function svCloseBind(){var e;
+ if(e=$('coFix'))e.onclick=svTakeFix;
+ if(e=$('coPages'))e.onclick=function(){svScanPages('page');};
+ if(e=$('coSketch'))e.onclick=function(){svScanPages('sketch');};
+ if(e=$('coConn'))e.onclick=function(){$('svy').style.display='none';pcSheet();svBackAfterPc();};
+ if(e=$('coDone'))e.onclick=function(){var btn=this;btn.disabled=true;svSendAll(function(ok){if(ok){svCloseNow();}else btn.disabled=false;});};
+ if(e=$('coSend'))e.onclick=function(){svSendAll(function(){svTripShow();});};
+ if(e=$('coClose'))e.onclick=function(){svCloseNow();};
+ if(e=$('coReopen'))e.onclick=function(){SV.closed=null;svPut(SV).then(function(){toast('Reopened');svTripShow();});};}
+function svCloseNow(){var d=new Date();SV.closed=today()+' '+hhmm(d);svPut(SV).then(function(){toast('✅ '+esc(SV.name)+' is closed out',3500);svTripShow();});}
+// the computer's connect page is on the main screen: come back to the survey when it closes
+function svBackAfterPc(){var id=SV&&SV.id,t=setInterval(function(){if($('pcOver').style.display!='none')return;clearInterval(t);if(!id)return;svDo('readonly',function(s){return s.get(id);}).then(function(s){if(s){svOpen(s);svView('trip');}});},400);}
+function svScanPages(kind){if(!canScan()){toast('Scanning needs the camera - the Topside app, or a browser with the camera allowed');return;}var id=SV.id;
+ var m={cave:SV.cave||'Cave',trip:SV.name,kind:kind,sv:id,after:function(rec){toast('📄 '+esc(rec.name)+' kept with the survey',3000);svTripShow();}};
+ scanCam({done:function(pages){if(!pages.length){svTripShow();return;}scanMake(pages,m);}});}
+// what was sent: changes after it mean it needs sending again (opening or closing it doesn't)
+function svSentSig(sc){return[SV.shots.length,SV.shots.filter(function(x){return x.cmt;}).length,(SV.plan||[]).length,(SV.prof||[]).length,(SV.xs||[]).length,SV.fix?SV.fix.t:0,(sc||[]).length,SV.name,SV.cave].join('|');}
+function svFolder(){return clean((SV.cave||'Survey')+' - '+SV.name);}
+function svInfoTxt(sc){var L=[],fx=svFixUtm();L.push('Topside survey: '+SV.name);L.push('Cave: '+(SV.cave||'-')+(SV.newCave?' (new cave)':''));
+ if(SV.entrance)L.push('Entrance: '+SV.entrance);if(SV.county||SV.state)L.push('Where: '+[SV.county?SV.county+' County':'',SV.state].filter(Boolean).join(', '));if(SV.owner)L.push('Landowner / access: '+SV.owner);
+ L.push('Date: '+SV.date);L.push('Team: '+(SV.team||'-'));L.push('Instrument: '+(SV.inst||'-'));L.push('Station prefix: '+(SV.prefix||'-')+'   Units shown: '+(SV.units=='m'?'metres':'feet')+'   Declination: '+(SV.decl||0)+'°');
+ L.push(SV.startAt=='tie'?'Starts: tied in at '+SV.first:'Starts: at '+SV.first+(SV.entrance?' ('+SV.entrance+')':''));
+ if(fx){var f=fx.f;L.push('');L.push('GPS at '+fx.st+' ('+f.name+'): '+f.lat.toFixed(7)+', '+f.lon.toFixed(7)+' WGS84, ±'+f.acc.toFixed(1)+' m from '+f.n+' readings over '+f.secs+' s, '+new Date(f.t).toLocaleString());
+  L.push('  UTM '+fx.zone+(fx.south?'S':'N')+' (WGS84): '+fx.e.toFixed(2)+' E, '+fx.n.toFixed(2)+' N');
+  if(f.ground!=null)L.push('  Elevation: '+f.ground.toFixed(1)+' m ('+Math.round(f.ground/FT)+' ft), from the cave\'s elevation model');
+  if(f.alt!=null)L.push('  GPS height: '+f.alt.toFixed(1)+' m'+(f.altAcc!=null?' ±'+f.altAcc.toFixed(0)+' m':'')+' - rough (Android gives height above the WGS84 ellipsoid, not sea level)');}
+ else if(SV.startAt!='tie')L.push('GPS: not taken');
+ var legs=svLegs().filter(function(l){return l.kind=='leg';});L.push('');L.push('Shots on the phone: '+legs.length+' legs, '+SV.shots.filter(function(x){return x.kind=='splay'||x.kind=='lrud';}).length+' splays/LRUDs');
+ if(sc&&sc.length){L.push('Scans:');sc.forEach(function(r){L.push('  '+r.name);});}
+ if(SV.comment){L.push('');L.push('Notes:');L.push(SV.comment);}
+ return L.join('\r\n')+'\r\n';}
+// everything for the trip into one folder on the computer (From phone\<day>\<cave - trip>); done(true) when it all went
+function svSendAll(done){if(!PC){pcSheet();return;}svScans().then(function(sc){var base=clean(SV.cave?SV.cave+' - '+SV.name:SV.name)||'survey',folder=svFolder(),day=today();
+ var files=[[base+' - trip info.txt',svInfoTxt(sc),'text/plain']];
+ if(SV.shots.length||SV.fix)files.push([base+'.srv',svWalls(),'text/plain'],[base+'.svx',svSurvex(),'text/plain'],[base+'.th',svTherion(base+'.th2'),'text/plain']);
+ if(SV.shots.length)files.push([base+'.th2',svTh2(),'text/plain'],[base+'.csv',svCsv(),'text/csv'],[base+' plan.svg',svSvg('plan'),'image/svg+xml'],[base+' profile.svg',svSvg('prof'),'image/svg+xml']);
+ if(SV.fix)files.push([base+' GPS.gpx',gpsGpx([SV.fix]),'application/gpx+xml'],[base+' GPS.csv',gpsCsv([SV.fix]),'text/csv']);
+ files.push([base+'.ctsurvey',JSON.stringify(SV),'application/json']);
+ sc.forEach(function(r){files.push([r.name,r.blob,'application/pdf',r]);});
+ var i=0;toast('Sending to '+esc(PC.name)+'…',60000);
+ (function next(){if(i>=files.length){var d=new Date();SV.sentAt=today()+' '+hhmm(d);SV.sentTo=PC.name;SV.sentSig=svSentSig(sc);svPut(SV).then(function(){
+    toast('✓ '+files.length+' files on '+esc(PC.name)+': From phone\\'+esc(day)+'\\'+esc(folder),6000);if(done)done(true);});return;}
+  var f=files[i++];toast('Sending '+i+' of '+files.length+' to '+esc(PC.name)+'…',60000);
+  pcJson('POST','/api/upload?name='+encodeURIComponent(f[0])+'&folder='+encodeURIComponent(folder),f[1] instanceof Blob?f[1]:new Blob([f[1]],{type:f[2]}),f[3]?300000:60000)
+   .then(function(){if(f[3]){f[3].sent=true;f[3].sentTo=PC.name;return pdo('readwrite',function(s){return s.put(f[3]);}).catch(function(){});}}).then(next,
+   function(e){toast('Not everything went ('+esc(e&&e.message||e)+' - '+esc(pcWhyShort())+'). It\'s all still on this phone - try again.',8000);if(done)done(false);});})();});}
+function svSendPc(){svSendAll(function(ok){if(ok&&SVVIEW=='trip')svTripShow();});}
 // ---- one survey
 function svOpen(s){SV=s;['plan','prof','xs','shots'].forEach(function(k){if(!SV[k])SV[k]=[];});if(!SV.ext)SV.ext={};SVUNDO={plan:[],prof:[]};SVREDO={plan:[],prof:[]};svOpenUi();
  $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1 id="svTtl">'+esc(SV.name)+'</h1><span class="chip" id="svDevC" style="cursor:pointer"></span><button class="ib" id="svMsgB" title="Messages to a unit">💬</button>'+
@@ -1580,7 +1864,8 @@ function svTag(s){var l=s.lbl;if(!l)return'';if(l=='3')return'<span class="tg g"
 function svDataShow(hl){var b=$('svBody');var top=$('svList')?$('svList').scrollTop:-1,atEnd=$('svList')?($('svList').scrollTop+$('svList').clientHeight>=$('svList').scrollHeight-40):true;
  var h='<div id="svList">';
  h+='<div class="card" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px"><div class="mut" style="width:100%;font-size:12px">'+esc(SV.cave?SV.cave+' · ':'')+esc(SV.name)+'</div><b style="font-size:16px">At '+esc(SV.cur)+'</b><span class="mut" style="font-size:12.5px;flex:1">next leg: '+esc(SV.cur)+' → '+esc((SV.prefix||'')+SV.next)+'</span>'+
-  '<button class="btn alt" id="svCurB" style="margin:0">Change</button></div>';
+  '<button class="btn alt" id="svCurB" style="margin:0">Change</button><div style="width:100%;font-size:12.5px;margin-top:2px">'+svFixLine()+'</div></div>'+
+  (SV.closed?'<div class="card" style="border-color:'+SVA+'">✅ <b>Closed out '+esc(SV.closed)+'.</b> <span class="mut">Shots from the Tacheo aren\'t added. Reopen it on the Trip page.</span></div>':'');
  if(!SV.shots.length)h+='<p class="mut">No shots yet. '+(svBleOk()?'Connect the Tacheo (the chip at the top), then take shots: '+SV.legShots+' that agree make a leg, the rest are splays.':'Type them with <b>Add a shot</b>.')+'</p>';
  var shown={};SV.shots.forEach(function(s){
   if(s.grp&&(s.kind=='leg'||s.kind=='back')){if(shown[s.grp])return;shown[s.grp]=1;var g=svGroup(s.grp),mm=svMean(g),lb=g.map(function(x){return x.lbl;}).filter(Boolean),sp=svSpread(g);
@@ -1589,14 +1874,14 @@ function svDataShow(hl){var b=$('svBody');var top=$('svList')?$('svList').scroll
  h+='<div style="margin:12px 0"><button class="btn" id="svAddB">＋ Add a shot</button>'+svOnUnits().map(function(u,i){return'<button class="btn alt" data-shot="'+esc(u.addr)+'">🎯 '+(svOnUnits().length>1?esc(svShort(u)):'Shot')+'</button>';}).join('')+(svOnUnits().length==1?'<button class="btn alt" id="svLasB">🔴 Laser</button>':'')+'</div>';
  h+='<p class="mut" style="font-size:12px">Units: '+(SV.units=='m'?'metres':'feet')+', degrees. Tap a row to edit it.</p></div>';
  b.innerHTML=h;var L=$('svList');if(atEnd||top<0)L.scrollTop=L.scrollHeight;else L.scrollTop=top;
- $('svAddB').onclick=svAddDlg;$('svCurB').onclick=svCurDlg;var e;Array.prototype.forEach.call(document.querySelectorAll('[data-shot]'),function(b){b.onclick=function(){svCmd(0x38,SVDEV.units[b.getAttribute('data-shot')]);};});if(e=$('svLasB'))e.onclick=function(){svCmd(0x36);};
+ $('svAddB').onclick=svAddDlg;$('svCurB').onclick=svCurDlg;if($('svFixB'))$('svFixB').onclick=function(ev){ev.preventDefault();svTakeFix();};var e;Array.prototype.forEach.call(document.querySelectorAll('[data-shot]'),function(b){b.onclick=function(){svCmd(0x38,SVDEV.units[b.getAttribute('data-shot')]);};});if(e=$('svLasB'))e.onclick=function(){svCmd(0x36);};
  Array.prototype.forEach.call(L.querySelectorAll('.svr'),function(r){r.onclick=function(){var g=r.getAttribute('data-g'),id=r.getAttribute('data-s');svEditDlg(g?svGroup(g):SV.shots.filter(function(x){return x.id==id;}));};});}
 function svSpread(g){if(g.length<2)return'';var mm=svMean(g),m=0;g.forEach(function(x){m=Math.max(m,Math.abs(x.d-mm.d));});return svL(m,2);}
 function svCurDlg(){var st=svStations();svDlg('<div class="big">The station you\'re at</div><p class="mut">New shots start here. Pick one surveyed already (to start a side passage) or type a name.</p><label>Station</label><input id="cuN" value="'+esc(SV.cur)+'" list="cuL" autocapitalize="characters"><datalist id="cuL">'+st.map(function(n){return'<option value="'+esc(n)+'">';}).join('')+'</datalist>'+
  '<label>Next new station number</label><input id="cuX" type="number" value="'+SV.next+'"><button class="btn" id="cuGo">Set</button><button class="btn alt" id="cuNo">Cancel</button>');
  $('cuNo').onclick=svDlgClose;$('cuGo').onclick=function(){var n=$('cuN').value.trim().toUpperCase();if(n)SV.cur=n;var x=+$('cuX').value;if(x>0)SV.next=x;svDlgClose();svTellStation();svSaveSoon();svRefresh();};}
 function svStations(){var s={};s[SV.first]=1;SV.shots.forEach(function(x){if(x.from)s[x.from]=1;if(x.to)s[x.to]=1;});return Object.keys(s);}
-function svAddDlg(){svDlg('<div class="big">Add a shot</div><div class="two"><div><label>From</label><input id="aF" value="'+esc(SV.cur)+'" autocapitalize="characters"></div><div><label>To (empty = a splay)</label><input id="aT" value="'+esc((SV.prefix||'')+SV.next)+'" autocapitalize="characters"></div></div>'+
+function svAddDlg(){if(SV.closed){toast('This survey is closed out - reopen it on the Trip page to add shots',4000);return;}svDlg('<div class="big">Add a shot</div><div class="two"><div><label>From</label><input id="aF" value="'+esc(SV.cur)+'" autocapitalize="characters"></div><div><label>To (empty = a splay)</label><input id="aT" value="'+esc((SV.prefix||'')+SV.next)+'" autocapitalize="characters"></div></div>'+
  '<div class="three"><div><label>Distance ('+svUn()+')</label><input id="aD" type="number" step="0.01" inputmode="decimal"></div><div><label>Azimuth °</label><input id="aA" type="number" step="0.1" inputmode="decimal"></div><div><label>Clino °</label><input id="aC" type="number" step="0.1" inputmode="decimal"></div></div>'+
  '<div class="three"><div><label>L</label><input id="aL" type="number" step="0.1" inputmode="decimal"></div><div><label>R</label><input id="aR" type="number" step="0.1" inputmode="decimal"></div><div><label>U / D</label><input id="aUD" placeholder="U/D" inputmode="decimal"></div></div>'+
  '<button class="btn" id="aGo">Add</button><button class="btn alt" id="aNo">Close</button><p class="mut" style="font-size:12px">LRUDs are added as splays at the From station.</p>');
@@ -1628,33 +1913,34 @@ function svEditDlg(g){if(!g.length)return;var s=g[0],isLeg=!!s.grp&&(s.kind=='le
   svDlgClose();svSaveSoon();svRefresh();};}
 // ---- Trip: details, settings, exports, the computer
 function svTripShow(){var legs=svLegs().filter(function(l){return l.kind=='leg';}),len=0;legs.forEach(function(l){len+=l.d;});
- var h='<div id="svList"><div class="card"><div class="stat"><b>'+legs.length+'</b> legs</div><div class="stat"><b>'+svL(len,0)+'</b> '+svUn()+'</div><div class="stat"><b>'+SV.shots.filter(function(x){return x.kind=='splay'||x.kind=='lrud';}).length+'</b> splays</div><div class="stat"><b>'+(SV.plan.length+SV.prof.length)+'</b> sketch items</div><div class="stat"><b>'+SV.xs.length+'</b> cross sections</div></div>';
+ var h='<div id="svList"><div id="svCo"></div><div class="k">This trip</div><div class="card"><div class="stat"><b>'+legs.length+'</b> legs</div><div class="stat"><b>'+svL(len,0)+'</b> '+svUn()+'</div><div class="stat"><b>'+SV.shots.filter(function(x){return x.kind=='splay'||x.kind=='lrud';}).length+'</b> splays</div><div class="stat"><b>'+(SV.plan.length+SV.prof.length)+'</b> sketch items</div><div class="stat"><b>'+SV.xs.length+'</b> cross sections</div></div>';
  h+='<div class="k">Send and save</div>';
  h+=(PC?'<button class="btn" id="tPcB">💻 Send to '+esc(PC.name)+'</button>':'<button class="btn alt" id="tPcB">💻 Send to my computer</button>');
  h+='<button class="btn alt" id="tSrv">Walls .srv</button><button class="btn alt" id="tSvx">Survex .svx</button><button class="btn alt" id="tTh">Therion .th + .th2</button><button class="btn alt" id="tCsv">CSV</button><button class="btn alt" id="tSvgP">Plan sketch .svg</button><button class="btn alt" id="tSvgE">Profile sketch .svg</button><button class="btn alt" id="tJson">Everything (.ctsurvey)</button>';
  h+='<div class="k">The trip</div><label class="mut" style="font-size:12px">Name</label><input class="fld" id="tName" value="'+esc(SV.name)+'"><label class="mut" style="font-size:12px">Cave</label><input class="fld" id="tCave" value="'+esc(SV.cave)+'">'+
+  '<label class="mut" style="font-size:12px">Entrance</label><input class="fld" id="tEnt" value="'+esc(SV.entrance||'')+'"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="mut" style="font-size:12px">County</label><input class="fld" id="tCty" value="'+esc(SV.county||'')+'"></div><div><label class="mut" style="font-size:12px">State</label><input class="fld" id="tSt" value="'+esc(SV.state||'')+'"></div></div><label class="mut" style="font-size:12px">Landowner / access</label><input class="fld" id="tOwn" value="'+esc(SV.owner||'')+'">'+
   '<label class="mut" style="font-size:12px">Team</label><input class="fld" id="tTeam" value="'+esc(SV.team)+'"><label class="mut" style="font-size:12px">Notes</label><textarea class="fld" id="tNote" rows="3">'+esc(SV.comment)+'</textarea>';
  h+='<div class="k">How shots are sorted</div><div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="mut" style="font-size:12px">Shots per leg</label><select class="fld" id="tLeg"><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></div>'+
   '<div><label class="mut" style="font-size:12px">Declination °</label><input class="fld" id="tDecl" type="number" step="0.1" value="'+SV.decl+'"></div><div><label class="mut" style="font-size:12px">Agree within (distance, '+svUn()+')</label><input class="fld" id="tTolD" type="number" step="0.01" value="'+svL(SV.tolD,2)+'"></div>'+
   '<div><label class="mut" style="font-size:12px">Agree within (angle °)</label><input class="fld" id="tTolA" type="number" step="0.1" value="'+SV.tolA+'"></div><div><label class="mut" style="font-size:12px">Units shown</label><select class="fld" id="tUnits"><option value="ft">Feet</option><option value="m">Metres</option></select></div></div>';
  h+='<button class="btn" id="tSave">Save the trip</button><div class="k">On this phone</div><button class="btn alt" id="tDel">Delete this survey</button></div>';
  $('svBody').innerHTML=h;$('tLeg').value=String(SV.legShots);$('tUnits').value=SV.units;
- $('tSave').onclick=function(){SV.name=$('tName').value.trim()||SV.name;SV.cave=$('tCave').value.trim();SV.team=$('tTeam').value.trim();SV.comment=$('tNote').value;SV.legShots=+$('tLeg').value;SV.decl=+$('tDecl').value||0;
+ $('tSave').onclick=function(){SV.name=$('tName').value.trim()||SV.name;SV.cave=$('tCave').value.trim();SV.entrance=$('tEnt').value.trim();SV.county=$('tCty').value.trim();SV.state=$('tSt').value.trim();SV.owner=$('tOwn').value.trim();SV.team=$('tTeam').value.trim();SV.comment=$('tNote').value;SV.legShots=+$('tLeg').value;SV.decl=+$('tDecl').value||0;
   SV.units=$('tUnits').value;SV.tolD=Math.max(0.005,(+$('tTolD').value||0.05)*svU());SV.tolA=Math.max(0.1,+$('tTolA').value||1.5);$('svTtl').textContent=SV.name;svPut(SV).then(function(){toast('Saved');svTripShow();});};
  $('tDel').onclick=function(){if(!confirm('Delete "'+SV.name+'" and its sketch from this phone? This can\'t be undone.'))return;svDo('readwrite',function(s){return s.delete(SV.id);}).then(svListShow);};
  var base=clean(SV.cave?SV.cave+' - '+SV.name:SV.name)||'survey';
  $('tSrv').onclick=function(){save(base+'.srv',svWalls(),'text/plain');};$('tSvx').onclick=function(){save(base+'.svx',svSurvex(),'text/plain');};$('tTh').onclick=function(){save(base+'.th',svTherion(base+'.th2'),'text/plain');setTimeout(function(){save(base+'.th2',svTh2(),'text/plain');},700);};
  $('tCsv').onclick=function(){save(base+'.csv',svCsv(),'text/csv');};$('tSvgP').onclick=function(){save(base+' plan.svg',svSvg('plan'),'image/svg+xml');};$('tSvgE').onclick=function(){save(base+' profile.svg',svSvg('prof'),'image/svg+xml');};
  $('tJson').onclick=function(){save(base+'.ctsurvey',JSON.stringify(SV),'application/json');};
- $('tPcB').onclick=svSendPc;}
-function svSendPc(){if(!PC){pcSheet();return;}var base=clean(SV.cave?SV.cave+' - '+SV.name:SV.name)||'survey',folder=clean((SV.cave||'Survey')+' - '+SV.name),day=today();
- var files=[[base+'.srv',svWalls(),'text/plain'],[base+'.th',svTherion(base+'.th2'),'text/plain'],[base+'.th2',svTh2(),'text/plain'],[base+' plan.svg',svSvg('plan'),'image/svg+xml'],[base+' profile.svg',svSvg('prof'),'image/svg+xml'],[base+'.ctsurvey',JSON.stringify(SV),'application/json']];
- toast('Sending to '+esc(PC.name)+'…',8000);var i=0;(function next(){if(i>=files.length){toast('Sent to '+esc(PC.name)+': From phone\\'+esc(day)+'\\'+esc(folder),6000);return;}var f=files[i++];
-  pcJson('POST','/api/upload?name='+encodeURIComponent(f[0])+'&folder='+encodeURIComponent(folder),new Blob([f[1]],{type:f[2]}),60000).then(next,function(e){toast('Couldn\'t send: '+esc(e&&e.message||e)+' - '+esc(pcWhyShort()),7000);});})();}
+ $('tPcB').onclick=svSendPc;
+ svScans().then(function(sc){if(SVVIEW!='trip'||!$('svCo'))return;$('svCo').innerHTML=svCloseHtml(sc);svCloseBind();});}
 // ---- exports
 function svOut(){var legs=svLegs(),out=[];SV.shots.forEach(function(s){if(s.grp&&(s.kind=='leg'||s.kind=='back'))return;out.push(s);});return{legs:legs,splays:out};}
 function svLrudOf(st){var r={};SV.shots.forEach(function(s){if(s.kind=='lrud'&&s.from==st&&!s.cmt){var v=s.lrud=='U'||s.lrud=='D'?Math.abs(s.d*Math.sin(s.cl*Math.PI/180)):s.d*Math.cos(s.cl*Math.PI/180);r[s.lrud]=v;}});return r;}
 function svWalls(){var o=svOut(),m=SV.units=='m',k=m?1:1/FT,L=[];L.push(';Topside survey: '+SV.name+(SV.cave?' ('+SV.cave+')':''));L.push(';Team: '+(SV.team||'-')+'   Instrument: '+(SV.inst||'-'));if(SV.comment)SV.comment.split(/\n/).forEach(function(x){L.push(';'+x);});
+ var fx=svFixUtm();if(fx){var f=fx.f;L.push(';GPS at '+fx.st+': '+f.lat.toFixed(7)+', '+f.lon.toFixed(7)+' WGS84, +/-'+f.acc.toFixed(1)+' m ('+f.n+' readings, Topside phone app)');
+  L.push(';UTM zone '+fx.zone+(fx.south?' south':' north')+', WGS84. Elevation from '+(fx.z!=null?fx.zsrc:'nowhere - set it before compiling'));
+  L.push('#Units Meters Order=ENU');L.push((fx.z==null?';':'')+'#Fix '+fx.st+'\t'+fx.e.toFixed(2)+'\t'+fx.n.toFixed(2)+'\t'+(fx.z==null?'?':fx.z.toFixed(1)));}
  L.push('#Date '+SV.date);L.push('#Units '+(m?'Meters':'Feet')+' Order=DAV Decl='+(SV.decl||0)+' TypeAB=N,5 TypeVB=N,5');   // backsights as read (not turned 180)
  // a leg and its backsight on one line, Walls' way: 26.29 100.1/280.0 -5.0/5.0
  var backs=o.legs.filter(function(l){return l.kind=='back';}),used={},lr={};
@@ -1675,12 +1961,14 @@ function svPairs(legs){var backs=legs.filter(function(l){return l.kind=='back';}
  return out;}
 function f1(v){return v==null?'-':v.toFixed(1);}
 function svSurvex(){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('*begin '+nm);L.push('; Topside survey: '+SV.name+(SV.cave?' ('+SV.cave+')':''));L.push('*date '+SV.date.replace(/-/g,'.'));if(SV.team)L.push('*team "'+SV.team.replace(/"/g,"'")+'"');
- if(SV.decl)L.push('*calibrate declination '+SV.decl);L.push('*units length metres');var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'*data normal from to tape compass backcompass clino backclino':'*data normal from to tape compass clino');
+ if(SV.decl)L.push('*calibrate declination '+SV.decl);L.push('*units length metres');
+ var fx=svFixUtm();if(fx&&fx.z!=null){L.push('; GPS at '+fx.st+' (Topside phone app): WGS84 UTM '+fx.zone+(fx.south?'S':'N')+', +/-'+fx.f.acc.toFixed(1)+' m, elevation from '+fx.zsrc);L.push('; with *cs out in your top-level file, add: *cs '+(fx.south?'EPSG:'+(32700+fx.zone):'UTM'+fx.zone+'N'));L.push('*fix '+fx.st+' reference '+fx.e.toFixed(2)+' '+fx.n.toFixed(2)+' '+fx.z.toFixed(1));}var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'*data normal from to tape compass backcompass clino backclino':'*data normal from to tape compass clino');
  pr.forEach(function(x){L.push((x.cmt?';':'')+x.from+' '+x.to+' '+x.d.toFixed(3)+' '+f1(x.az)+(anyB?' '+f1(x.baz):'')+' '+f1(x.cl)+(anyB?' '+f1(x.bcl):''));});
  if(o.splays.length){if(anyB)L.push('*data normal from to tape compass clino');L.push('*flags splay');o.splays.forEach(function(s){L.push((s.cmt?';':'')+s.from+' . '+s.d.toFixed(3)+' '+s.az.toFixed(1)+' '+s.cl.toFixed(1));});L.push('*flags not splay');}
  L.push('*end '+nm);return L.join('\n')+'\n';}
 function svTherion(th2){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('encoding utf-8');L.push('survey '+nm+' -title "'+(SV.name||'').replace(/"/g,"'")+'"');L.push('  centreline');L.push('    date '+SV.date.replace(/-/g,'.'));
  (SV.team||'').split(/[,;]+/).map(function(x){return x.trim();}).filter(Boolean).forEach(function(t){L.push('    team "'+t.replace(/"/g,"'")+'"');});if(SV.decl)L.push('    declination '+SV.decl+' degrees');
+ var fx=svFixUtm();if(fx&&fx.z!=null){L.push('    # GPS at '+fx.st+' (Topside phone app), +/-'+fx.f.acc.toFixed(1)+' m, elevation from '+fx.zsrc);L.push('    cs EPSG:'+((fx.south?32700:32600)+fx.zone));L.push('    fix '+fx.st+' '+fx.e.toFixed(2)+' '+fx.n.toFixed(2)+' '+fx.z.toFixed(1));}
  L.push('    units length meters');var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'    data normal from to length compass backcompass clino backclino':'    data normal from to length compass clino');
  pr.forEach(function(x){L.push('    '+(x.cmt?'# ':'')+x.from+' '+x.to+' '+x.d.toFixed(3)+' '+f1(x.az)+(anyB?' '+f1(x.baz):'')+' '+f1(x.cl)+(anyB?' '+f1(x.bcl):''));});
  if(o.splays.length){if(anyB)L.push('    data normal from to length compass clino');L.push('    flags splay');o.splays.forEach(function(s){L.push('    '+(s.cmt?'# ':'')+s.from+' - '+s.d.toFixed(3)+' '+s.az.toFixed(1)+' '+s.cl.toFixed(1));});L.push('    flags not splay');}
@@ -2399,7 +2687,7 @@ window.svBle=function(kind,data){try{if(typeof data=='string'&&kind!='rx'){try{d
  else if(kind=='state'){var u=svUnitOf(data.addr);if(data.addr)SVDEV.last=data.addr;if(data.name)u.name=data.name;var was=u.state;u.state=data.state=='connected'?'on':data.state=='connecting'?'connecting':'off';svDevChip();
   if(u.state=='on'&&was!='on'){toast('📡 Connected to '+esc(svShort(u)),2500);u.rx='';u.waiters=[];setTimeout(function(){svHello(u);},600);}else if(data.state=='disconnected'&&data.msg)toast('📡 '+esc(svShort(u))+': '+esc(data.msg),4000);
   if(SVVIEW=='data'&&SV)svDataShow();if(SVVIEW=='units'&&!SV&&$('svUnitsPg'))svDevSheet(true);svChatRefresh();}
- else if(kind=='leg'){if(!SV){toast('A shot came in - open a survey to keep it',3000);return;}var lu=svUnitOf(data.addr);var s=svAddShot({d:+data.dist,az:az360(+data.az),cl:+data.cl,roll:+data.roll,lbl:data.label||'',dev:svShort(lu),role:lu.role||undefined});if(navigator.vibrate)navigator.vibrate(s.kind=='leg'?[40,60,40]:30);}
+ else if(kind=='leg'){if(!SV){toast('A shot came in - open a survey to keep it',3000);return;}if(SV.closed){toast('A shot came in, but this survey is closed out - reopen it on the Trip page to keep shots',4000);return;}var lu=svUnitOf(data.addr);var s=svAddShot({d:+data.dist,az:az360(+data.az),cl:+data.cl,roll:+data.roll,lbl:data.label||'',dev:svShort(lu),role:lu.role||undefined});if(navigator.vibrate)navigator.vibrate(s.kind=='leg'?[40,60,40]:30);}
  else if(kind=='rssi'){svRssi(svUnitOf(data.addr),+data.rssi);}
  else if(kind=='phy'){var pu=svUnitOf(data.addr);pu.phy=+data.tx;svCardRadio(pu);}
  else if(kind=='rx'||kind=='rx2'){var ru=svUnitOf(kind=='rx2'?data.addr:SVDEV.last),txt=kind=='rx2'?String(data.text||''):String(data);ru.rx+=txt;var i;while((i=ru.rx.search(/\r?\n/))>=0){var line=ru.rx.slice(0,i).replace(/\r$/,'');ru.rx=ru.rx.slice(i+1).replace(/^\n/,'');if(line)svRxLine(ru,line);}}
