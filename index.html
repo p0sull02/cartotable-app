@@ -34,6 +34,9 @@ body.cave #homeBtn{background:#c9d2dc;border-color:#c9d2dc}   /* 17 Nov: the top
 body.cave #tabs button{font-size:15px;padding:12px 12px}
 #tabs button.on{color:var(--ink);border-bottom-color:var(--accent)}
 .subseg{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 10px}
+/* 19 Nov 2026 (stage 2, proposal 10): the wordmark is branding, and on a phone it was 110 px of a bar that had to scroll. The Home
+   button beside it says where you are; the name is on the Home screen and in About. */
+@media (max-width:520px){#ttl{display:none}}
 .subseg button{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #pane{flex:1;overflow:auto;padding:12px 14px calc(14px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
 body.cave #pane{font-size:15.5px}
@@ -121,7 +124,7 @@ body.cave .tile .tt{font-size:16px}
 <body>
 <div id="top">
  <button class="ib" id="homeBtn" title="Home: caves, Tacheo, survey and everything else"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M3 11 12 3l9 8"/><path d="M5.5 9.5V21h13V9.5"/><path d="M10 21v-6h4v6"/></svg>Home</button>
- <h1 id="ttl">CartoTable</h1><span id="score" class="chip" style="display:none"></span>
+ <h1 id="ttl">CartoTable</h1>
  <button class="ib" id="modeBtn" title="Switch between Topside and In the cave"></button>
  <div class="seg" id="views"><button data-v="plan" class="on">Plan</button><button data-v="profile">Profile</button><button data-v="3d">3-D</button></div>
  <button class="ib" id="measureBtn" title="Measure between two points">📏 Measure</button>
@@ -178,7 +181,8 @@ function load(d){
  depthMax=0;for(i=0;i<N;i++)if(S[i][7]>depthMax)depthMax=S[i][7];
  files={};imgs={};ground=null;G=null;sinks=D.sinks||[];sel=-1;trip=-1;route=null;measure={on:false,a:null,b:null};gl3=null;shotIx=null;openBook=-1;plan={from:null,to:null,pace:1,res:null};two={a:null,b:null};
  $('ttl').textContent=D.name;document.title=D.name+' - CartoTable';
- var sc=$('score');if(D.score!=null){sc.textContent='Closure '+D.score+' · '+D.scoreWord;sc.style.background=D.scoreColor;sc.style.display='';}else sc.style.display='none';
+ // 19 Nov 2026 (stage 2, proposal 10): the closure chip sits at the head of Station / Here, not in the top bar where it pushed the
+ // bar into a sideways scroll on a 360 px phone. scoreChip() draws it where the panel wants it.
  buildGraph();
  var bases=D.rasters.filter(function(r){return r.base;});
  lay.base=D.ground?'hillshade':(bases.length?D.rasters.indexOf(bases[0]):null);lay.extra={};
@@ -541,8 +545,9 @@ function setTabs(){var T=CAVE?TABS_CAVE:TABS_TOP;$('tabs').innerHTML=T.map(funct
 function showTab(t,html){if(html==null&&INSUB[t]){sub[INSUB[t]]=t;t=INSUB[t];}
  var same=t==tab,p=$('pane'),st=p.scrollTop;tab=t;[].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b.dataset.t==t);});
  p.innerHTML=html!=null?html:({station:stationHtml,here:hereTab,map:mapTab,leads:leadsHtml,plan:planHtml,books:booksHtml})[t]();bind();p.scrollTop=same?st:0;}
-function stationHtml(){if(sel<0)return draftedAsk()+'<div class="k">Station</div><p class="mut">Tap a station on the plot, or find one by name at the top, to see where it is, how long it takes to get there, and the way in.</p>'+entList();
- var s=S[sel],h='<div class="k">Station</div><div class="big">'+esc(s[0])+'</div>';
+function scoreChip(){return D.score==null?'':'<div class="chip" style="display:inline-block;margin:0 0 8px;background:'+D.scoreColor+'">Closure '+D.score+' \u00b7 '+esc(D.scoreWord)+'</div>';}
+function stationHtml(){if(sel<0)return draftedAsk()+scoreChip()+'<div class="k">Station</div><p class="mut">Tap a station on the plot, or find one by name at the top, to see where it is, how long it takes to get there, and the way in.</p>'+entList();
+ var s=S[sel],h=scoreChip()+'<div class="k">Station</div><div class="big">'+esc(s[0])+'</div>';
  if(s[4]>=0)h+='<div class="card"><div class="stat"><b>'+hm(s[4])+'</b><br><span class="mut">from the nearest entrance</span></div><div class="stat"><b>'+ft(s[8])+'</b><br><span class="mut">of passage</span></div><br><button class="btn" id="wayBtn">Show the way in</button><button class="btn alt" id="planTo">Plan a trip here</button></div>';
  else h+='<div class="mut">Not connected to an entrance in this survey.</div>';
  return h+stationFacts(sel);}
@@ -557,7 +562,7 @@ function stationFacts(i){var s=S[i],h='<div class="k">Depth</div><div>'+ft(s[7])
  return h;}
 // ---- in the cave
 function stationPicker(id,val,ph){return'<div style="display:flex;gap:6px;margin:4px 0"><input type="text" id="'+id+'" placeholder="'+(ph||'Station name')+'" value="'+esc(val!=null&&val>=0?S[val][0]:'')+'" style="flex:1;min-width:0;font-size:16px;padding:11px 10px" autocomplete="off" autocapitalize="characters"><button class="btn alt" data-usesel="'+id+'" style="margin:0">Selected</button></div>';}
-function hereHtml(){var h='<div class="k">Where are you?</div>'+stationPicker('hereSt',sel,'The station you\'re at')+'<button class="btn" id="hereGo">That\'s me</button>';
+function hereHtml(){var h=scoreChip()+'<div class="k">Where are you?</div>'+stationPicker('hereSt',sel,'The station you\'re at')+'<button class="btn" id="hereGo">That\'s me</button>';
  if(sel<0)return h+'<p class="mut">Type the station name off the nearest tag or book, or tap it on the plot. Then: the way out, the nearest leads, how far to anywhere.</p>'+entList();
  var s=S[sel];h+='<div class="big" style="margin-top:12px">'+esc(s[0])+'</div>';
  if(s[4]>=0)h+='<div class="card"><div class="stat"><b>'+hm(s[4])+'</b><br><span class="mut">to the nearest entrance</span></div><div class="stat"><b>'+ft(s[8])+'</b><br><span class="mut">of passage</span></div><div class="stat"><b>'+ft(s[7])+'</b><br><span class="mut">deep</span></div><br><button class="btn" id="outGo">Show the way out</button></div>';
