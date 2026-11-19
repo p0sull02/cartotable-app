@@ -181,6 +181,7 @@ function load(d){
  tripsAt={};for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1],t=SH[4*k+3];(tripsAt[a]=tripsAt[a]||{})[t]=1;(tripsAt[b]=tripsAt[b]||{})[t]=1;}
  depthMax=0;for(i=0;i<N;i++)if(S[i][7]>depthMax)depthMax=S[i][7];
  files={};imgs={};ground=null;G=null;sinks=D.sinks||[];sel=-1;trip=-1;route=null;measure={on:false,a:null,b:null};gl3=null;shotIx=null;openBook=-1;plan={from:null,to:null,pace:1,res:null};two={a:null,b:null};
+ if(D.plan&&D.plan.to!=null){plan.from=String(D.plan.from);plan.to=D.plan.to;}   // the trip planned in CartoTable (Send to phone, 19 Nov 2026)
  $('ttl').textContent=D.name;document.title=D.name+' - CartoTable';
  // 19 Nov 2026 (stage 2, proposal 10): the closure chip sits at the head of Station / Here, not in the top bar where it pushed the
  // bar into a sideways scroll on a 360 px phone. scoreChip() draws it where the panel wants it.
@@ -195,6 +196,7 @@ function load(d){
  return p.then(function(){return Promise.all(D.rasters.map(getImage));}).then(function(){
   $('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}setTabs();if(mode=='3d')setMode('plan');resize();fit();legend();showTab(CAVE?'here':'station');draw();
   if(store('ct-mode')==null)pickMode();
+  setTimeout(function(){draftOffer(false);},1200);   // 19 Nov 2026: "Do you want to download all the maps?" when the computer has some
  });
 }
 // ======================================================================= the ground: heights, hillshade, contours
@@ -962,14 +964,33 @@ function draftedAsk(){if(CAVE||!D||hasDrafted()||store('ct-noask-'+D.name))retur
 function pickDrafted(){var inp=document.createElement('input');inp.type='file';inp.onchange=function(){var f=inp.files[0];if(f)importDrafted(f);};inp.click();}
 function importDrafted(file){toast('Reading '+esc(file.name)+'…',60000);
  var buf;file.arrayBuffer().then(function(b){buf=b;return loadPdfJs();}).then(function(pdfjs){return pdfjs.getDocument({data:new Uint8Array(buf)}).promise;}).then(function(doc){return doc.getPage(1);}).then(function(pg){
-  return pg.getOperatorList().then(function(ol){var segs=pdfSegments(ol,window.pdfjsLib.OPS);var vp=pg.getViewport({scale:1});
+  return Promise.all([pg.getOperatorList(),pg.getTextContent()]).then(function(res){var ol=res[0],tc=res[1];var segs=pdfSegments(ol,window.pdfjsLib.OPS);var vp=pg.getViewport({scale:1});
    var shots=[],sts={};for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];shots.push([X[a],Y[a],X[b],Y[b]]);sts[a]=1;sts[b]=1;}
    var st=Object.keys(sts).map(function(i){return[X[i],Y[i]];});
-   var fit=alignMap(shots,st,segs,Math.hypot(vp.width,vp.height));
-   if(!fit||!fit.good){toast('Couldn\'t find the line plot on that map'+(fit&&fit.note?' ('+esc(fit.note)+')':'')+'. Line it up on the computer (Topside: File → Add a drafted map), then send the cave to the phone again.',9000);return;}
+   // 19 Nov 2026: the station names printed on the sheet first (a finished sheet often has no line plot left), then the line plot
+   var fit=draftByNames(tc.items||[]);if(fit)fit.method='names';
+   else{fit=alignMap(shots,st,segs,Math.hypot(vp.width,vp.height),pg.view);if(fit)fit.method='line plot';}
+   if(!fit||!fit.good){toast('Couldn\'t line it up: no station names or line plot on it that match the survey'+(fit&&fit.note?' ('+esc(fit.note)+')':'')+'. Line it up on the computer (Topside: Cartography > Drafted maps - a click or two), then Home > Drafted maps > Get maps.',9000);return;}
    var sc=Math.min(4,4096/Math.max(vp.width,vp.height)),v2=pg.getViewport({scale:sc}),cv0=document.createElement('canvas');cv0.width=Math.ceil(v2.width);cv0.height=Math.ceil(v2.height);
    return pg.render({canvasContext:cv0.getContext('2d'),viewport:v2}).promise.then(function(){placeDrafted(cv0,v2.transform,fit,file.name);});});
  }).catch(function(e){toast('Couldn\'t read it: '+esc(e.message),8000);});}
+// the same rules as CartoTable's DraftLineUp: every station by its name and by the part after the survey prefix; a label is centred on its
+// text; RANSAC over pairs of names for scale, turn and shift; refused unless 4 names and a quarter of them agree (River Hall: 9 of 95)
+function draftByNames(items){var by={};for(var i=0;i<N;i++){var n=String(S[i][0]).toUpperCase();(by[n]=by[n]||[]).push(i);var c=n.lastIndexOf(':');if(c>=0&&c<n.length-1){var t=n.slice(c+1);(by[t]=by[t]||[]).push(i);}}
+ var C=[],sizes=[],li=0;items.forEach(function(it){var t=String(it.str||'').trim().toUpperCase();if(!t||t.length>16||!/\d/.test(t))return;var l=by[t];if(!l||l.length>6)return;
+  var m=it.transform,sz=Math.hypot(m[2],m[3])||Math.hypot(m[0],m[1]);if(!(sz>0&&sz<200))return;var w=it.width||0.55*sz*t.length,em=Math.hypot(m[0],m[1])||1;
+  var cx=m[4]+m[0]/em*w/2+m[2]/sz*0.35*sz,cy=m[5]+m[1]/em*w/2+m[3]/sz*0.35*sz;l.forEach(function(si){C.push([X[si],Y[si],cx,cy,li]);});sizes.push(sz);li++;});
+ if(li<4)return null;sizes.sort(function(a,b){return a-b;});var tol=Math.max(10,1.6*sizes[sizes.length>>1]);
+ function fitOf(P){var n=P.length,mx=0,my=0,qx=0,qy=0;P.forEach(function(p){mx+=p[0];my+=p[1];qx+=p[2];qy+=p[3];});mx/=n;my/=n;qx/=n;qy/=n;var a=0,b=0,v=0;
+  P.forEach(function(p){var px=p[0]-mx,py=p[1]-my,ux=p[2]-qx,uy=p[3]-qy;a+=px*ux+py*uy;b+=px*uy-py*ux;v+=px*px+py*py;});if(v<1e-9)return null;var th=Math.atan2(b,a),k=Math.hypot(a,b)/v,c=Math.cos(th),s=Math.sin(th);return{k:k,th:th,tx:qx-k*(c*mx-s*my),ty:qy-k*(s*mx+c*my)};}
+ function P(f,x,y){var c=Math.cos(f.th),s=Math.sin(f.th);return[f.k*(c*x-s*y)+f.tx,f.k*(s*x+c*y)+f.ty];}
+ function agree(f){var seen={},n=0;C.forEach(function(c){if(seen[c[4]])return;var q=P(f,c[0],c[1]);if((q[0]-c[2])*(q[0]-c[2])+(q[1]-c[3])*(q[1]-c[3])<tol*tol){seen[c[4]]=1;n++;}});return n;}
+ var best=null,bn=0,seed=7;function rnd(n){seed=(seed*1103515245+12345)&0x7fffffff;return seed%n;}
+ for(var it=0;it<Math.min(12000,C.length*C.length);it++){var a=C[rnd(C.length)],b=C[rnd(C.length)];if(a[4]==b[4])continue;var dm=Math.hypot(a[0]-b[0],a[1]-b[1]),dp=Math.hypot(a[2]-b[2],a[3]-b[3]);if(dm<3||dp<4*tol)continue;var k=dp/dm;if(k<0.05||k>100)continue;
+  var f=fitOf([a,b]);if(!f)continue;var n=agree(f);if(n>bn){bn=n;best=f;}}
+ if(!best)return null;
+ for(var r=0;r<3;r++){var pick={},dd={};C.forEach(function(c){var q=P(best,c[0],c[1]),d=(q[0]-c[2])*(q[0]-c[2])+(q[1]-c[3])*(q[1]-c[3]);if(d<tol*tol&&(dd[c[4]]==null||d<dd[c[4]])){dd[c[4]]=d;pick[c[4]]=c;}});var pp=Object.keys(pick).map(function(x){return pick[x];});if(pp.length<3)break;var f2=fitOf(pp);if(!f2)break;best=f2;}
+ bn=agree(best);if(bn<4||bn<0.25*li)return null;best.matched=bn;best.stations=li;best.good=true;best.toPage=function(x,y){return P(best,x,y);};return best;}
 function pdfSegments(ol,OPS){var segs=[],m=[1,0,0,1,0,0],stack=[],pending=[];
  function mul(a,b){return[a[0]*b[0]+a[1]*b[2],a[0]*b[1]+a[1]*b[3],a[2]*b[0]+a[3]*b[2],a[2]*b[1]+a[3]*b[3],a[4]*b[0]+a[5]*b[2]+b[4],a[4]*b[1]+a[5]*b[3]+b[5]];}
  function P(x,y){return[m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]];}
@@ -986,7 +1007,7 @@ function pdfSegments(ol,OPS){var segs=[],m=[1,0,0,1,0,0],stack=[],pending=[];
   else if(fn==OPS.stroke||fn==OPS.closeStroke||fn==OPS.fillStroke||fn==OPS.eoFillStroke||fn==OPS.closeFillStroke||fn==OPS.closeEOFillStroke){pending.forEach(function(sp){if(!sp.s)return;for(var k=1;k<sp.p.length;k++)segs.push([sp.p[k-1][0],sp.p[k-1][1],sp.p[k][0],sp.p[k][1]]);});pending=[];}
   else if(fn==OPS.fill||fn==OPS.eoFill||fn==OPS.endPath)pending=[];}
  return segs;}
-function alignMap(shots,stations,segs,diag){ // the same as CartoTable's MapAlign: corners first, then shots end to end, then least squares
+function alignMap(shots,stations,segs,diag,pv){ // the same as CartoTable's MapAlign: corners first, then shots end to end, then least squares
  function len(s){return Math.hypot(s[2]-s[0],s[3]-s[1]);}
  var S=shots.filter(function(s){return len(s)>0.3;}),P=segs.filter(function(s){return len(s)>diag*0.0012;}).sort(function(a,b){return len(b)-len(a);}).slice(0,40000);
  if(S.length<2||P.length<2)return{good:false,note:'no straight lines found to match'};
@@ -1015,7 +1036,9 @@ function alignMap(shots,stations,segs,diag){ // the same as CartoTable's MapAlig
  if(!top||best<2)return{good:false,note:'no part of the drawing matched the survey\'s shape'};
  var rel=0.06;for(var it=0;it<8;it++){var pairs=[];if(score(top,S,rel,pairs)<2)break;fitPairs(top,pairs);rel=Math.max(0.02,rel*0.75);}
  var tol=Math.max(0.8,Math.max(3*(top.rms||0),top.k*0.6)),matched=0;stations.forEach(function(p){var q=toPage(top,p[0],p[1]);var best1=null;for(var cx=-1;cx<=1;cx++){}if(near(q[0],q[1],tol).length)matched++;});
- top.matched=matched;top.stations=stations.length;top.good=matched>=Math.min(6,Math.max(3,stations.length/3))&&matched>=0.3*stations.length;top.toPage=function(x,y){return toPage(top,x,y);};return top;}
+ // 19 Nov 2026: a quad shows part of the cave - judged on the stations that land on its sheet (pv), not the whole cave
+ var den=stations.length;if(pv){var on=0;stations.forEach(function(p){var q=toPage(top,p[0],p[1]);if(q[0]>=pv[0]&&q[0]<=pv[2]&&q[1]>=pv[1]&&q[1]<=pv[3])on++;});if(on>0)den=on;}
+ top.matched=matched;top.stations=den;top.good=matched>=Math.min(6,Math.max(3,den/3))&&matched>=0.3*den;top.toPage=function(x,y){return toPage(top,x,y);};return top;}
 function saveDrafted(){if(!D.hosted){dbDo('readwrite',function(st){return st.put(D,D.name);}).catch(function(){});return;}
  var rs=D.rasters.filter(function(r){return r.kind=='drafted';}),fs={};rs.forEach(function(r){fs[r.file]=D.files[r.file];});
  dbDo('readwrite',function(st){return st.put({rasters:rs,files:fs},'drafted:'+D.name);}).catch(function(){});}
@@ -1028,11 +1051,14 @@ function placeDrafted(pageCanvas,vt,fit,name){ // turn and scale the page onto t
  var L=[mpp,0,0,-mpp,x0,y1],R=[k*c,k*s,-k*s,k*c,fit.tx,fit.ty];
  function mul(a,b){return[a[0]*b[0]+a[1]*b[2],a[0]*b[1]+a[1]*b[3],a[2]*b[0]+a[3]*b[2],a[2]*b[1]+a[3]*b[3],a[4]*b[0]+a[5]*b[2]+b[4],a[4]*b[1]+a[5]*b[3]+b[5]];}
  function inv(a){var d=a[0]*a[3]-a[1]*a[2];return[a[3]/d,-a[1]/d,-a[2]/d,a[0]/d,(a[2]*a[5]-a[3]*a[4])/d,(a[1]*a[4]-a[0]*a[5])/d];}
+ // 19 Nov 2026 (Sully, 12:02: "use the map dimensions (border of the map) to draw the outline around the lineplot"): the sheet's edge
+ // (the page canvas's corners) taken back through the same fit into the cave's coordinates, kept with the map for Home > Drafted maps
+ var Bi=inv(mul(R,vt)),PW=pageCanvas.width,PH=pageCanvas.height,border=[[0,0],[PW,0],[PW,PH],[0,PH]].map(function(p){return[p[0]*Bi[0]+p[1]*Bi[2]+Bi[4],p[0]*Bi[1]+p[1]*Bi[3]+Bi[5]];});
  var A=mul(mul(L,R),vt),Ai=inv(A),out=document.createElement('canvas');out.width=w;out.height=h;var g2=out.getContext('2d');g2.setTransform(Ai[0],Ai[1],Ai[2],Ai[3],Ai[4],Ai[5]);g2.drawImage(pageCanvas,0,0);
  out.toBlob(function(blob){blob.arrayBuffer().then(function(ab){var file='data/drafted'+Date.now()+'.png',u=new Uint8Array(ab),bin='';for(var i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
-  D.files[file]=btoa(bin);files[file]=ab;var r={name:'Drafted map: '+name.replace(/\.[^.]+$/,''),kind:'drafted',file:file,mime:'image/png',x0:x0,y0:y1,mpp:mpp,w:w,h:h,base:false,on:true,op:0.85,attr:''};
+  D.files[file]=btoa(bin);files[file]=ab;var r={name:'Drafted map: '+name.replace(/\.[^.]+$/,''),kind:'drafted',file:file,mime:'image/png',x0:x0,y0:y1,mpp:mpp,w:w,h:h,base:false,on:true,op:0.85,attr:'',border:border,method:fit.method||''};
   D.rasters.push(r);var ix=D.rasters.length-1;lay.extra[ix]=0.85;getImage(r).then(function(){draw();saveDrafted();
-   toast('Lined up: '+fit.matched+' of '+fit.stations+' stations on its line plot. It\'s on the GIS tab.',6000);if(tab=='station'||tab=='layers')showTab(tab);});});},'image/png');}
+   toast(fit.method=='names'?'Lined up by the station names on it: '+fit.matched+' of '+fit.stations+' agree. It\'s on the GIS tab, and in Home > Drafted maps.':'Lined up: '+fit.matched+' of '+fit.stations+' stations on its line plot. It\'s on the GIS tab.',6000);if(tab=='station'||tab=='layers')showTab(tab);});});},'image/png');}
 // ======================================================================= views, find, sheet, modes
 function setMode(m){mode=m;setTimeout(locBtnSet,0);[].forEach.call(document.querySelectorAll('#views button'),function(b){b.classList.toggle('on',b.dataset.v==m);});
  $('gl').style.display=m=='3d'?'block':'none';cv.style.display=m=='3d'?'none':'block';$('measureBtn').style.display=CAVE||m=='3d'?'none':'';
@@ -1094,6 +1120,9 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  // survey it feeds are one job, so one tile opens one page with two pills - Surveys and Tacheo. The tile's own line says what is connected.
  h+=tileHtml('tSurvey','📐','#1A9850','Survey',window.svTileSub?svTileSub():'Shots from the Tacheo, sketch as you go');   // 16 Nov 2026 (Sully: "Can you build in a digital sketching/survey suite too? Like sexytopo or Topodroid?")   // 16 Nov 2026 (Sully: "I don't see a tile regarding connecting to a Tacheo. Idk where the message function would be")
  h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
+ // 19 Nov 2026 (Sully, 12:01: "For In cave on the app, add a tab for quick access to drafted maps"): every drafted map on the phone in one
+ // list; a tap opens its cave with that map on under the line plot (offline - the lined-up picture is kept with the cave).
+ h+=tileHtml('tDraft','✒','#a16207','Drafted maps',(D&&D.rasters&&hasDrafted())?'On '+esc(D.name)+' and your other caves':'Your map sheets, lined up on the survey');
  h+='</div>';
  var outN=4+((HOSTED||LOCALPC)?1:0);
  h+='<div class="hgrp">Outside Cave</div><div class="tiles">';
@@ -1106,7 +1135,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tDraft'))e.onclick=draftedSheet;
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
  if(PC&&$('tPc'))pcHello().then(function(hh){var s=$('tPcS');if(s)s.textContent='Connected · '+PCVIA;return pcInbox().then(function(l){setBadge('tPc',(l||[]).length);if(l&&l.length&&s)s.textContent=l.length+(l.length==1?' thing':' things')+' sent to this phone';});},function(){var s=$('tPcS');if(s)s.textContent=pcWhyShort();});}
@@ -1118,6 +1147,115 @@ function cavesSheet(){sheet('My caves','<div id="hList" class="mut">…</div><bu
   L.innerHTML=keys.map(function(k){return'<div class="row" data-k="'+esc(k)+'" style="display:flex;justify-content:space-between;align-items:center"><span class="t">'+(D&&D.name==k?'▶ ':'')+esc(k)+'</span><button class="btn alt" data-del="'+esc(k)+'" style="margin:0;padding:4px 9px">Remove</button></div>';}).join('');
   [].forEach.call(L.querySelectorAll('[data-k]'),function(r){r.onclick=function(ev){if(ev.target.dataset.del)return;dbDo('readonly',function(s){return s.get(r.dataset.k);}).then(function(d){if(d){$('pcOver').style.display='none';load(d);}});};});
   [].forEach.call(L.querySelectorAll('[data-del]'),function(b){b.onclick=function(){if(!confirm('Remove '+b.dataset.del+' from this phone? (It stays on your computer.)'))return;dbDo('readwrite',function(s){return s.delete(b.dataset.del);}).then(cavesSheet);};});});}
+// ---- Drafted maps on Home (Sully, 19 Nov 2026, 12:01: "For In cave on the app, add a tab for quick access to drafted maps"; 12:02: "Show
+// the lineplot, allow someone to click on a part of the lineplot to select the respective drafted map. Show outlines of the drafts. Take a
+// look at the lineplot in the PDF to determine which areas of the cave the draft covers, then use the map dimensions (border of the map) to
+// draw the outline around the lineplot"). The import already finds the PDF's line plot on the survey (fitDrafted); the sheet's edge goes
+// through that fit into cave coordinates (r.border, from 19 Nov). A map lined up before that gets its outline from the lined-up picture:
+// the sheet is opaque and the rest transparent, so the hull of its opaque pixels is the part of the sheet round the cave.
+var DF_COL=['#f59e0b','#38bdf8','#c084fc','#34d399','#f472b6','#facc15','#fb7185','#60a5fa'];
+function dfHull(P){P=P.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1];});if(P.length<3)return P;function cr(o,a,b){return(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);}
+ var lo=[],up=[];P.forEach(function(p){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);});
+ for(var i=P.length-1;i>=0;i--){var p=P[i];while(up.length>1&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}lo.pop();up.pop();return lo.concat(up);}
+function dfBorder(r,b64){if(r.border&&r.border.length>2)return Promise.resolve(r.border);if(!b64)return Promise.resolve(null);
+ return new Promise(function(ok){var im=new Image();im.onload=function(){var f=Math.min(1,256/Math.max(im.width,im.height)),w=Math.max(1,Math.round(im.width*f)),h=Math.max(1,Math.round(im.height*f));
+  var c=document.createElement('canvas');c.width=w;c.height=h;var g=c.getContext('2d');g.drawImage(im,0,0,w,h);var px=g.getImageData(0,0,w,h).data,pts=[];
+  for(var y=0;y<h;y++){var a=-1,b=-1;for(var x=0;x<w;x++)if(px[4*(y*w+x)+3]>128){if(a<0)a=x;b=x;}if(a>=0){pts.push([a,y]);pts.push([b+1,y]);pts.push([a,y+1]);pts.push([b+1,y+1]);}}
+  var mx=r.mpp*r.w/w,my=r.mpp*r.h/h;ok(pts.length?dfHull(pts).map(function(p){return[r.x0+p[0]*mx,r.y0-p[1]*my];}):null);};im.onerror=function(){ok(null);};im.src='data:'+(r.mime||'image/png')+';base64,'+b64;});}
+function dfInside(p,poly){var c=false;for(var i=0,j=poly.length-1;i<poly.length;j=i++){var a=poly[i],b=poly[j];if((a[1]>p[1])!=(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])c=!c;}return c;}
+function dfArea(poly){var s=0;for(var i=0,j=poly.length-1;i<poly.length;j=i++)s+=(poly[j][0]+poly[i][0])*(poly[j][1]-poly[i][1]);return Math.abs(s/2);}
+function draftedSheet(){sheet('✒ Drafted maps','<div id="dfPills" style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px"></div><div id="dfWrap" style="position:relative"><canvas id="dfCv" style="width:100%;height:56vh;display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;touch-action:manipulation"></canvas></div>'+
+  '<div class="mut" id="dfHint" style="font-size:13px;margin:6px 2px">Loading the drafted maps on this phone…</div><div id="dfPick"></div><div id="dfList"></div>'+(D&&D.st&&PC&&(HOSTED||LOCALPC)?'<button class="btn" id="dfFromPc">⬇ Get maps from '+esc(PC.name)+'</button>':'')+(D&&D.st?'<button class="btn alt" id="dfHomeAdd">＋ Add a drafted map to '+esc(D.name)+'</button>':'')+
+  '<p class="mut" style="font-size:13px;margin-top:10px">A drafted map is a PDF or Illustrator (.ai) map sheet with the line plot on it. It lines itself up on the survey, and works with no signal. Topside on your computer can add one too (File → Add a drafted map), then Send to phone.</p>');
+ var e;if(e=$('dfFromPc'))e.onclick=function(){draftOffer(true);};
+ if(e=$('dfHomeAdd'))e.onclick=function(){$('pcOver').style.display='none';$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();pickDrafted();};
+ // the caves with drafted maps: their stations and shots, and each map with its picture's data for the outline
+ var by={},order=[];function cave(n){if(!by[n]){by[n]={name:n,st:null,sh:null,maps:[],seen:{},saved:false};order.push(n);}return by[n];}
+ function add(n,r,b64){if(!r||r.kind!='drafted')return;var g=cave(n);if(g.seen[r.file])return;g.seen[r.file]=1;g.maps.push({r:r,b64:b64});}
+ if(D&&D.st){var g0=cave(D.name);g0.st=D.st;g0.sh=D.sh;g0.saved=!D.hosted;(D.rasters||[]).forEach(function(r){add(D.name,r,D.files&&D.files[r.file]);});}
+ dbDo('readonly',function(st){return st.getAllKeys();}).catch(function(){return[];}).then(function(keys){keys=(keys||[]).map(String);
+  return keys.reduce(function(p,k){return p.then(function(){return dbDo('readonly',function(st){return st.get(k);}).then(function(x){if(!x)return;
+   if(k.indexOf('drafted:')==0){var n=k.slice(8);(x.rasters||[]).forEach(function(r){add(n,r,x.files&&x.files[r.file]);});}
+   else{if(!(x.rasters||[]).some(function(r){return r.kind=='drafted';})&&!by[k])return;var g=cave(k);g.saved=true;if(!g.st){g.st=x.st;g.sh=x.sh;}(x.rasters||[]).forEach(function(r){add(k,r,x.files&&x.files[r.file]);});}}).catch(function(){});});},Promise.resolve());
+ }).then(function(){order=order.filter(function(n){return by[n].maps.length;});
+  if(!order.length){$('dfHint').textContent='None on this phone yet. Open a cave, then add its drafted map here or on the map\'s GIS tab.';$('dfWrap').style.display='none';return;}
+  return Promise.all(order.map(function(n){return Promise.all(by[n].maps.map(function(m,i){m.col=DF_COL[i%DF_COL.length];return dfBorder(m.r,m.b64).then(function(b){m.poly=b;});}));})).then(function(){
+   var cur=(D&&by[D.name])?D.name:order[0];show(cur);});});
+ function show(n){var g=by[n],sel=null;
+  // Sully, 12:05: "allow in the mobile app, the ability to select the quads from a list of the respective cave" - the list under the plot, in quad order (Q2S1 before Q19S2)
+  g.maps.sort(function(a,b){return dfName(a.r).localeCompare(dfName(b.r),undefined,{numeric:true,sensitivity:'base'});});g.maps.forEach(function(m,i){m.col=DF_COL[i%DF_COL.length];});
+  $('dfPills').innerHTML=order.length>1?order.map(function(c){return'<button class="btn'+(c==n?'':' alt')+'" data-cv="'+esc(c)+'" style="margin:0;padding:5px 12px;width:auto">'+esc(c)+'</button>';}).join(''):'';
+  [].forEach.call($('dfPills').querySelectorAll('[data-cv]'),function(b){b.onclick=function(){show(b.dataset.cv);};});
+  // what each sheet covers: the stations inside its outline, and their surveys (the letters of the names)
+  g.maps.forEach(function(m){m.n=0;var sv={};if(m.poly&&g.st)g.st.forEach(function(p){if(dfInside([p[1],p[2]],m.poly)){m.n++;var d=String(p[0]).match(/^[A-Za-z]+/);if(d)sv[d[0].toUpperCase()]=1;}});m.sv=Object.keys(sv).sort();});
+  var cv=$('dfCv'),dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;var c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
+  var lo=[1e9,1e9],hi=[-1e9,-1e9];function grow(x,y){lo[0]=Math.min(lo[0],x);lo[1]=Math.min(lo[1],y);hi[0]=Math.max(hi[0],x);hi[1]=Math.max(hi[1],y);}
+  (g.st||[]).forEach(function(p){grow(p[1],p[2]);});g.maps.forEach(function(m){(m.poly||[]).forEach(function(p){grow(p[0],p[1]);});});
+  var pad=14,sc=Math.min((W-2*pad)/Math.max(1,hi[0]-lo[0]),(H-2*pad)/Math.max(1,hi[1]-lo[1])),ox=(W-sc*(hi[0]-lo[0]))/2,oy=(H-sc*(hi[1]-lo[1]))/2;
+  function P(x,y){return[ox+(x-lo[0])*sc,H-oy-(y-lo[1])*sc];}
+  function paint(){c.clearRect(0,0,W,H);
+   g.maps.forEach(function(m){if(!m.poly)return;c.beginPath();m.poly.forEach(function(p,i){var q=P(p[0],p[1]);if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();
+    c.globalAlpha=m===sel?0.30:0.12;c.fillStyle=m.col;c.fill();c.globalAlpha=1;c.lineWidth=m===sel?3:1.6;c.strokeStyle=m.col;c.setLineDash(m===sel?[]:[6,4]);c.stroke();c.setLineDash([]);});
+   if(g.st&&g.sh){c.strokeStyle='#e5e7eb';c.lineWidth=1.2;c.beginPath();for(var k=0;k+1<g.sh.length;k+=4){var a=g.st[g.sh[k]],b=g.st[g.sh[k+1]];if(!a||!b)continue;var qa=P(a[1],a[2]),qb=P(b[1],b[2]);c.moveTo(qa[0],qa[1]);c.lineTo(qb[0],qb[1]);}c.stroke();}
+   c.font='600 12px system-ui,sans-serif';g.maps.forEach(function(m){if(!m.poly)return;var mx=0,my=0;m.poly.forEach(function(p){mx+=p[0];my+=p[1];});var q=P(mx/m.poly.length,my/m.poly.length),t=dfName(m.r);
+    var w=c.measureText(t).width+10;c.fillStyle='rgba(15,20,27,.78)';c.fillRect(q[0]-w/2,q[1]-9,w,18);c.fillStyle=m.col;c.textAlign='center';c.textBaseline='middle';c.fillText(t,q[0],q[1]);});}
+  function pick(m){sel=m;paint();var h='';
+   if(m)h='<div class="card" style="border-color:'+m.col+'"><b>'+esc(dfName(m.r))+'</b><div class="mut">'+(m.poly?'Covers '+m.n+(m.n==1?' station':' stations')+(m.sv.length?' · surveys '+esc(m.sv.slice(0,12).join(', '))+(m.sv.length>12?'…':''):''):'Its outline couldn\'t be worked out')+'</div><button class="btn" id="dfOpen">Open it on the map</button></div>';
+   $('dfPick').innerHTML=h;if(m)$('dfOpen').onclick=function(){openDrafted(n,m.r.file);};
+   [].forEach.call($('dfList').querySelectorAll('[data-di]'),function(row){row.style.outline=g.maps[+row.dataset.di]===m?'2px solid '+m.col:'';});}
+  $('dfHint').textContent=g.maps.length+(g.maps.length==1?' drafted map':' drafted maps')+' on '+n+'. Tap the line plot inside an outline to pick that map.';
+  $('dfList').innerHTML='<div class="k">Quads of '+esc(n)+' - tap one to pick it</div>'+g.maps.map(function(m,i){return'<div class="row" data-di="'+i+'" style="display:flex;align-items:center;gap:10px;border-radius:8px"><span style="width:14px;height:14px;border-radius:4px;flex:none;background:'+m.col+'"></span><span class="t" style="flex:1">'+esc(dfName(m.r))+'</span><span class="mut" style="white-space:nowrap">'+(m.poly?m.n+' stn':'')+'</span></div>';}).join('');
+  [].forEach.call($('dfList').querySelectorAll('[data-di]'),function(row){row.onclick=function(){pick(g.maps[+row.dataset.di]);};});
+  cv.onclick=function(ev){var b=cv.getBoundingClientRect(),x=(ev.clientX-b.left-ox)/sc+lo[0],y=(H-oy-(ev.clientY-b.top))/sc+lo[1],best=null,ba=1e300;
+   g.maps.forEach(function(m){if(m.poly&&dfInside([x,y],m.poly)){var a=dfArea(m.poly);if(a<ba){ba=a;best=m;}}});   // overlapping sheets: the smallest one under the finger
+   if(best)pick(best);else{pick(null);toast('No drafted map covers that part of the cave',2500);}};
+  paint();if(g.maps.length==1)pick(g.maps[0]);}}
+// ---- Maps from the computer (Sully, 19 Nov 2026, 12:06-12:11: "Have the ability to pull drafts from the desktop computer from the mobile app" /
+// "Prompt the mobile user, when opening a cave project 'Do you want to download all the maps?' And have a drop-down menu with check boxes for
+// the maps they may want to download. Auto pull from desktop."). Topside lines the sheets up (Cartography > Drafted maps) and serves them over
+// Phone link (/api/drafts, /api/draft) on the cave's grid with three stations it knows; the phone moves each onto its own copy of the cave by them.
+var DF_ASKED={};
+function draftOffer(asked){if(!D||!D.st||!PC||!(HOSTED||LOCALPC))return;var cave=D.name;
+ if(!asked&&(DF_ASKED[cave]||store('ct-nodraft-'+cave)))return;DF_ASKED[cave]=1;
+ pcJson('GET','/api/drafts?name='+encodeURIComponent(cave),null,asked?9000:5000).then(function(j){if(!D||D.name!=cave)return;
+  var have={};(D.rasters||[]).forEach(function(r){if(r.kind=='drafted')have[dfName(r)]=1;});
+  var maps=(j.maps||[]).map(function(m){m.have=!!have[dfName(m)];return m;});
+  if(!maps.length){if(asked)toast(esc(PC.name)+' has no drafted maps for '+esc(cave)+' yet (Topside: Cartography > Drafted maps).',6000);return;}
+  var fresh=maps.filter(function(m){return!m.have;});if(!asked&&!fresh.length)return;
+  var mb=maps.reduce(function(t,m){return t+(m.have?0:m.bytes);},0);
+  var h='<p style="margin-top:0"><b>Do you want to download all the maps?</b></p><p class="mut" style="margin-top:0">'+esc(PC.name)+' has '+maps.length+(maps.length==1?' drafted map':' drafted maps')+' of '+esc(cave)+', lined up on the survey. On the phone they work with no signal.</p>'+
+   '<details open class="card" style="padding:8px 10px"><summary style="cursor:pointer;font-weight:700">Maps to download ('+fresh.length+' of '+maps.length+')</summary><div id="dfoL" style="margin-top:6px">'+
+   maps.map(function(m,i){return'<label class="lab" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-dfo="'+i+'"'+(m.have?'':' checked')+'><span style="flex:1"><b>'+esc(dfName(m))+'</b><span class="mut" style="display:block;font-size:12.5px">'+esc(m.quad?m.quad+' · ':'')+esc(m.when)+(m.have?' · already on this phone':'')+'</span></span></label>';}).join('')+
+   '</div></details><button class="btn" id="dfoGo">Download</button><button class="btn alt" id="dfoNo">Not now</button>'+(asked?'':'<button class="btn alt" id="dfoNever">Don\'t ask for this cave</button>');
+  sheet('⬇ Maps from '+esc(PC.name),h);
+  var upd=function(){var n=[].filter.call(document.querySelectorAll('[data-dfo]'),function(c){return c.checked;}).length;var sm=document.querySelector('#pcIn details summary');if(sm)sm.textContent='Maps to download ('+n+' of '+maps.length+')';};
+  [].forEach.call(document.querySelectorAll('[data-dfo]'),function(c){c.onchange=upd;});
+  $('dfoNo').onclick=function(){$('pcOver').style.display='none';};
+  var e;if(e=$('dfoNever'))e.onclick=function(){store('ct-nodraft-'+cave,'1');$('pcOver').style.display='none';toast('Maps can still be had from Home > Drafted maps > Get maps.',4000);};
+  $('dfoGo').onclick=function(){var pick=[].filter.call(document.querySelectorAll('[data-dfo]'),function(c){return c.checked;}).map(function(c){return maps[+c.dataset.dfo];});
+   $('pcOver').style.display='none';if(pick.length)draftPull(cave,pick);};
+ }).catch(function(e){if(asked)toast('Couldn\'t ask '+esc(PC.name)+': '+esc(e.message||e),6000);});}
+function draftPull(cave,maps){var i=0,got=0;
+ (function next(){if(!D||D.name!=cave)return;if(i>=maps.length){saveDrafted();draw();toast(got+(got==1?' map':' maps')+' from '+esc(PC.name)+'. Home > Drafted maps has them, or the Map tab\'s layers.',6000);return;}
+  var m=maps[i++];toast('Downloading '+esc(dfName(m))+' ('+i+' of '+maps.length+')…',120000);
+  pcJson('GET','/api/draft?name='+encodeURIComponent(cave)+'&n='+m.n,null,180000).then(function(r){
+   // the computer's grid -> this copy of the cave: the reference stations it sent, else the true coordinates' origin
+   var dx=0,dy=0,k=0;(r.refs||[]).forEach(function(f){var si=byName[String(f[0]).toLowerCase()];if(si==null)return;dx+=f[1]-X[si];dy+=f[2]-Y[si];k++;});
+   if(k){dx/=k;dy/=k;}else if(D.coords&&D.coords.e0!=null){dx=D.coords.e0;dy=D.coords.n0;}else throw new Error('none of its stations are in this copy of the cave');
+   var nm=dfName(r);D.rasters.forEach(function(q,ix){if(q.kind=='drafted'&&dfName(q)==nm)delete lay.extra[ix];});
+   D.rasters=D.rasters.filter(function(q){return!(q.kind=='drafted'&&dfName(q)==nm);});
+   var file='data/pc'+Date.now()+'-'+i+'.png';D.files=D.files||{};D.files[file]=r.data;delete files[file];
+   var nr={name:r.name,kind:'drafted',file:file,mime:r.mime||'image/png',x0:r.e0-dx,y0:r.n1-dy,mpp:r.mpp,w:r.w,h:r.h,base:false,on:true,op:0.85,attr:'',quad:r.quad||'',method:r.method||'',border:(r.border||[]).map(function(b){return[b[0]-dx,b[1]-dy];})};
+   D.rasters.push(nr);lay.extra[D.rasters.length-1]=0.85;got++;return getImage(nr);
+  }).catch(function(e){toast('Couldn\'t get '+esc(dfName(m))+': '+esc(e.message||e),6000);}).then(function(){setTimeout(next,50);});})();}
+function dfName(r){return String(r.name||'Drafted map').replace(/^Drafted map: /,'');}
+function openDrafted(cave,file){
+ function on(){var i=-1;D.rasters.forEach(function(r,k){if(r.file==file)i=k;});if(i<0){toast('That drafted map isn\'t with this copy of '+esc(cave));return;}
+  D.rasters.forEach(function(r,k){if(r.kind=='drafted'&&k!=i)delete lay.extra[k];});   // the quad picked is the one shown
+  if(lay.extra[i]==null)lay.extra[i]=D.rasters[i].op||0.85;$('pcOver').style.display='none';$('home').style.display='none';
+  try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();draw();toast('Drafted map on. Its layer is on the GIS tab.',3500);}
+ if(D&&D.name==cave&&D.st){on();return;}
+ dbDo('readonly',function(st){return st.get(cave);}).then(function(d){if(!d||!d.st){toast('Open '+esc(cave)+' from its link first - it isn\'t saved on this phone',6000);return;}$('pcOver').style.display='none';return load(d).then(on);}).catch(function(e){toast('Couldn\'t open it: '+esc(e&&e.message||e),6000);});}
 function addSheet(){sheet('Add a cave','<div class="card"><b>From a file</b><div class="mut">A .ctcave file from Drive, Files, a message or a download.</div><button class="btn" id="asFile">Open a cave file (.ctcave)</button></div>'+
   ((HOSTED||LOCALPC)?'<div class="card"><b>From your computer</b><div class="mut">'+(PC?'Copy any cave Topside has on '+esc(PC.name)+'.':'Pair this phone with Topside once (Topside\'s first screen > <b>Connect a phone</b>), then your caves come straight over.')+'</div><button class="btn'+(PC?'':' alt')+'" id="asPc">'+(PC?'Caves on '+esc(PC.name):'Connect to my computer')+'</button></div>':'')+
   '<p class="mut" style="font-size:13px">The app keeps every cave you open - they work with no signal.</p>');
