@@ -207,6 +207,15 @@ footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(
 </ol>
 <p>Under each message: <b>✓ sent</b> (the unit has it), <b>✓✓ on screen</b>, <b>Read</b> (a button was pressed), or <b>Not read (10 min)</b>. A message that didn't go says why, with <b>try again</b>. Messages are kept with the trip (or on the phone, from the Tacheo page). On the unit, <b>Settings → Messages</b> lists the last ten with their times.</p>
 <div class="tip">Messages need firmware <b>1.17.8</b> on a Tacheo (T1, T2, SAP5X, SAP5XC) or <b>1.16.30.5</b> on a SAP6. An older unit gets a note in the chat saying so.</div>
+<h3>CrossTalk live</h3>
+<p><b>⇄ CrossTalk</b> on the Tacheo page watches a two-unit survey as it happens. Connect both units (the FS and the BS) to the phone; they stay linked to each other too.</p>
+<ol class="steps">
+<li>The top says how many units are connected to the phone and whether they're linked to each other.</li>
+<li>Each unit has a card with its signal bars, battery, role and its last shot.</li>
+<li>When one unit shoots a leg it shows straight away with <i>Waiting for the other unit to shoot it back…</i>. When the other one shoots, the pair shows <b>✓ Agree</b> (green) or <b>✗ Check</b> (red), with how far off the azimuth, clino and distance are; the one out of tolerance is in red. The phone buzzes once for agree, twice long for check.</li>
+<li>Quick messages and a message box are on the same page and go to every connected unit.</li>
+</ol>
+<div class="tip">The verdict is the Tacheo's own when the unit has firmware <b>1.17.10</b> (it uses the unit's tolerances); with older firmware the phone checks the pair with the usual 2° and 0.10 ft. "Linked to each other" also needs 1.17.10.</div>
 <div class="tip">iPhones and iPads don't let apps like this one use Bluetooth, so there shots are typed and messages can't be sent. Everything else - the sketch, the exports, sending to the computer - works the same.</div>
 
 <h2 id="caves">Get a cave onto the phone</h2>
