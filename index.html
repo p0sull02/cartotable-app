@@ -93,6 +93,7 @@ input[type=range]{width:100%}
 .tile .tt{font-weight:700;font-size:15px;line-height:1.2}
 .tile .ts{color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .tile .badge{position:absolute;top:9px;right:9px;background:var(--amber);color:#111;border-radius:11px;font-size:12px;font-weight:700;padding:1px 8px}
+.hgrp{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin:16px 2px -4px}
 .tile.wide{grid-column:1/-1;flex-direction:row;align-items:center;min-height:0;gap:12px}
 body.cave .tile{min-height:124px}
 body.cave .tile.wide{min-height:0}
@@ -1084,24 +1085,28 @@ function pickMode(){$('modeIn').innerHTML=installHtml('mInstall')+'<div class="b
 function tileHtml(id,ic,bg,title,sub,badge,wide){return'<button class="tile'+(wide?' wide':'')+'" id="'+id+'"><span class="ic" style="background:'+bg+'">'+ic+'</span><span style="min-width:0"><span class="tt" style="display:block">'+title+'</span><span class="ts" id="'+id+'S">'+(sub||'')+'</span></span>'+(badge?'<span class="badge" id="'+id+'B">'+badge+'</span>':'<span class="badge" id="'+id+'B" style="display:none"></span>')+'</button>';}
 function setBadge(id,n){var b=$(id+'B');if(!b)return;b.textContent=n;b.style.display=n?'':'none';}
 function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
- h+='<div class="tiles">';
+ // 19 Nov 2026 (Sully, 09:09: "Also organize these by In Cave and Outside Cave. Remove the option at the bottom that says In the Cave. The
+ // difference is barely noticeable."): two groups. In Cave = what works underground with no signal (the open cave's map, Survey,
+ // the caves on the phone); Outside Cave = the rest. The In the cave tile is gone (the top bar's mode button still switches).
+ h+='<div class="hgrp">In Cave</div><div class="tiles">';
  if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
- h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
- h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
  // 19 Nov 2026 (Sully, 08:28: "Fold Tacheo and Survey and Sketch into 1 tab. Organize how best you see fit."): the instrument and the
  // survey it feeds are one job, so one tile opens one page with two pills - Surveys and Tacheo. The tile's own line says what is connected.
  h+=tileHtml('tSurvey','📐','#1A9850','Survey',window.svTileSub?svTileSub():'Shots from the Tacheo, sketch as you go');   // 16 Nov 2026 (Sully: "Can you build in a digital sketching/survey suite too? Like sexytopo or Topodroid?")   // 16 Nov 2026 (Sully: "I don't see a tile regarding connecting to a Tacheo. Idk where the message function would be")
+ h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
+ h+='</div>';
+ var outN=4+((HOSTED||LOCALPC)?1:0);
+ h+='<div class="hgrp">Outside Cave</div><div class="tiles">';
+ h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
  h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages read into data on your computer');
  h+=tileHtml('tScan','📄','#0e7490','Scan sketches and data','Cave book pages and sketches, one PDF for your computer');   // 17 Nov 2026 (Sully: "Have the app record cave data picture like Google Pixel does its scans" / "Label it 'scan cave sketch and data'")   // 16 Nov 2026 (Sully: "a short description under it saying it automatically transcribes data from photos")
  h+=tileHtml('tGps','📍','#4285f4','GPS points','Take one with a tap - ridge walking, sinks, entrances');   // 18 Nov 2026 (Sully: "a button to take gps coords whenever, as in during ridge walking")
- if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer');
- h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!!(HOSTED||LOCALPC));   // 18 Nov: the GPS tile made it odd again   // wide when it would sit alone (17 Nov: the Scan tile made the rest even)
+ if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer','',outN%2==1);   // wide when it would sit alone
  h+='</div>';
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');
  $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;
- $('hMode').onclick=function(){setCave(!CAVE);homeShow();};
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
  if(PC&&$('tPc'))pcHello().then(function(hh){var s=$('tPcS');if(s)s.textContent='Connected · '+PCVIA;return pcInbox().then(function(l){setBadge('tPc',(l||[]).length);if(l&&l.length&&s)s.textContent=l.length+(l.length==1?' thing':' things')+' sent to this phone';});},function(){var s=$('tPcS');if(s)s.textContent=pcWhyShort();});}
