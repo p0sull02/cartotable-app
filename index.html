@@ -149,7 +149,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function ft(m){return Math.round(m/FT).toLocaleString('en-US')+' ft';}
 function ft1(m){var f=m/FT;return (Math.abs(f)<100?f.toFixed(1):Math.round(f).toLocaleString('en-US'))+' ft';}
 function hm(s){if(s==null||s<0||!isFinite(s))return'-';if(s<60)return'under a minute';if(s<3600)return Math.round(s/60)+' min';var h=Math.floor(s/3600),mm=Math.round(s%3600/60);if(mm==60){h++;mm=0;}return h+' h '+(mm<10?'0':'')+mm+' min';}
-function toast(t,ms){var e=$('toast');e.innerHTML=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.display='none';},ms||2600);}
+function toast(t,ms){var e=$('toast');e.innerHTML=t;if(typeof unprefix=='function')unprefix(e);e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.display='none';},ms||2600);}
 function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 var SANDBOX=(function(){try{return window.top!==window.self&&!window.top.location.href;}catch(e){return true;}})();
 var HOSTED=!!(D&&D.hosted)||(location.protocol=='https:'&&!SANDBOX)||(!!document.querySelector('link[rel=manifest]')&&!SANDBOX);
@@ -195,8 +195,13 @@ function gz(c,r){var v=ground[r*D.ground.w+c];return v==65535?NaN:D.ground.lo+v/
 function groundAt(x,y){if(!ground)return NaN;var g=D.ground,c=(x-g.x0)/g.cell-0.5,r=(g.y0-y)/g.cell-0.5;if(c<0||r<0||c>g.w-1||r>g.h-1)return NaN;
  var c0=Math.floor(c),r0=Math.floor(r),c1=Math.min(g.w-1,c0+1),r1=Math.min(g.h-1,r0+1),fx=c-c0,fy=r-r0;
  return (gz(c0,r0)*(1-fx)+gz(c1,r0)*fx)*(1-fy)+(gz(c0,r1)*(1-fx)+gz(c1,r1)*fx)*fy;}
+// the elevation heat map (Sully, 19 Nov 2026, 00:12: "I want an elevation heat map option. For both phone and desktop") in the desktop's colours
+// (Joe Walko's ArcGIS ramp): purple low, through blue, green, yellow and salmon, to brown and white high
+var HEAT=[0x9B4FC0,0xB165CA,0xB57CD6,0x9386DE,0x7995D4,0x86A987,0xA6C561,0xDBE877,0xF8E07E,0xFCA480,0xE2836F,0xB6745A,0xB9876D,0xD3AA98,0xE6D2C7,0xFCFCFC];
+function heatRgb(t){t=Math.max(0,Math.min(1,t))*(HEAT.length-1);var k=Math.min(HEAT.length-2,Math.floor(t)),f=t-k,a=HEAT[k],b=HEAT[k+1];return[0,1,2].map(function(i){var sh=16-8*i,x=(a>>sh)&255,y=(b>>sh)&255;return x+(y-x)*f;});}
 function buildGround(){var g=D.ground,w=g.w,h=g.h;G={contours:{}};
  var cv=document.createElement('canvas');cv.width=w;cv.height=h;var cx=cv.getContext('2d'),im=cx.createImageData(w,h),px=im.data,lo=1e9,hi=-1e9;
+ var hv=document.createElement('canvas');hv.width=w;hv.height=h;var hx=hv.getContext('2d'),hm=hx.createImageData(w,h),hp=hm.data,fv=document.createElement('canvas');fv.width=w;fv.height=h;var fx2=fv.getContext('2d'),fm=fx2.createImageData(w,h),fp=fm.data;
  for(var i=0;i<w*h;i++){var v=ground[i];if(v!=65535){if(v<lo)lo=v;if(v>hi)hi=v;}}
  var dirs=[[315,0.4],[45,0.2],[225,0.2],[135,0.2]],zen=45*Math.PI/180,ZF=1.6;
  for(var r=0;r<h;r++)for(var c=0;c<w;c++){var o=4*(r*w+c),z=gz(c,r);if(isNaN(z)){px[o+3]=0;continue;}
@@ -207,8 +212,9 @@ function buildGround(){var g=D.ground,w=g.w,h=g.h;G={contours:{}};
   // 17 Nov (Sully: "too dark ... have it like arcgis brightness"): light grey like Esri's World Hillshade - flat ground ~#d6d6d6,
   // sunlit slopes to white, shaded slopes to ~#2e; slopes exaggerated x1.6 so low relief still reads. The legs keep their dark casing.
   var t=(ground[r*w+c]-lo)/Math.max(1,hi-lo),sh=Math.max(46,Math.min(255,214*s/Math.cos(zen)));
-  px[o]=Math.min(255,sh*(0.99+0.03*t));px[o+1]=Math.min(255,sh*(0.99+0.02*t));px[o+2]=Math.min(255,sh*(1.0-0.03*t));px[o+3]=255;}
- cx.putImageData(im,0,0);G.hill=cv;}
+  px[o]=Math.min(255,sh*(0.99+0.03*t));px[o+1]=Math.min(255,sh*(0.99+0.02*t));px[o+2]=Math.min(255,sh*(1.0-0.03*t));px[o+3]=255;
+  var hc=heatRgb(t),lt=Math.max(0.5,Math.min(1.15,sh/200));hp[o]=Math.min(255,hc[0]*lt);hp[o+1]=Math.min(255,hc[1]*lt);hp[o+2]=Math.min(255,hc[2]*lt);hp[o+3]=255;fp[o]=hc[0];fp[o+1]=hc[1];fp[o+2]=hc[2];fp[o+3]=255;}
+ cx.putImageData(im,0,0);G.hill=cv;hx.putImageData(hm,0,0);G.heat=hv;fx2.putImageData(fm,0,0);G.heatFlat=fv;G.lo=D.ground.lo+lo/10;G.hi=D.ground.lo+hi/10;}
 function contours(intFt){if(G.contours[intFt])return G.contours[intFt];
  var g=D.ground,w=g.w,h=g.h,step=intFt*FT,minor=new Path2D(),index=new Path2D(),lo=1e9,hi=-1e9;
  for(var i=0;i<w*h;i++){var v=ground[i];if(v!=65535){var z=g.lo+v/10;if(z<lo)lo=z;if(z>hi)hi=z;}}
@@ -290,6 +296,14 @@ function drawRaster(img,x0,y0,mpp,op){if(!img)return;var t=worldTransform();g.sa
  g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);g.transform(mpp,0,0,-mpp,x0,y0);g.imageSmoothingEnabled=true;g.drawImage(img,0,0);g.restore();}
 var LB=null,LX=0,LY=0;   // labels placed this frame (a 40 px grid of their boxes), and where the last free spot was
 function lbl(n){if(lay.prefix)return n;var k=n.lastIndexOf(':');return k>=0&&k<n.length-1?n.slice(k+1):n;}
+// 19 Nov 2026 (Sully: "Remove prefixes from being displayed anywhere unless specifically toggled"): the cave's own prefixes taken off every
+// name in the panels, the messages and the sheets too - only the prefixes this cave has, so times and notes are left alone
+var PFXRE=null,PFXFOR=null;
+function pfxRe(){if(PFXFOR===S)return PFXRE;PFXFOR=S;var ps={};(S||[]).forEach(function(x){var n=x[0],k=n.lastIndexOf(':');if(k>0)ps[n.slice(0,k+1)]=1;});
+ var l=Object.keys(ps).sort(function(a,b){return b.length-a.length;}).map(function(p){return p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');});
+ PFXRE=l.length?new RegExp('(^|[^A-Za-z0-9_:])('+l.join('|')+')(?=[A-Za-z0-9])','g'):null;return PFXRE;}
+function unprefix(el){if(!el||lay.prefix)return;var re=pfxRe();if(!re)return;var w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null,false),n;
+ while((n=w.nextNode())){var p=n.parentNode;if(p&&/^(INPUT|TEXTAREA|SCRIPT|STYLE)$/.test(p.nodeName))continue;var t=n.nodeValue;if(t.indexOf(':')<0)continue;var u=t.replace(re,'$1');if(u!=t)n.nodeValue=u;}}
 function room(x,y,w,h){if(!LB)LB={};var x0=Math.floor(x/40),x1=Math.floor((x+w)/40),y0=Math.floor(y/40),y1=Math.floor((y+h)/40),i,j,k,l;
  for(i=x0;i<=x1;i++)for(j=y0;j<=y1;j++){l=LB[i+','+j];if(l)for(k=0;k<l.length;k++){var b=l[k];if(x<b[0]+b[2]+3&&b[0]<x+w+3&&y<b[1]+b[3]&&b[1]<y+h)return false;}}
  var r=[x,y,w,h];for(i=x0;i<=x1;i++)for(j=y0;j<=y1;j++)(LB[i+','+j]=LB[i+','+j]||[]).push(r);LX=x;LY=y;return true;}
@@ -298,9 +312,11 @@ function paint(){LB={};try{keyCheck();}catch(e){}
  if(P2.length!=2*N)P2=new Float64Array(2*N);for(var i=0;i<N;i++){var p=proj(X[i],Y[i],Z[i]);P2[2*i]=p[0];P2[2*i+1]=p[1];}
  if(mode=='plan'){var dim=CAVE?0.55:1;
   if(lay.base=='hillshade'&&G)drawRaster(G.hill,D.ground.x0,D.ground.y0,D.ground.cell,lay.baseOp*dim);
+  else if(lay.base=='heat'&&G)drawRaster(G.heat,D.ground.x0,D.ground.y0,D.ground.cell,lay.baseOp*dim);
   else if(lay.base=='live'&&!CAVE)drawLive(attr);
   else if(lay.base!=null&&D.rasters[lay.base]){var r=D.rasters[lay.base];drawRaster(imgs[r.file],r.x0,r.y0,r.mpp,lay.baseOp*dim);if(r.attr)attr.push(r.attr);}
   for(var k in lay.extra){var rr=D.rasters[k];if(rr){drawRaster(imgs[rr.file],rr.x0,rr.y0,rr.mpp,lay.extra[k]*dim);if(rr.attr)attr.push(rr.attr);}}
+  if(lay.heatOver&&G&&lay.base!='heat'){g.save();g.globalCompositeOperation='multiply';drawRaster(G.heatFlat,D.ground.x0,D.ground.y0,D.ground.cell,0.7*dim);g.restore();}
   if(lay.hillOver&&G&&lay.base!='hillshade'){g.save();g.globalCompositeOperation='multiply';drawRaster(G.hill,D.ground.x0,D.ground.y0,D.ground.cell,0.55*dim);g.restore();}
   if(!CAVE&&D.coords)for(var ov in lay.over)drawTiles(LIVE[ov],lay.over[ov],attr);
   if(lay.contours&&G){var cc=contours(lay.cint),t=worldTransform();g.save();g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);
@@ -380,8 +396,9 @@ var TABS_CAVE=[['here','Here'],['out','Way out'],['two','Two stations'],['plan',
 function setTabs(){var T=CAVE?TABS_CAVE:TABS_TOP;$('tabs').innerHTML=T.map(function(t){return'<button data-t="'+t[0]+'">'+t[1]+'</button>';}).join('');
  [].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){if(sheetDragged)return;showTab(b.dataset.t);openSheet();};});
  document.body.classList.toggle('cave',CAVE);$('modeBtn').innerHTML=CAVE?'🔦 In the cave':'☀ Topside';$('measureBtn').style.display=CAVE||mode=='3d'?'none':'';}
-function showTab(t,html){tab=t;[].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b.dataset.t==t);});var p=$('pane');p.scrollTop=0;
- p.innerHTML=html!=null?html:({station:stationHtml,here:hereHtml,out:outHtml,two:twoHtml,leads:leadsHtml,plan:planHtml,books:booksHtml,layers:layersHtml,export:exportHtml,about:aboutHtml})[t]();bind();}
+// 19 Nov 2026 (Sully: "Every time you click a button the menu flies back up to the top"): drawing the same tab again keeps its place
+function showTab(t,html){var same=t==tab,p=$('pane'),st=p.scrollTop;tab=t;[].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b.dataset.t==t);});
+ p.innerHTML=html!=null?html:({station:stationHtml,here:hereHtml,out:outHtml,two:twoHtml,leads:leadsHtml,plan:planHtml,books:booksHtml,layers:layersHtml,export:exportHtml,about:aboutHtml})[t]();bind();p.scrollTop=same?st:0;}
 function stationHtml(){if(sel<0)return draftedAsk()+'<div class="k">Station</div><p class="mut">Tap a station on the plot, or find one by name at the top, to see where it is, how long it takes to get there, and the way in.</p>'+entList();
  var s=S[sel],h='<div class="k">Station</div><div class="big">'+esc(s[0])+'</div>';
  if(s[4]>=0)h+='<div class="card"><div class="stat"><b>'+hm(s[4])+'</b><br><span class="mut">from the nearest entrance</span></div><div class="stat"><b>'+ft(s[8])+'</b><br><span class="mut">of passage</span></div><br><button class="btn" id="wayBtn">Show the way in</button><button class="btn alt" id="planTo">Plan a trip here</button></div>';
@@ -469,13 +486,14 @@ function bookHtml(i){var t=D.trips[i],gr=t.g!=null?D.grades[t.g]:null;
  return h;}
 // ---- layers
 function layersHtml(){var h=gpsSectionHtml()+'<div class="k">Base map</div>';
- var opts=[['none','None']];if(D.ground)opts.push(['hillshade','Hillshade (from the elevation)']);D.rasters.forEach(function(r,i){if(r.base)opts.push([String(i),r.name]);});
+ var opts=[['none','None']];if(D.ground){opts.push(['hillshade','Hillshade (from the elevation)']);opts.push(['heat','Elevation heat map (purple low, white high)']);}D.rasters.forEach(function(r,i){if(r.base)opts.push([String(i),r.name]);});
  if(D.coords&&HOSTED)LIVE.forEach(function(l,i){if(!l.over)opts.push(['live'+i,l.name+' (online)']);});
  var cur=lay.base==null?'none':lay.base=='live'?'live'+lay.live:String(lay.base);
  h+=opts.map(function(o){return'<label class="lab"><input type="radio" name="base" value="'+o[0]+'"'+(cur==o[0]?' checked':'')+'> '+esc(o[1])+'</label>';}).join('');
  h+='<div class="mut" style="font-size:12px">Opacity</div><input type="range" id="baseOp" min="0.1" max="1" step="0.05" value="'+lay.baseOp+'">';
  if(D.ground){h+='<div class="k">Ground</div><label class="lab"><input type="checkbox" id="lyC"'+(lay.contours?' checked':'')+'> Contours every <select id="cint" style="margin-left:4px">'+[2,5,10,20,40,100].map(function(v){return'<option'+(v==lay.cint?' selected':'')+'>'+v+'</option>';}).join('')+'</select> ft</label>'+
   '<label class="lab"><input type="checkbox" id="lyS"'+(lay.sinks?' checked':'')+'> Sinks ('+sinks.length+')</label>'+
+  '<label class="lab"><input type="checkbox" id="lyHM"'+(lay.heatOver?' checked':'')+'> Elevation colours over the map (put them on the lidar hillshade for the ArcGIS look)</label>'+(G&&isFinite(G.lo)?'<div class="mut" style="font-size:12px;margin:-2px 0 6px 26px"><span style="display:inline-block;width:120px;height:9px;border-radius:3px;vertical-align:middle;background:linear-gradient(90deg,'+HEAT.map(function(c){return"#"+("00000"+c.toString(16)).slice(-6);}).join(',')+')"></span> '+Math.round(G.lo/FT)+' to '+Math.round(G.hi/FT)+' ft</div>':'')+
   '<label class="lab"><input type="checkbox" id="lyHO"'+(lay.hillOver?' checked':'')+'> Hillshade over the map (shows the ground\'s shape on imagery)</label>';}
  h+=onlineHtml();
  var ex=D.rasters.map(function(r,i){return r.base?'':'<label class="lab"><input type="checkbox" data-ex="'+i+'"'+(lay.extra[i]!=null?' checked':'')+'> '+esc(r.name)+'</label>'+(r.kind=='drafted'?'<button class="btn alt" style="padding:2px 10px;margin:0 0 6px 28px" data-dfdel="'+i+'">Remove</button>':'');}).join('');h+='<div class="k">Map layers</div>'+ex+'<div style="margin-top:6px"><button class="btn alt" id="dfAdd">+ Add a drafted map (PDF / .ai)</button></div>';
@@ -529,8 +547,9 @@ function bindOnline(q){var e;
    var k=LIVE.length-1;if(LIVE[k].over)lay.over[k]=0.9;else{lay.base='live';lay.live=k;}draw();showTab('layers');toast('Added '+nm);};
   im.onerror=function(){if(done)return;done=true;m.textContent=' That address didn\'t give a map picture for the cave\'s area.';};im.src=url;};
  if(e=$('lyHO'))e.onchange=function(){lay.hillOver=e.checked;draw();};
+ if(e=$('lyHM'))e.onchange=function(){lay.heatOver=e.checked;draw();};
  if(e=$('lyOffline'))e.onclick=function(){saveOffline('lyOffMsg',true);};}
-function bind(){var q=function(s){return document.querySelectorAll('#pane '+s);};
+function bind(){unprefix($('pane'));var q=function(s){return document.querySelectorAll('#pane '+s);};
  [].forEach.call(q('[data-st]'),function(r){r.onclick=function(){select(+r.dataset.st,true);};});
  [].forEach.call(q('[data-book]'),function(r){r.onclick=function(){openBook=+r.dataset.book;showTab('books');};});
  [].forEach.call(q('[data-rt]'),function(r){r.onclick=function(){var s0=sel,rt=route;sel=+r.dataset.rt;route=rt;if(mode!='3d'){view.cx=X[sel];view.cy=Y[sel];view.cz=Z[sel];}draw();};});
@@ -554,7 +573,7 @@ function bind(){var q=function(s){return document.querySelectorAll('#pane '+s);}
  [].forEach.call(q('#bs button'),function(b){b.onclick=function(){bookSort=b.dataset.s;showTab('books');};});
  if(e=$('bBack'))e.onclick=function(){openBook=-1;trip=-1;if(gl3)gl3.colours();showTab('books');draw();};
  if(e=$('bShow'))e.onclick=function(){trip=openBook;if(gl3)gl3.colours();fitTrip();};
- [].forEach.call(q('input[name=base]'),function(r){r.onchange=function(){var v=r.value;if(v=='none')lay.base=null;else if(v=='hillshade')lay.base='hillshade';else if(v.indexOf('live')==0){lay.base='live';lay.live=+v.slice(4);}else lay.base=+v;draw();if(gl3)gl3.texture();};});
+ [].forEach.call(q('input[name=base]'),function(r){r.onchange=function(){var v=r.value;if(v=='none')lay.base=null;else if(v=='hillshade'||v=='heat')lay.base=v;else if(v.indexOf('live')==0){lay.base='live';lay.live=+v.slice(4);}else lay.base=+v;draw();if(gl3)gl3.texture();};});
  if(e=$('baseOp'))e.oninput=function(){lay.baseOp=+e.value;draw();};
  bindOnline(q);gpsBind();
  if(e=$('lyC'))e.onchange=function(){lay.contours=e.checked;draw();};if(e=$('cint'))e.onchange=function(){lay.cint=+e.value;lay.contours=true;$('lyC').checked=true;draw();};
@@ -651,7 +670,7 @@ var LIVE_BUILTIN=[
  {name:'Topo map (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin, USGS, NGA'},
  {name:'OpenTopoMap',url:'https://tile.opentopomap.org/{z}/{x}/{y}.png',max:17,attr:'OpenTopoMap (CC-BY-SA), OpenStreetMap contributors, SRTM',noBulk:1},
  {name:'Shaded relief (USGS)',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSShadedReliefOnly/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS The National Map'},
- {name:'Hillshade, world (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',max:16,attr:'Esri, USGS, NGA, NASA'},
+ {name:'Lidar hillshade (Esri - sharpens as you zoom; 3DEP lidar in the US)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',max:20,attr:'Esri, USGS 3DEP, NGA, NASA'},
  {name:'Streams and lakes (USGS)',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS National Hydrography',over:1},
  {name:'Roads (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin',over:1},
  {name:'Place names and boundaries (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin',over:1}];
@@ -668,9 +687,14 @@ function drawTiles(L,op,attr){if(!L||!D.coords)return;if(L.attr&&attr.indexOf(L.
  var t1=tileXY(b[0],a[1],z),t2=tileXY(a[0],b[1],z);if((t2[0]-t1[0])*(t2[1]-t1[1])>400)return;
  for(var tx=Math.floor(t1[0]);tx<=Math.floor(t2[0]);tx++)for(var ty=Math.floor(t1[1]);ty<=Math.floor(t2[1]);ty++){var url=L.url.replace('{z}',z).replace('{x}',tx).replace('{y}',ty),im=tileCache[url];
   if(!im){im=tileCache[url]=new Image();im.onload=draw;im.onerror=function(){this.bad=true;};im.src=url;}
-  if(!im.complete||im.bad||!im.naturalWidth)continue;
+  var sx=0,sy=0,sw=256,img=im;
+  // 19 Nov 2026: where a zoom level has no tile (or it hasn't come yet), the coarser one above it fills in, so nothing goes blank
+  if(!im.complete||im.bad||!im.naturalWidth){img=null;for(var up=1;up<=4&&z-up>=0&&!img;up++){var k=1<<up,px2=Math.floor(tx/k),py2=Math.floor(ty/k),pu=L.url.replace('{z}',z-up).replace('{x}',px2).replace('{y}',py2),pi=tileCache[pu];
+    if(!pi&&up==1){pi=tileCache[pu]=new Image();pi.onload=draw;pi.onerror=function(){this.bad=true;};pi.src=pu;}
+    if(pi&&pi.complete&&!pi.bad&&pi.naturalWidth){img=pi;sw=256/k;sx=(tx-px2*k)*sw;sy=(ty-py2*k)*sw;}}
+   if(!img)continue;}
   var p0=fromLatLon.apply(0,tileLL(tx,ty,z)),p1=fromLatLon.apply(0,tileLL(tx+1,ty,z)),p2=fromLatLon.apply(0,tileLL(tx,ty+1,z));
-  var t=worldTransform();g.save();g.globalAlpha=op;g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);g.transform((p1[0]-p0[0])/256,(p1[1]-p0[1])/256,(p2[0]-p0[0])/256,(p2[1]-p0[1])/256,p0[0],p0[1]);g.drawImage(im,0,0,256,256);g.restore();}}
+  var t=worldTransform();g.save();g.globalAlpha=op;g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);g.transform((p1[0]-p0[0])/256,(p1[1]-p0[1])/256,(p2[0]-p0[0])/256,(p2[1]-p0[1])/256,p0[0],p0[1]);g.drawImage(img,sx,sy,sw,sw,0,0,256,256);g.restore();}}
 function saveOffline(mid,picked){var msg=$(mid||'xOffMsg');if(!('serviceWorker' in navigator)||!window.caches){msg.textContent=' This browser can\'t keep pages offline.';return;}
  msg.textContent=' Saving...';navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready;}).then(function(){
   return dbDo('readwrite',function(s){return s.put(D,D.name);}).catch(function(){});}).then(function(){
@@ -713,7 +737,7 @@ function make3D(){var c=$('gl'),gl=c.getContext('webgl2',{antialias:true,preserv
   for(r=0;r<ch-1;r++)for(c=0;c<cw-1;c++){var q=r*cw+c;idx.push(q,q+1,q+cw,q+1,q+cw+1,q+cw);}
   terr={pos:pos,uv:new Float32Array(cw*ch*2),n:idx.length,p:B(pos),nr:B(nrm),uvb:gl.createBuffer(),idx:B(new Uint32Array(idx),gl.ELEMENT_ARRAY_BUFFER)};texture();}
  function texture(){if(!terr)return;var src=null,x0,y0,mpp;
-  if(lay.base!=null&&lay.base!=='hillshade'&&lay.base!=='live'&&D.rasters[lay.base]&&imgs[D.rasters[lay.base].file]){var r=D.rasters[lay.base];src=imgs[r.file];x0=r.x0;y0=r.y0;mpp=r.mpp;}
+  if(lay.base!=null&&lay.base!=='hillshade'&&lay.base!=='heat'&&lay.base!=='live'&&D.rasters[lay.base]&&imgs[D.rasters[lay.base].file]){var r=D.rasters[lay.base];src=imgs[r.file];x0=r.x0;y0=r.y0;mpp=r.mpp;}
   else if(G&&G.hill){src=G.hill;x0=D.ground.x0;y0=D.ground.y0;mpp=D.ground.cell;}
   if(!src){texFor=null;return;}if(texFor===src)return;texFor=src;var w=src.width||src.naturalWidth,h=src.height||src.naturalHeight;
   for(var i=0;i<terr.pos.length/3;i++){terr.uv[2*i]=(terr.pos[3*i]-x0)/(mpp*w);terr.uv[2*i+1]=(y0-terr.pos[3*i+1])/(mpp*h);}
@@ -930,7 +954,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
  if(PC&&$('tPc'))pcHello().then(function(hh){var s=$('tPcS');if(s)s.textContent='Connected · '+PCVIA;return pcInbox().then(function(l){setBadge('tPc',(l||[]).length);if(l&&l.length&&s)s.textContent=l.length+(l.length==1?' thing':' things')+' sent to this phone';});},function(){var s=$('tPcS');if(s)s.textContent=pcWhyShort();});}
 // a page over Home with a back arrow; Home's counts are refreshed on the way back
-function sheet(title,html){var o=$('pcOver');$('pcIn').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><button class="ib" id="pcBack">←</button><div class="big" style="margin:0">'+title+'</div></div>'+html;o.style.display='block';o.scrollTop=0;
+function sheet(title,html){var o=$('pcOver');$('pcIn').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><button class="ib" id="pcBack">←</button><div class="big" style="margin:0">'+title+'</div></div>'+html;unprefix($('pcIn'));o.style.display='block';o.scrollTop=0;
  $('pcBack').onclick=function(){o.style.display='none';if($('home').style.display=='block')homeShow();};}
 function cavesSheet(){sheet('My caves','<div id="hList" class="mut">…</div><button class="btn alt" id="csAdd">＋ Add a cave</button>');$('csAdd').onclick=addSheet;
  savedCaves().then(function(keys){var L=$('hList');if(!L)return;if(!keys||!keys.length){L.innerHTML='None yet. Add one: a .ctcave file, or straight from your computer.';return;}
@@ -1274,7 +1298,7 @@ function viaOf(b){return b===''?'Wi-Fi':(PC&&PC.ts||[]).some(function(t){return 
 function pcJson(method,path,body,timeout){return pcReq(method,path,body,timeout).then(function(r){return r.json().catch(function(){return{};}).then(function(j){if(!r.ok)throw new Error(j.error||('the computer answered '+r.status));return j;});});}
 function pcPair(base,code){var hd={'Content-Type':'application/json'};PC=null;
  return rawReq(base,'POST','/api/pair',JSON.stringify({code:String(code).replace(/\D/g,''),phone:phoneName()}),9000).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'pairing failed');return j;});})
-  .then(function(j){PC={name:j.name,key:j.key,addrs:base===''?[]:[base],ts:[]};PCBASE=base;pcSave();return pcHello();});}
+  .then(function(j){PC={name:j.name,key:j.key,addrs:base===''?[]:[base],ts:[]};PCBASE=base;pcSave();return pcHello();}).then(function(h){setTimeout(pcAutoTake,300);return h;});}
 function pcHello(){return pcJson('GET','/api/hello').then(function(h){if(PC&&!LOCALPC){var port=h.port||8770,w=(h.wifi||[]).map(function(a){return a+':'+port;}),t=(h.tailscale||[]).map(function(a){return a+':'+port;});
   var keep=(PC.addrs||[]).filter(function(a){return w.indexOf(a)<0&&t.indexOf(a)<0&&(PC.ts||[]).indexOf(a)<0;});PC.addrs=keep.concat(w).concat(t);PC.ts=t;PC.name=h.name;pcSave();}return h;});}
 function pcOver(html){sheet(PC?esc(PC.name):'My computer',html);}
@@ -1290,10 +1314,14 @@ var INBOX=[],inboxSeen='';
 function pcInbox(){if(!PC||!(pcCanReach()))return Promise.resolve([]);return pcJson('GET','/api/inbox',null,6000).then(function(l){INBOX=l||[];var b=$('pcInbox');if(b)b.innerHTML=inboxHtml();hookInbox();
   var sig=INBOX.map(function(i){return i.id;}).join(',');if(INBOX.length&&sig!=inboxSeen&&$('home').style.display!='block')toast('💻 '+esc(PC.name)+' sent '+(INBOX.length==1?esc(INBOX[0].title):INBOX.length+' things')+' - <a href="#" id="tInbox" style="color:var(--accent)">take '+(INBOX.length==1?'it':'them')+'</a>',9000);inboxSeen=sig;var t=$('tInbox');if(t)t.onclick=function(e){e.preventDefault();homeShow();};return INBOX;},function(){return[];});}
 function inboxHtml(){if(!INBOX.length)return'';return'<div class="card" style="border-color:var(--accent);margin:8px 0"><b>Sent from '+esc(PC.name)+'</b>'+INBOX.map(function(i){return'<div class="row" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><div class="t">'+(i.cave?'🗺 ':'📄 ')+esc(i.title)+'</div><div class="s">'+(i.bytes/1048576).toFixed(1)+' MB · '+esc(i.when)+'</div></div><button class="btn" data-take="'+esc(i.id)+'" style="margin:0">Take it</button></div>';}).join('')+'</div>';}
-function hookInbox(){[].forEach.call(document.querySelectorAll('[data-take]'),function(b){b.onclick=function(){var it=INBOX.filter(function(x){return x.id==b.dataset.take;})[0];if(!it)return;b.disabled=true;b.textContent='Bringing it over…';
-  pcReq('GET','/api/inboxfile?id='+encodeURIComponent(it.id),null,180000).then(function(r){if(!r.ok)throw new Error('it\'s no longer waiting on the computer');return it.cave?r.text():r.blob();}).then(function(d){
+function inboxTake(it){return pcReq('GET','/api/inboxfile?id='+encodeURIComponent(it.id),null,180000).then(function(r){if(!r.ok)throw new Error('it\'s no longer waiting on the computer');return it.cave?r.text():r.blob();}).then(function(d){
    pcReq('POST','/api/inboxdone?id='+encodeURIComponent(it.id),'').catch(function(){});INBOX=INBOX.filter(function(x){return x.id!=it.id;});
-   if(it.cave){$('home').style.display='none';openCaveText(d);toast(esc(it.title)+' is on this phone - it opens with no signal');}else{save(it.name,d,it.type);var bb=$('pcInbox');if(bb)bb.innerHTML=inboxHtml();hookInbox();}}).catch(function(x){b.disabled=false;b.textContent='Take it';toast(esc(x.message),6000);});};});}
+   if(it.cave){$('home').style.display='none';openCaveText(d);toast(esc(it.title)+' is on this phone - it opens with no signal');}else{save(it.name,d,it.type);var bb=$('pcInbox');if(bb)bb.innerHTML=inboxHtml();hookInbox();}});}
+function hookInbox(){[].forEach.call(document.querySelectorAll('[data-take]'),function(b){b.onclick=function(){var it=INBOX.filter(function(x){return x.id==b.dataset.take;})[0];if(!it)return;b.disabled=true;b.textContent='Bringing it over…';
+  inboxTake(it).catch(function(x){b.disabled=false;b.textContent='Take it';toast(esc(x.message),6000);});};});}
+// 19 Nov 2026 (Sully: "Shouldnt it open the app and link to download the project?"): Send to phone on the computer marks the cave auto;
+// connecting from its QR code brings it straight over and opens it
+function pcAutoTake(){pcInbox().then(function(l){var it=(l||[]).filter(function(x){return x.auto;})[0];if(!it)return;toast('Bringing '+esc(it.title)+' over from '+esc(PC.name)+'…',30000);inboxTake(it).catch(function(x){toast(esc(x.message),6000);});});}
 setInterval(function(){if(PC&&document.visibilityState=='visible')pcInbox();},30000);
 document.addEventListener('visibilitychange',function(){if(PC&&document.visibilityState=='visible')pcInbox();});
 // ---- the camera: point it at the QR code Topside shows and it connects by itself
@@ -1507,10 +1535,11 @@ function gpsDraw(){if(mode!='plan'||!D||!D.coords||CAVE)return;var pts=gpsPts();
   g.fillStyle='rgba(66,133,244,.16)';g.strokeStyle='rgba(66,133,244,.55)';g.lineWidth=1;g.beginPath();g.arc(q[0],q[1],r,0,7);g.fill();g.stroke();
   if(f.hd!=null&&isFinite(f.hd)&&f.spd>0.5){var a=(f.hd-view.az-90)*Math.PI/180;g.fillStyle='rgba(66,133,244,.45)';g.beginPath();g.moveTo(q[0],q[1]);g.arc(q[0],q[1],26,a-0.45,a+0.45);g.closePath();g.fill();}
   g.fillStyle='#4285f4';g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();g.arc(q[0],q[1],7.5,0,7);g.fill();g.stroke();}}
-function locBtnSet(){var b=$('locBtn');if(!b)return;var ok=D&&D.coords&&!CAVE&&mode=='plan';b.style.display=ok?'flex':'none';
+function locBtnSet(){var b=$('locBtn');if(!b)return;var ok=D&&!CAVE&&mode=='plan';b.style.display=ok?'flex':'none';b.style.opacity=D&&D.coords?'':'.55';
  b.classList.toggle('on',GPS.on);b.classList.toggle('fol',GPS.on&&GPS.fol);b.classList.toggle('wait',GPS.on&&!GPS.fix);}
 // ◎: off -> on and follow; on but moved away -> follow again; following -> off
-function locTap(){if(!D||!D.coords){toast('This copy of the cave has no true coordinates, so the phone\'s location can\'t be put on it');return;}
+var NOCOORDS='This copy of the cave was sent without its true coordinates, so your location can\'t go on it. On the computer, Send to phone again - it puts them in now.';
+function locTap(){if(!D||!D.coords){toast(NOCOORDS,8000);return;}
  if(!GPS.on){GPS.on=true;GPS.fol=true;gpsStart();if(GPS.fix)gpsCentre();else toast('Finding where you are…',2500);if(GPS.err)toast(gpsWhy(GPS.err),6000);}
  else if(!GPS.fol){GPS.fol=true;if(GPS.fix)gpsCentre();else if(GPS.err)toast(gpsWhy(GPS.err),6000);}
  else{GPS.on=false;GPS.fol=false;gpsStop();}
@@ -1527,7 +1556,7 @@ function gpsHereHtml(){if(!GPS.on)return'';var f=GPS.fix;if(!f)return'<div class
  return h;}
 function compass(a,b){var brg=(Math.atan2(b[0]-a[0],b[1]-a[1])*180/Math.PI+360)%360,w=['N','NE','E','SE','S','SW','W','NW'][Math.round(brg/45)%8];return w+' ('+Math.round(brg)+'° grid)';}
 function gpsSectionHtml(){var h='<div class="k">Where you are (GPS)</div>';
- if(!D.coords)return h+'<div class="card" style="margin:4px 0 8px"><b>Not on this copy of the cave</b><div class="mut">It was sent without true coordinates, so the phone\'s location can\'t be lined up with it. GPS points can still be taken from <b>GPS points</b> on Home.</div></div>';
+ if(!D.coords)return h+'<div class="card" style="margin:4px 0 8px"><b>Not on this copy of the cave</b><div class="mut">It was sent without its true coordinates, so your location can\'t be lined up with it. On the computer, <b>Send to phone</b> again - it puts them in now. GPS points can still be taken from <b>GPS points</b> on Home.</div></div>';
  h+='<label class="lab"><input type="checkbox" id="lyMe"'+(GPS.on?' checked':'')+'> Show my location on the map</label><div id="gpsHere" class="card" style="margin:4px 0 8px;'+(GPS.on?'':'display:none')+'">'+gpsHereHtml()+'</div>';
  h+='<button class="btn" id="gpsTakeB" style="width:100%;padding:14px;font-size:17px;background:#4285f4">📍 Take a GPS point here</button>';
  var pts=gpsPts();h+='<label class="lab" style="margin-top:6px"><input type="checkbox" id="lyGps"'+(lay.gps!==false?' checked':'')+'> GPS points on the map ('+pts.length+')</label>';
