@@ -161,7 +161,7 @@ function savedCaves(){return dbDo('readonly',function(s){return s.getAllKeys();}
 // ======================================================================= the cave
 var S,N,X,Y,Z,SH,M,ED,byName,leadAt,tripsAt,depthMax,files={},imgs={},ground=null,G=null,sinks=[];
 var view={az:0,tilt:90,cx:0,cy:0,cz:0,ppm:1}, mode='plan', colour='travel', sel=-1, trip=-1, route=null, W=0,H=0;
-var lay={prefix:store('ct-prefix')=='1',base:null,baseOp:1,contours:false,cint:10,sinks:false,names:true,leads:true,ents:true,extra:{},ground3d:'see',light:'whole',vex:1,live:0,over:{},hillOver:false};
+var lay={squeezes:store('ct-sq')=='1',prefix:store('ct-prefix')=='1',base:null,baseOp:1,contours:false,cint:10,sinks:false,names:true,leads:true,ents:true,extra:{},ground3d:'see',light:'whole',vex:1,live:0,over:{},hillOver:false};
 var measure={on:false,a:null,b:null}, CAVE=store('ct-mode')=='cave';
 function b64(s){var bin=atob(s),n=bin.length,u=new Uint8Array(n);for(var i=0;i<n;i++)u[i]=bin.charCodeAt(i);return u.buffer;}
 function getFile(name){if(files[name])return Promise.resolve(files[name]);var v=D.files&&D.files[name];
@@ -229,6 +229,33 @@ function contours(intFt){if(G.contours[intFt])return G.contours[intFt];
 // ======================================================================= travel graph (the planner's speeds)
 var adj=null,pace=1;
 function edgeCost(k){var kind=ED[5*k+3];return ED[5*k+2]/(D.speeds[kind]*pace)+(kind==6?D.rig:0);}
+// ---- the way in drawn by how it's travelled (Sully, 19 Nov 2026, 00:15: "also show the type of travel visually somehow. Crawling, stoop
+// walking, belly crawl"); significant squeezes bracketed in red with their size ("label it as a filter on the map")
+var GOSTY=[{c:'#fbbf24',d:[]},{c:'#fbbf24',d:[16,7]},{c:'#fb923c',d:[7,5]},{c:'#ef4444',d:[1,6]},{c:'#b45309',d:[12,4,2,4]},{c:'#c084fc',d:[]},{c:'#f472b6',d:[1,7]},{c:'#94a3b8',d:[6,6]}];
+function routeKind(a,b){if(!adj)buildGraph();var L=adj[a]||[];for(var j=0;j<L.length;j++){var k=L[j];if((ED[5*k]==a&&ED[5*k+1]==b)||(ED[5*k]==b&&ED[5*k+1]==a))return ED[5*k+3];}return 7;}
+function routeKinds(){var o={};if(route)for(var i=1;i<route.length;i++)o[routeKind(route[i-1],route[i])]=1;return Object.keys(o).map(Number).sort();}
+function drawRoute(lw){g.save();g.lineCap='round';g.lineJoin='round';g.strokeStyle='rgba(8,12,18,.85)';g.lineWidth=lw+6;g.beginPath();g.moveTo(P2[2*route[0]],P2[2*route[0]+1]);for(var i=1;i<route.length;i++)g.lineTo(P2[2*route[i]],P2[2*route[i]+1]);g.stroke();
+ for(var i=1;i<route.length;i++){var a=route[i-1],b=route[i],st=GOSTY[routeKind(a,b)]||GOSTY[7];g.strokeStyle=st.c;g.lineWidth=lw+(st.d.length&&st.d[0]<3?4:2.8);g.setLineDash(st.d);g.beginPath();g.moveTo(P2[2*a],P2[2*a+1]);g.lineTo(P2[2*b],P2[2*b+1]);g.stroke();}
+ g.restore();}
+// a squeeze: under 0.5 m (20 in) high or wide, or the notes say squeeze / belly crawl / tight and it isn't tall
+function squeezeAt(i){var d=D.dm;if(!d||3*i+2>=d.length)return null;var w=d[3*i],h=d[3*i+1],n=d[3*i+2];
+ if((h>=0&&h<0.5)||(w>=0&&w<0.5)||(n&&(h<0||h<0.9)))return{w:w,h:h,noted:!!n};return null;}
+function sqLen(m){return m<0?'?':m<0.9144?Math.round(m/0.0254)+' in':(m/FT).toFixed(1)+' ft';}
+function sqTxt(q){if(q.w>=0&&q.h>=0&&q.w<0.9144&&q.h<0.9144)return Math.round(q.w/0.0254)+' × '+Math.round(q.h/0.0254)+' in';return sqLen(q.w)+' wide × '+sqLen(q.h)+' high';}
+function squeezeList(onlyRoute){var o=[];var ids=onlyRoute?(route||[]):(S?S.map(function(_,i){return i;}):[]);ids.forEach(function(i,ix){var q=squeezeAt(i);if(q){q.i=i;q.ix=ix;o.push(q);}});return o;}
+function drawSqueezes(){if(!D||!D.dm)return;var on={};if(lay.squeezes)squeezeList(false).forEach(function(q){on[q.i]=q;});if(route&&route.length>1)squeezeList(true).forEach(function(q){on[q.i]=q;});
+ var ri={};if(route)route.forEach(function(s,ix){ri[s]=ix;});g.save();g.font='700 11.5px system-ui,sans-serif';
+ var drawn=[];Object.keys(on).sort(function(a,b){return(ri[b]!=null)-(ri[a]!=null);}).forEach(function(k){var i=+k,q=on[k],x=P2[2*i],y=P2[2*i+1];if(x<-40||y<-40||x>W+40||y>H+40)return;
+  if(drawn.some(function(d){return Math.hypot(d[0]-x,d[1]-y)<34;}))return;drawn.push([x,y]);   // zoomed out, one bracket per spot
+  var a=-1,b=-1;if(ri[i]!=null){a=route[Math.max(0,ri[i]-1)];b=route[Math.min(route.length-1,ri[i]+1)];}else{if(!adj)buildGraph();var L=adj[i]||[];if(L.length){var k0=L[0];a=i;b=ED[5*k0]==i?ED[5*k0+1]:ED[5*k0];}}
+  var dx=1,dy=0;if(a>=0&&b>=0&&a!=b){dx=P2[2*b]-P2[2*a];dy=P2[2*b+1]-P2[2*a+1];var l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;}var nx=-dy,ny=dx,A=13,B=6,O=10;
+  g.strokeStyle='rgba(8,12,18,.8)';g.lineWidth=6;g.lineCap='round';g.lineJoin='round';
+  for(var pass=0;pass<2;pass++){if(pass==1){g.strokeStyle='#ef4444';g.lineWidth=3;}
+   [-1,1].forEach(function(sd){var cx=x+dx*O*sd,cy=y+dy*O*sd;g.beginPath();g.moveTo(cx+nx*A-dx*B*sd,cy+ny*A-dy*B*sd);g.lineTo(cx+nx*A,cy+ny*A);g.lineTo(cx-nx*A,cy-ny*A);g.lineTo(cx-nx*A-dx*B*sd,cy-ny*A-dy*B*sd);g.stroke();});}
+  var t='Squeeze '+sqTxt(q),tw=g.measureText(t).width,lx=x+nx*(A+8)+(nx<0?-tw-10:0),ly=y+ny*(A+8)-9;
+  if(!room(lx,ly,tw+10,18))return;   // a label only where it doesn't land on another
+  g.fillStyle='#ef4444';g.beginPath();if(g.roundRect)g.roundRect(lx,ly,tw+10,18,5);else g.rect(lx,ly,tw+10,18);g.fill();g.fillStyle='#fff';g.fillText(t,lx+5,ly+13);});
+ g.restore();}
 function buildGraph(){adj=[];for(var i=0;i<N;i++)adj.push([]);for(var k=0;k<ED.length/5;k++){adj[ED[5*k]].push(k);adj[ED[5*k+1]].push(k);}}
 function dijkstra(srcs,byMetres){var T=new Float64Array(N).fill(Infinity),Dm=new Float64Array(N).fill(Infinity),P=new Int32Array(N).fill(-1),PE=new Int32Array(N).fill(-1),heap=[];
  function push(t,i){heap.push([t,i]);var j=heap.length-1;while(j>0){var p=(j-1)>>1;if(heap[p][0]<=heap[j][0])break;var x=heap[p];heap[p]=heap[j];heap[j]=x;j=p;}}
@@ -245,6 +272,107 @@ function legsOf(run,path){var legs=[],byG={},rope=0;
   last.to=path[i];last.m+=ED[5*k+2];last.t+=edgeCost(k);last.dz+=Z[path[i]]-Z[path[i-1]];last.g[kind]=(last.g[kind]||0)+ED[5*k+2];}
  return{legs:legs,byG:byG,rope:rope};}
 function legsTable(legs){return'<table class="sh"><tr><th>Book</th><th>From → to</th><th class="r">Length</th><th class="r">Time</th></tr>'+legs.map(function(l){var tr=D.trips[l.trip];return'<tr data-rt="'+l.to+'"><td>'+esc(tr?tr.n:'')+'</td><td>'+esc(S[l.from][0])+' → '+esc(S[l.to][0])+'<br><span class="mut">'+Object.keys(l.g).map(function(k){return D.going[k];}).join(', ')+(Math.abs(l.dz)>3?' · '+(l.dz>0?'up ':'down ')+ft(Math.abs(l.dz)):'')+'</span></td><td class="r">'+ft(l.m)+'</td><td class="r">'+hm(l.t)+'</td></tr>';}).join('')+'</table>';}
+
+// ======================================================================= the trip plan as a PDF (Sully, 19 Nov 2026, 00:16: "Have a trip
+// plan PDF produced for the phone app ... Just like the desktop version. All info you can think of"). Written here, with no library and no
+// signal: Letter pages, Helvetica, the route map and the depth profile as pictures. Saved to Downloads/Topside in the app.
+function PdfDoc(){this.W=612;this.H=792;this.pg=[];this.im=[];this.np();}
+PdfDoc.prototype.np=function(){this.c=[];this.pg.push(this.c);this.y=this.H-46;};
+PdfDoc.esc=function(t){var m={'→':'->','←':'<-','×':'\xD7','°':'\xB0','·':'\xB7','–':'\x96','—':'\x97','…':'\x85','±':'\xB1','’':"'",'‘':"'",'“':'"','”':'"','≈':'~','◎':'o'};
+ var o='';String(t).split('').forEach(function(ch){if(m[ch]!=null)ch=m[ch];var c=ch.charCodeAt(0);if(ch.length==1&&c>255)ch='?';if(ch=='\\'||ch=='('||ch==')')ch='\\'+ch;o+=ch;});return o;};
+PdfDoc.w=function(t,sz,b){return String(t).length*sz*(b?0.56:0.51);};
+PdfDoc.prototype.col=function(c){var n=parseInt((c||'#111827').slice(1),16);return((n>>16&255)/255).toFixed(3)+' '+((n>>8&255)/255).toFixed(3)+' '+((n&255)/255).toFixed(3);};
+PdfDoc.prototype.t=function(x,y,t,sz,b,c){this.c.push('BT /'+(b?'F2':'F1')+' '+sz+' Tf '+this.col(c)+' rg '+x.toFixed(1)+' '+y.toFixed(1)+' Td ('+PdfDoc.esc(t)+') Tj ET');};
+PdfDoc.prototype.r=function(x,y,w,h,c){this.c.push(this.col(c)+' rg '+x.toFixed(1)+' '+y.toFixed(1)+' '+w.toFixed(1)+' '+h.toFixed(1)+' re f');};
+PdfDoc.prototype.l=function(x1,y1,x2,y2,c,w){this.c.push(this.col(c)+' RG '+(w||0.6)+' w '+x1.toFixed(1)+' '+y1.toFixed(1)+' m '+x2.toFixed(1)+' '+y2.toFixed(1)+' l S');};
+PdfDoc.prototype.need=function(h){if(this.y-h<50)this.np();};
+PdfDoc.prototype.wrap=function(t,sz,b,w){var words=String(t).split(/\s+/),lines=[],cur='';words.forEach(function(wd){var tr=cur?cur+' '+wd:wd;if(PdfDoc.w(tr,sz,b)>w&&cur){lines.push(cur);cur=wd;}else cur=tr;});if(cur)lines.push(cur);return lines;};
+PdfDoc.prototype.para=function(t,sz,b,c,x,w){x=x||46;w=w||520;var L=this.wrap(t,sz,b,w),me=this;L.forEach(function(s){me.need(sz+4);me.t(x,me.y,s,sz,b,c);me.y-=sz+3.5;});};
+PdfDoc.prototype.head=function(t,keep){this.need(40+(keep||0));this.y-=8;this.t(46,this.y,t.toUpperCase(),9.5,true,'#1F5FC0');this.y-=4;this.l(46,this.y,566,this.y,'#C7D2E0',0.8);this.y-=13;};
+PdfDoc.prototype.img=function(url,iw,ih,w){var h=w*ih/iw;if(this.y-h<50&&this.y>this.H*0.45){w=w*(this.y-56)/h;h=this.y-56;}else this.need(h+6);w=Math.min(w,520);var b=atob(url.slice(url.indexOf(',')+1)),n=this.im.length;this.im.push({b:b,w:iw,h:ih});this.c.push('q '+w.toFixed(1)+' 0 0 '+h.toFixed(1)+' 46 '+(this.y-h).toFixed(1)+' cm /Im'+n+' Do Q');this.y-=h+8;};
+PdfDoc.prototype.table=function(cols,rows){var me=this,x0=46;function line(cells,b,bg){var hts=cells.map(function(c,i){return me.wrap(c,8.6,b,cols[i].w-6).length;}),h=Math.max.apply(0,hts)*11+5;me.need(h);if(bg)me.r(x0,me.y-h+9,520,h,bg);
+  var x=x0;cells.forEach(function(c,i){var L=me.wrap(c,8.6,b,cols[i].w-6);L.forEach(function(s,k){var tx=cols[i].r?x+cols[i].w-6-PdfDoc.w(s,8.6,b):x+3;me.t(tx,me.y-k*11,s,8.6,b,b?'#334155':'#111827');});x+=cols[i].w;});me.y-=h;}
+ line(cols.map(function(c){return c.n;}),true,'#EEF2F7');rows.forEach(function(r,i){line(r,false,i%2?'#F8FAFC':null);});this.y-=4;};
+PdfDoc.prototype.bytes=function(){var objs=[],me=this,kids=[];function add(s){objs.push(s);return objs.length;}
+ var cat=add(''),pages=add(''),f1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),f2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+ var imIds=this.im.map(function(m){return add('<< /Type /XObject /Subtype /Image /Width '+m.w+' /Height '+m.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+m.b.length+' >>\nstream\n'+m.b+'\nendstream');});
+ var xo=imIds.map(function(id,i){return'/Im'+i+' '+id+' 0 R';}).join(' ');
+ this.pg.forEach(function(c,i){var body=c.join('\n');var ft='BT /F1 7.5 Tf 0.45 0.5 0.56 rg 46 26 Td ('+PdfDoc.esc('Topside trip plan · page '+(i+1)+' of '+me.pg.length+' · travel times are estimates from the passage sizes - add time to work')+') Tj ET';body+='\n'+ft;
+  var cs=add('<< /Length '+body.length+' >>\nstream\n'+body+'\nendstream');kids.push(add('<< /Type /Page /Parent '+pages+' 0 R /MediaBox [0 0 '+me.W+' '+me.H+'] /Resources << /Font << /F1 '+f1+' 0 R /F2 '+f2+' 0 R >> /XObject << '+xo+' >> >> /Contents '+cs+' 0 R >>'));});
+ objs[cat-1]='<< /Type /Catalog /Pages '+pages+' 0 R >>';objs[pages-1]='<< /Type /Pages /Kids ['+kids.map(function(k){return k+' 0 R';}).join(' ')+'] /Count '+kids.length+' >>';
+ var out='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n',off=[];objs.forEach(function(o,i){off.push(out.length);out+=(i+1)+' 0 obj\n'+o+'\nendobj\n';});
+ var xr=out.length;out+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n'+off.map(function(o){return('000000000'+o).slice(-10)+' 00000 n \n';}).join('')+'trailer\n<< /Size '+(objs.length+1)+' /Root '+cat+' 0 R >>\nstartxref\n'+xr+'\n%%EOF';
+ var u=new Uint8Array(out.length);for(var i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;return u;};
+// the route on the map, framed to it, north up (the view is put back afterwards)
+function routeMapJpeg(path){var keep={az:view.az,tilt:view.tilt,cx:view.cx,cy:view.cy,cz:view.cz,ppm:view.ppm},km=mode,ks=sel;
+ var x0=1e18,x1=-1e18,y0=1e18,y1=-1e18;path.forEach(function(i){x0=Math.min(x0,X[i]);x1=Math.max(x1,X[i]);y0=Math.min(y0,Y[i]);y1=Math.max(y1,Y[i]);});
+ var bw=Math.max(30,x1-x0),bh=Math.max(30,y1-y0);mode='plan';view.az=0;view.tilt=90;view.cx=(x0+x1)/2;view.cy=(y0+y1)/2;view.cz=Z[path[0]];view.ppm=Math.min(W/(bw*1.2),H/(bh*1.25));
+ paint();var url=cv.toDataURL('image/jpeg',0.86),r={url:url,w:cv.width,h:cv.height,mpp:1/view.ppm};
+ view.az=keep.az;view.tilt=keep.tilt;view.cx=keep.cx;view.cy=keep.cy;view.cz=keep.cz;view.ppm=keep.ppm;mode=km;sel=ks;paint();return r;}
+// depth along the way: distance across, depth down, coloured by how it's travelled; squeezes in red
+function routeProfileJpeg(path){var w=1400,h=420,c=document.createElement('canvas');c.width=w;c.height=h;var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);
+ var d=[0],zs=[Z[path[0]]];for(var i=1;i<path.length;i++){d.push(d[i-1]+Math.hypot(X[path[i]]-X[path[i-1]],Y[path[i]]-Y[path[i-1]],Z[path[i]]-Z[path[i-1]]));zs.push(Z[path[i]]);}
+ var zt=Math.max.apply(0,zs),zb=Math.min.apply(0,zs),L=90,R=30,T=30,B=60,sx=(w-L-R)/Math.max(1,d[d.length-1]),sz=(h-T-B)/Math.max(3,zt-zb);
+ function px(i){return[L+d[i]*sx,T+(zt-zs[i])*sz];}
+ x.strokeStyle='#e5e7eb';x.lineWidth=1;x.font='22px Helvetica,Arial';x.fillStyle='#475569';
+ for(var k=0;k<=4;k++){var yy=T+(h-T-B)*k/4;x.beginPath();x.moveTo(L,yy);x.lineTo(w-R,yy);x.stroke();x.fillText(Math.round((zt-(zt-zb)*k/4-Z[path[0]])/FT)+' ft',4,yy+7);}
+ var tot=d[d.length-1],stepFt=[100,200,500,1000,2000,5000,10000].filter(function(v){return v*FT>=tot/8;})[0]||10000;x.textAlign='center';for(var m2=0;m2<=tot+1;m2+=stepFt*FT){x.beginPath();x.moveTo(L+m2*sx,h-B+4);x.lineTo(L+m2*sx,h-B+12);x.strokeStyle='#94a3b8';x.stroke();x.fillText(Math.round(m2/FT).toLocaleString('en-US'),L+m2*sx,h-16);}x.textAlign='left';x.fillText('ft in',w-R-60,h-16);
+ x.lineCap='round';for(var i=1;i<path.length;i++){var st=GOSTY[routeKind(path[i-1],path[i])]||GOSTY[7],a=px(i-1),b=px(i);x.strokeStyle=st.c=='#fbbf24'?'#d97706':st.c;x.lineWidth=7;x.setLineDash(st.d.map(function(v){return v*2;}));x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
+ x.setLineDash([]);path.forEach(function(s,i){if(squeezeAt(s)){var p=px(i);x.strokeStyle='#ef4444';x.lineWidth=5;x.beginPath();x.moveTo(p[0]-12,p[1]-22);x.lineTo(p[0]-18,p[1]-22);x.lineTo(p[0]-18,p[1]+22);x.lineTo(p[0]-12,p[1]+22);x.moveTo(p[0]+12,p[1]-22);x.lineTo(p[0]+18,p[1]-22);x.lineTo(p[0]+18,p[1]+22);x.lineTo(p[0]+12,p[1]+22);x.stroke();}});
+ return{url:c.toDataURL('image/jpeg',0.9),w:w,h:h};}
+function tripPdf(){var P=plan.data;if(!P){toast('Plan the trip first');return;}toast('Making the PDF…',4000);
+ var path=P.path,start=P.start,to=P.to,lg=P.lg,doc=new PdfDoc(),now=P.when||new Date(),cave=D.name||'Cave';
+ var pf=function(i){return lbl(S[i][0]);},hmP=function(s){return hm(s).replace('under a minute','<1 min');};
+ // ---- page 1: the plan at a glance
+ doc.r(0,doc.H-78,doc.W,78,'#0E141B');doc.t(46,doc.H-40,'Trip plan - '+cave,20,true,'#FFFFFF');
+ doc.t(46,doc.H-60,pf(start)+' -> '+pf(to)+'   ·   planned '+now.toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'})+' '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'   ·   '+(P.pace==1?'normal':P.pace<1?'slow':'fast')+' pace',9.5,false,'#C9D2DC');
+ doc.y=doc.H-100;var sq=squeezeList(true),rope=[];for(var i=1;i<path.length;i++)if(routeKind(path[i-1],path[i])==6)rope.push([path[i-1],path[i]]);
+ var stats=[['In',hmP(P.tIn)],['Out'+(P.outTo!=null?' (via '+pf(P.outTo)+')':''),P.tOut!=null?hmP(P.tOut):'-'],['Round trip, travel',P.tOut!=null?hmP(P.tIn+P.tOut):'-'],['Each way',ft(P.dist)],['Depth there',ft(S[to][7]||0)],['Squeezes',String(sq.length)],['Drops on rope',String(rope.length)]];
+ var bx=46;stats.forEach(function(s2){var w=PdfDoc.w(s2[0],7.5,false)+14;w=Math.max(w,PdfDoc.w(s2[1],13,true)+14,62);if(bx+w>566){bx=46;doc.y-=50;}doc.r(bx,doc.y-32,w,42,'#EEF2F7');doc.t(bx+7,doc.y-8,s2[1],13,true,'#0E141B');doc.t(bx+7,doc.y-24,s2[0],7.5,false,'#475569');bx+=w+8;});doc.y-=56;
+ var m=routeMapJpeg(path);doc.head('The way in',Math.min(300,520*m.h/m.w));doc.img(m.url,m.w,m.h,520);
+ doc.para('Route colours: '+routeKinds().map(function(k){return D.going[k];}).join(', ')+'. Red brackets: squeezes, with their size. Map about '+Math.round(m.mpp/FT*72*m.w/520/(window.devicePixelRatio||1))+' ft to the inch.',8.5,false,'#475569');
+ doc.head('How it goes');var rows=Object.keys(lg.byG).map(Number).sort().map(function(k){var mtr=lg.byG[k];return[D.going[k],ft(mtr),hmP(mtr/(D.speeds[k]*P.pace)+(k==6?D.rig:0))];});
+ doc.table([{n:'Going',w:220},{n:'Length',w:150,r:1},{n:'Time, one way',w:150,r:1}],rows);
+ // call-out
+ var rt=(P.tIn||0)+(P.tOut||P.tIn||0),sug=new Date(now.getTime()+(rt*1.5+3*3600)*1000);
+ doc.head('Surface contact and call-out');
+ doc.para('Going in at ________   Expect out by ________   Call out at ________   Call: _________________________',10,false);
+ doc.para('Travel alone is about '+hmP(rt)+' in and out. Add the time to work, then half again for the unexpected. Starting now with no work time, a call-out would be about '+sug.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' (travel x1.5 + 3 h).',8.5,false,'#475569');
+ // ---- legs
+ doc.head('The way, leg by leg');
+ doc.table([{n:'Book',w:120},{n:'From -> to',w:150},{n:'Going',w:120},{n:'Length',w:50,r:1},{n:'Up/down',w:40,r:1},{n:'Time',w:40,r:1}],lg.legs.map(function(l){var tr=D.trips[l.trip];return[tr?tr.n:'',pf(l.from)+' -> '+pf(l.to),Object.keys(l.g).map(function(k){return D.going[k];}).join(', '),ft(l.m),(Math.abs(l.dz)>1?(l.dz>0?'+':'')+Math.round(l.dz/FT)+' ft':'-'),hmP(l.t)];}));
+ // ---- squeezes
+ doc.head('Squeezes on the way ('+sq.length+')');
+ if(sq.length){var dIn=[0];for(var i=1;i<path.length;i++)dIn.push(dIn[i-1]+Math.hypot(X[path[i]]-X[path[i-1]],Y[path[i]]-Y[path[i-1]],Z[path[i]]-Z[path[i-1]]));
+  doc.table([{n:'Station',w:110},{n:'Size (width x height)',w:150},{n:'Into the trip',w:110,r:1},{n:'Why',w:150}],sq.map(function(q){return[pf(q.i),sqTxt(q),ft(dIn[q.ix]),q.noted?'the notes say tight / squeeze / belly':'LRUD under 20 in'];}));
+  doc.para('Sizes are the passage at the station from its LRUD (left+right, up+down), the smallest recorded there - the tightest point can be smaller. Check the book.',8,false,'#475569');}
+ else doc.para('None recorded on this route (no station under 20 in high or wide, and no note of a squeeze).',9,false,'#475569');
+ // ---- rope
+ doc.head('Drops on rope ('+rope.length+')');
+ if(rope.length){var tot=0;doc.table([{n:'From -> to',w:220},{n:'Drop',w:100,r:1},{n:'Rope to bring (+30%, rigging)',w:200,r:1}],rope.map(function(r){var dz=Math.abs(Z[r[1]]-Z[r[0]]);tot+=dz;return[pf(r[0])+' -> '+pf(r[1]),ft(dz),ft(dz*1.3+6)];}));doc.para('All drops together: '+ft(tot)+'. Bring vertical gear for everyone and rig time is counted ('+hmP(D.rig)+' a drop).',9);}
+ else doc.para('None on this route.',9,false,'#475569');
+ // ---- leads, weak survey
+ doc.head('Leads on the way ('+P.leads.length+')');
+ if(P.leads.length)doc.table([{n:'Station',w:90},{n:'Kind',w:80},{n:'Where',w:100},{n:'Note',w:250}],P.leads.map(function(x){return[pf(x.l.s),x.l.kind||'',x.off>3?ft(x.off)+' off the route':'on the route',(x.l.size?x.l.size+' · ':'')+(x.l.text||'')];}));
+ else doc.para('No leads within 500 ft of the route.',9,false,'#475569');
+ var wk=Object.keys(P.weak);doc.head('Weak survey along the way');
+ if(wk.length)doc.table([{n:'Book',w:260},{n:'Shots graded poor or worse',w:260,r:1}],wk.map(function(t){return[(D.trips[t]||{}).n||t,String(P.weak[t].length)];}));else doc.para('Nothing graded poor on the route.',9,false,'#475569');
+ // ---- profile
+ var pr=routeProfileJpeg(path);doc.head('Depth along the way',520*pr.h/pr.w);doc.img(pr.url,pr.w,pr.h,520);
+ // ---- where
+ doc.head('The entrance');
+ var ent=[pf(start)+(S[start][3]!=null&&D.z0!=null?' · elevation '+Math.round((Z[start]+D.z0)/FT)+' ft':'')];
+ if(D.coords){var ll=toLatLon(X[start],Y[start]);ent.push(ll[0].toFixed(6)+', '+ll[1].toFixed(6)+' (WGS84)   ·   '+gpsUtmTxt(ll[0],ll[1]));}else ent.push('This copy of the cave has no true coordinates - Send to phone again from the computer to have them here.');
+ ent.forEach(function(t){doc.para(t,9.5);});
+ // ---- team and gear
+ doc.head('Team');for(var k=0;k<5;k++){doc.need(18);doc.t(46,doc.y,(k+1)+'.  ________________________________   phone ______________   ' +(k==0?'leader':''),9.5);doc.y-=17;}
+ doc.head('Gear');var gear=['Helmet and three lights each, spare batteries','Water and food for '+hmP(rt*1.5+2*3600)+' or more','First aid kit, space blanket, trash bags'];
+ var kinds=routeKinds();if(kinds.indexOf(2)>=0||kinds.indexOf(3)>=0)gear.push('Knee and elbow pads (crawling'+(kinds.indexOf(3)>=0?', belly crawls':'')+')');if(sq.length)gear.push('Small packs or drag bags for the squeezes ('+sq.length+')');
+ if(rope.length)gear.push('Vertical gear for everyone; rope (see Drops on rope), rigging kit');gear.push('Survey kit and book if pushing leads ('+P.leads.length+' on the way)');
+ gear.forEach(function(t){doc.para('[  ]  '+t,9.5);});
+ doc.head('Notes');for(var k=0;k<5;k++){doc.need(18);doc.l(46,doc.y-2,566,doc.y-2,'#CBD5E1');doc.y-=18;}
+ var name=(cave+' trip plan '+pf(to)+' '+now.toISOString().slice(0,10)).replace(/[^\w\- .]+/g,'_')+'.pdf';
+ save(name,new Blob([doc.bytes()],{type:'application/pdf'}),'application/pdf');}
 // ======================================================================= colours
 var TB=[['under 30 min','#ffd23f'],['30 min-1 h','#c5e34a'],['1-2 h','#5fd66b'],['2-3 h','#3fd3c6'],['3-5 h','#5aa8ff'],['5-7 h','#b18cff'],['7 h +','#ff6b5e']];
 // the lines use the legend's own colours (16 Nov 2026: they were still the old muted set, and did not match the key)
@@ -267,13 +395,14 @@ function legend(){var L=$('legend'),h='';
  var sym='';if(D&&D.ent&&D.ent.length&&lay.ents)sym+='<span><b style="color:#2f80ed;margin-right:4px">▲</b>Entrance</span>';
  if(D&&D.leads&&D.leads.length&&lay.leads)sym+='<span><b style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f472d0;border:1.5px solid #0b1016;margin-right:5px"></b>Lead ('+D.leads.length+') - tap for the note</span>';
  if(sel>=0)sym+='<span><b style="display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid #fbbf24;margin-right:5px"></b>Selected station</span>';
- if(route&&route.length>1)sym+='<span><i style="background:repeating-linear-gradient(90deg,#fbbf24 0 6px,transparent 6px 10px)"></i>The way in</span>';
+ if(route&&route.length>1)routeKinds().forEach(function(k){var st=GOSTY[k]||GOSTY[7],bg=st.d.length?'repeating-linear-gradient(90deg,'+st.c+' 0 '+Math.max(2,st.d[0]/2)+'px,transparent '+Math.max(2,st.d[0]/2)+'px '+Math.max(5,(st.d[0]+st.d[1])/2)+'px)':st.c;sym+='<span><i style="background:'+bg+';height:4px"></i>Way in: '+esc(D.going[k]||'')+'</span>';});
+ if((route&&squeezeList(true).length)||(lay.squeezes&&D&&D.dm))sym+='<span><b style="display:inline-block;width:12px;height:10px;border-left:3px solid #ef4444;border-right:3px solid #ef4444;margin-right:5px"></b>Squeeze (size shown)</span>';
  if(lay.contours&&D&&D.ground)sym+='<span><i style="background:#c48c52;height:2px"></i>Contours, every '+lay.cint+' ft</span>';
  if(lay.sinks&&typeof sinks!='undefined'&&sinks.length)sym+='<span><b style="display:inline-block;width:10px;height:10px;border-radius:50%;border:1.5px solid #4f9be0;background:rgba(79,155,224,.18);margin-right:5px"></b>Sink</span>';
  var full=h+(sym?(h?'<div style="height:3px"></div>':'')+sym:'');
  L.innerHTML=full?(keyOpen?full+' <span class="mut" style="font-size:10.5px">▾ hide</span>':'<span style="margin:0">Key ▸</span>'):'';L.classList.toggle('folded',!keyOpen);L.style.display=full?'':'none';}
 $('legend').onclick=function(){keyOpen=!keyOpen;store('ct-key2',keyOpen?'1':'0');legend();};
-function keyCheck(){var k=[colour,lay.ents,lay.leads,sel>=0,route&&route.length,lay.contours,lay.cint,lay.sinks,keyOpen].join('|');if(k!=keySig){keySig=k;legend();}}
+function keyCheck(){var k=[colour,lay.ents,lay.leads,sel>=0,route&&route.length,route&&route[route.length-1],lay.contours,lay.cint,lay.sinks,lay.squeezes,keyOpen].join('|');if(k!=keySig){keySig=k;legend();}}
 // ======================================================================= 2-D view
 var cv=$('cv'),g=cv.getContext('2d'),P2=new Float64Array(0);
 function proj(x,y,z){var c=Math.cos(view.az*Math.PI/180),s=Math.sin(view.az*Math.PI/180),ti=view.tilt*Math.PI/180;
@@ -330,7 +459,8 @@ function paint(){LB={};try{keyCheck();}catch(e){}
  for(var k2=0;k2<M;k2++){var on=!dimT||SH[4*k2+3]==trip,col=on?shotCol(k2):'#3a4554';(groups[col]=groups[col]||[]).push(k2);}
  for(var col in groups){g.strokeStyle=col;g.lineWidth=col=='#3a4554'?lw*0.8:(dimT?lw+1.2:lw);g.beginPath();var L=groups[col];
   for(var j=0;j<L.length;j++){var a=SH[4*L[j]],b=SH[4*L[j]+1];g.moveTo(P2[2*a],P2[2*a+1]);g.lineTo(P2[2*b],P2[2*b+1]);}g.stroke();}
- if(route&&route.length>1){g.save();g.strokeStyle='#fbbf24';g.lineWidth=lw+2.6;g.setLineDash([9,6]);g.beginPath();g.moveTo(P2[2*route[0]],P2[2*route[0]+1]);for(i=1;i<route.length;i++)g.lineTo(P2[2*route[i]],P2[2*route[i]+1]);g.stroke();g.restore();}
+ if(route&&route.length>1)drawRoute(lw);
+ if(mode=='plan'||mode=='profile'||mode=='prof')drawSqueezes();
  if(lay.leads){g.fillStyle='#f472d0';g.strokeStyle='rgba(8,12,18,.9)';g.lineWidth=1.6;var lr=Math.max(2.6,Math.min(4.6,view.ppm*3));g.lineWidth=lr>3.5?1.6:1.1;D.leads.forEach(function(l){g.beginPath();g.arc(P2[2*l.s],P2[2*l.s+1],lr,0,7);g.fill();g.stroke();});}
  if(lay.ents)D.ent.forEach(function(e){var x=P2[2*e],y=P2[2*e+1];g.fillStyle='#2f80ed';g.beginPath();g.moveTo(x,y-9);g.lineTo(x-7,y+4);g.lineTo(x+7,y+4);g.closePath();g.fill();g.strokeStyle='#0e141b';g.lineWidth=1.5;g.stroke();
   g.fillStyle='#e6ecf2';g.font='600 12px system-ui,sans-serif';var t=lbl(S[e][0]);if(room(x+9,y-18,g.measureText(t).width,15))g.fillText(t,x+9,y-6);});
@@ -451,6 +581,7 @@ function runPlan(){var to=findStation($('pTo').value);if(to==null){toast('No sta
  D.leads.forEach(function(l){var dm=near.D[l.s];if(dm<=152.4){var r=l.s,gd=0;while(onRoute[r]==null&&near.P[r]>=0&&gd++<1e5)r=near.P[r];leads.push({l:l,at:onRoute[r]||0,off:dm});}});
  leads.sort(function(a,b){return a.at-b.at||a.off-b.off;});
  var weak={};for(var i=1;i<path.length;i++){var sk=shotBetween(path[i-1],path[i]);if(sk>=0){var gn=(D.grades[SH[4*sk+2]].n||'').toLowerCase();if(gn.indexOf('poor')>=0||gn.indexOf('blunder')>=0){var tt=SH[4*sk+3];(weak[tt]=weak[tt]||[]).push(sk);}}}
+ plan.data={start:start,to:to,tIn:tIn,tOut:tOut,outTo:outTo,dist:run.D[to],path:path,lg:lg,leads:leads,weak:weak,pace:plan.pace,when:new Date()};
  route=path;sel=to;
  var h='<div class="k">The trip</div><div class="card"><div><b>'+esc(S[start][0])+'</b> → <b>'+esc(S[to][0])+'</b></div><div class="stat"><b>'+hm(tIn)+'</b><br><span class="mut">in</span></div>'+(tOut!=null?'<div class="stat"><b>'+hm(tOut)+'</b><br><span class="mut">out (via '+esc(S[outTo][0])+')</span></div><div class="stat"><b>'+hm(tIn+tOut)+'</b><br><span class="mut">travel, round trip</span></div>':'')+
   '<div class="stat"><b>'+ft(run.D[to])+'</b><br><span class="mut">each way</span></div><div class="stat"><b>'+ft(S[to][7])+'</b><br><span class="mut">deep</span></div>'+(lg.rope?'<div class="stat"><b>'+lg.rope+'</b><br><span class="mut">drops on rope</span></div>':'')+
@@ -458,7 +589,7 @@ function runPlan(){var to=findStation($('pTo').value);if(to==null){toast('No sta
  h+='<div class="k">The way, leg by leg</div>'+legsTable(lg.legs);
  h+='<div class="k">Leads on the way ('+leads.length+')</div>'+(leads.length?leads.map(function(x){var s=S[x.l.s];return'<div class="row" data-st="'+x.l.s+'"><div class="t">'+esc(s[0])+' <span class="mut" style="font-weight:400">· '+esc(x.l.kind)+(x.off>3?' · '+ft(x.off)+' off the route':' · on the route')+'</span></div><div class="s">'+esc(x.l.size?x.l.size+' · ':'')+esc(x.l.text)+'</div></div>';}).join(''):'<div class="mut">None within 500 ft of the route.</div>');
  var wk=Object.keys(weak);h+='<div class="k">Weak survey along the way</div>'+(wk.length?wk.map(function(t){var tr=D.trips[t];return'<div class="row" data-book="'+t+'"><div class="t">'+esc(tr.n)+'</div><div class="s">'+weak[t].length+' shot'+(weak[t].length>1?'s':'')+' graded poor or worse - worth resurveying on the way</div></div>';}).join(''):'<div class="mut">Nothing graded poor on the route.</div>');
- h+='<button class="btn alt" id="pCopy">Copy the plan as text</button>';
+ h+='<button class="btn" id="pPdf">Trip plan PDF</button> <button class="btn alt" id="pCopy">Copy the plan as text</button>';
  plan.text=planText(start,to,tIn,tOut,outTo,lg.legs,leads);pace=1;plan.res=h;showTab('plan');draw();}
 function planText(start,to,tIn,tOut,outTo,legs,leads){var t=D.name+' - trip plan\n'+S[start][0]+' -> '+S[to][0]+'\nIn: '+hm(tIn)+(tOut!=null?'   Out: '+hm(tOut)+' (via '+S[outTo][0]+')':'')+'\n\nLegs:\n';
  legs.forEach(function(l){var tr=D.trips[l.trip];t+='  '+(tr?tr.n:'')+': '+S[l.from][0]+' -> '+S[l.to][0]+'  '+ft(l.m)+'  '+hm(l.t)+'\n';});
@@ -497,7 +628,7 @@ function layersHtml(){var h=gpsSectionHtml()+'<div class="k">Base map</div>';
   '<label class="lab"><input type="checkbox" id="lyHO"'+(lay.hillOver?' checked':'')+'> Hillshade over the map (shows the ground\'s shape on imagery)</label>';}
  h+=onlineHtml();
  var ex=D.rasters.map(function(r,i){return r.base?'':'<label class="lab"><input type="checkbox" data-ex="'+i+'"'+(lay.extra[i]!=null?' checked':'')+'> '+esc(r.name)+'</label>'+(r.kind=='drafted'?'<button class="btn alt" style="padding:2px 10px;margin:0 0 6px 28px" data-dfdel="'+i+'">Remove</button>':'');}).join('');h+='<div class="k">Map layers</div>'+ex+'<div style="margin-top:6px"><button class="btn alt" id="dfAdd">+ Add a drafted map (PDF / .ai)</button></div>';
- h+='<div class="k">Survey</div><label class="lab"><input type="checkbox" id="lyN"'+(lay.names?' checked':'')+'> Station names</label><label class="lab"><input type="checkbox" id="lyP"'+(lay.prefix?' checked':'')+'> With the survey prefix (BBB903:LT27)</label><label class="lab"><input type="checkbox" id="lyL"'+(lay.leads?' checked':'')+'> Leads</label><label class="lab"><input type="checkbox" id="lyE"'+(lay.ents?' checked':'')+'> Entrances</label>';
+ h+='<div class="k">Survey</div>'+(D.dm?'<label class="lab"><input type="checkbox" id="lySq"'+(lay.squeezes?' checked':'')+'> Squeezes ('+squeezeList(false).length+') - red brackets with their size; the way in always shows its own</label>':'')+'<label class="lab"><input type="checkbox" id="lyN"'+(lay.names?' checked':'')+'> Station names</label><label class="lab"><input type="checkbox" id="lyP"'+(lay.prefix?' checked':'')+'> With the survey prefix (BBB903:LT27)</label><label class="lab"><input type="checkbox" id="lyL"'+(lay.leads?' checked':'')+'> Leads</label><label class="lab"><input type="checkbox" id="lyE"'+(lay.ents?' checked':'')+'> Entrances</label>';
  h+='<div class="k">3-D</div><div class="mut" style="font-size:12px">Ground</div><div class="seg" id="g3"><button data-g="off"'+(lay.ground3d=='off'?' class="on"':'')+'>Off</button><button data-g="see"'+(lay.ground3d=='see'?' class="on"':'')+'>See-through</button><button data-g="solid"'+(lay.ground3d=='solid'?' class="on"':'')+'>Solid</button></div>'+
   '<div class="mut" style="font-size:12px;margin-top:8px">Light</div><div class="seg" id="l3"><button data-l="whole"'+(lay.light=='whole'?' class="on"':'')+'>Whole cave</button><button data-l="head"'+(lay.light=='head'?' class="on"':'')+'>Headlamp</button></div>';
  return h;}
@@ -548,6 +679,7 @@ function bindOnline(q){var e;
   im.onerror=function(){if(done)return;done=true;m.textContent=' That address didn\'t give a map picture for the cave\'s area.';};im.src=url;};
  if(e=$('lyHO'))e.onchange=function(){lay.hillOver=e.checked;draw();};
  if(e=$('lyHM'))e.onchange=function(){lay.heatOver=e.checked;draw();};
+ if(e=$('lySq'))e.onchange=function(){lay.squeezes=e.checked;store('ct-sq',e.checked?'1':'');draw();};
  if(e=$('lyOffline'))e.onclick=function(){saveOffline('lyOffMsg',true);};}
 function bind(){unprefix($('pane'));var q=function(s){return document.querySelectorAll('#pane '+s);};
  [].forEach.call(q('[data-st]'),function(r){r.onclick=function(){select(+r.dataset.st,true);};});
@@ -569,6 +701,7 @@ function bind(){unprefix($('pane'));var q=function(s){return document.querySelec
  if(e=$('pGo'))e.onclick=runPlan;
  [].forEach.call(q('#pPace button'),function(b){b.onclick=function(){plan.pace=+b.dataset.p;[].forEach.call(q('#pPace button'),function(x){x.classList.toggle('on',x==b);});};});
  if(e=$('pCopy'))e.onclick=function(){copyText(plan.text);};
+ if(e=$('pPdf'))e.onclick=function(){try{tripPdf();}catch(x){toast('Couldn\'t make the PDF: '+esc(x.message),7000);}};
  if(e=$('bq'))e.oninput=function(){bookQ=e.value.toLowerCase();var pos=e.selectionStart;showTab('books');var n=$('bq');n.focus();try{n.setSelectionRange(pos,pos);}catch(x){}};
  [].forEach.call(q('#bs button'),function(b){b.onclick=function(){bookSort=b.dataset.s;showTab('books');};});
  if(e=$('bBack'))e.onclick=function(){openBook=-1;trip=-1;if(gl3)gl3.colours();showTab('books');draw();};
@@ -1710,7 +1843,7 @@ function svCss(){if($('svCss'))return;var st=document.createElement('style');st.
  '#svDlg label{display:block;margin:8px 0 2px;color:var(--muted);font-size:12px}#svDlg input,#svDlg select,#svDlg textarea{width:100%;font-size:16px;padding:9px;background:var(--bar);color:var(--ink);border:1px solid var(--line);border-radius:8px;font-family:inherit}'+
  '#svDlg input[type=checkbox]{width:auto;padding:0;margin:0}#svDlg .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}#svDlg .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}'+
  '#svXsBar{position:absolute;left:8px;right:8px;top:8px;display:flex;align-items:center;gap:6px;background:rgba(14,20,27,.94);border:1px solid var(--sa);border-radius:10px;padding:5px 8px;color:#e6ecf2;font-size:13px;z-index:2}#svXsBar .ib{height:34px}'+
- '.chip.on .uSig.g i,#svDevC .uSig.g i{background:rgba(255,255,255,.3)!important}.chip.on .uSig.g i.l,#svDevC .uSig.g i.l{background:#fff!important}.chip.on .uSig i:not(.l),#svDevC .uSig i:not(.l){background:rgba(0,0,0,.25)!important}.uSig{display:inline-flex;align-items:flex-end;gap:2px;height:12px;vertical-align:-1px;margin-left:3px}.uSig i{display:block;width:3px;border-radius:1px}.uSig.big{height:18px;gap:3px}.uSig.big i{width:5px}.ucard .uSigW{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-top:6px}#svUnitsPg .ucard,#svDlgIn .ucard{padding:14px}.ucard .uHead{display:flex;align-items:center;gap:9px}.ucard .uDot{width:11px;height:11px;border-radius:50%;flex:none}.ucard .uName{font-size:20px;flex:1}.ucard .uBatt{display:flex;align-items:center;gap:6px;font-weight:700;font-size:15px}.ucard .uBattBar{width:34px;height:14px;border:2px solid #8a97a4;border-radius:3px;padding:1px;display:inline-block}.ucard .uBattBar i{display:block;height:100%;border-radius:1px}.ucard .uMeta{color:var(--muted);font-size:13px;margin:5px 0 12px;line-height:1.4}.ucard .uMsg{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--sa);color:#fff;border:0;border-radius:14px;padding:16px;font-size:18px;cursor:pointer;box-shadow:0 2px 10px rgba(48,164,108,.35)}.ucard .uMsg small{display:block;font-size:13px;opacity:.85;font-weight:400;margin-top:2px}.ucard .uMsg .uI{font-size:30px}.ucard .uSec{color:'+SVA2+';font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:16px 0 7px}.ucard .uGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ucard .uB{display:flex;align-items:center;gap:9px;min-height:56px;background:#24303c;color:#e6ecf2;border:1px solid #33414f;border-radius:12px;padding:10px 12px;font-size:16px;font-weight:600;cursor:pointer;text-align:left}.ucard .uB:active,.ucard .uMsg:active{filter:brightness(1.25)}.ucard .uI{font-size:22px;line-height:1;flex:none}.ucard .uRow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:15px;margin:0 0 9px}.ucard .uChk{justify-content:flex-start;flex-wrap:nowrap;gap:10px;cursor:pointer}.ucard .uChk input{width:22px;height:22px;flex:none}.ucard .uSeg button{padding:9px 11px;font-size:14px}.ucard .uFoot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}.ucard .uDim{justify-content:center;background:none}.ucard .uRed{justify-content:center;background:none;border-color:#7a2d30;color:#ff8a8d}'+
+ '.chip.on .uSig.g i,#svDevC .uSig.g i{background:rgba(255,255,255,.3)!important}.chip.on .uSig.g i.l,#svDevC .uSig.g i.l{background:#fff!important}.chip.on .uSig i:not(.l),#svDevC .uSig i:not(.l){background:rgba(0,0,0,.25)!important}.uSig{display:inline-flex;align-items:flex-end;gap:2px;height:12px;vertical-align:-1px;margin-left:3px}.uSig i{display:block;width:3px;border-radius:1px}.uSig.big{height:18px;gap:3px}.uSig.big i{width:5px}.ucard .uSigW{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-top:6px}#svUnitsPg .ucard,#svDlgIn .ucard{padding:14px}.ucard .uHead{display:flex;align-items:center;gap:9px}.ucard .uDot{width:11px;height:11px;border-radius:50%;flex:none}.ucard .uName{font-size:20px;flex:1}.ucard .uBatt{display:flex;align-items:center;gap:6px;font-weight:700;font-size:15px}.ucard .uBattBar{width:34px;height:14px;border:2px solid #8a97a4;border-radius:3px;padding:1px;display:inline-block}.ucard .uBattBar i{display:block;height:100%;border-radius:1px}.ucard .uMeta{color:var(--muted);font-size:13px;margin:5px 0 12px;line-height:1.4}.ucard .uMsg{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--sa);color:#fff;border:0;border-radius:14px;padding:16px;font-size:18px;cursor:pointer;box-shadow:0 2px 10px rgba(48,164,108,.35)}.ucard .uMsg small{display:block;font-size:13px;opacity:.85;font-weight:400;margin-top:2px}.ucard .uMsg .uI{font-size:30px}.ucard .uSec{color:'+SVA2+';font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:16px 0 7px}.ucard .uGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.uQuick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 2px}.uQ{display:flex;flex-direction:column;align-items:center;gap:2px;background:#24303c;color:#e6ecf2;border:1px solid #33414f;border-radius:12px;padding:8px 4px;font-size:13px;font-weight:600;cursor:pointer}.uQ span{font-size:20px}.uQ.go{background:#16a34a;border-color:#16a34a;color:#fff}.uDet{border-top:1px solid #33414f;margin-top:8px}.uDet>summary{list-style:none;cursor:pointer;padding:11px 2px;font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}.uDet>summary::-webkit-details-marker{display:none}.uDet>summary small{font-weight:400;font-size:12.5px}.uDet>summary::after{content:"▸";margin-left:auto;color:#8a99a8;transition:transform .15s}.uDet[open]>summary::after{transform:rotate(90deg)}.uDetIn{padding:0 0 8px}.uPgSec{padding-top:2px;padding-bottom:2px}.uPgSec>.uDet{border-top:0;margin-top:0}.ucard .uB{display:flex;align-items:center;gap:9px;min-height:56px;background:#24303c;color:#e6ecf2;border:1px solid #33414f;border-radius:12px;padding:10px 12px;font-size:16px;font-weight:600;cursor:pointer;text-align:left}.ucard .uB:active,.ucard .uMsg:active{filter:brightness(1.25)}.ucard .uI{font-size:22px;line-height:1;flex:none}.ucard .uRow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:15px;margin:0 0 9px}.ucard .uChk{justify-content:flex-start;flex-wrap:nowrap;gap:10px;cursor:pointer}.ucard .uChk input{width:22px;height:22px;flex:none}.ucard .uSeg button{padding:9px 11px;font-size:14px}.ucard .uFoot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}.ucard .uDim{justify-content:center;background:none}.ucard .uRed{justify-content:center;background:none;border-color:#7a2d30;color:#ff8a8d}'+
  '#svChat{position:absolute;inset:0;z-index:4;display:none;flex-direction:column;background:#0d1319}#svChat .chHead{display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 8px 6px;background:var(--bar);border-bottom:2px solid var(--sa)}'+
  '#svChat .chTo{display:flex;gap:6px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--line);flex:none}#svChat .chip{cursor:pointer;border:1px solid var(--line);background:#1b2530;color:#e6ecf2;padding:6px 11px;font-size:13px;border-radius:16px}#svChat .chTo .chip.on{background:var(--sa);border-color:var(--sa);color:#fff}'+
  '#svChat .chList{flex:1;overflow-y:auto;padding:10px 10px 4px;display:flex;flex-direction:column;gap:6px}#svChat .chB{align-self:flex-end;max-width:78%;background:var(--sa);color:#fff;border-radius:16px 16px 4px 16px;padding:7px 11px;font-size:15px;line-height:1.3;word-wrap:break-word}#svChat .chB.bad{background:#5a2a2a}'+
@@ -1725,10 +1858,16 @@ function svClose(){$('svy').style.display='none';SV=null;homeShow();}
 // the Tacheo page from the home screen (Sully, 16 Nov 2026: "I don't see a tile regarding connecting to a Tacheo. Idk where the message
 // function would be"): the units, their batteries and controls, and the messages, without opening a survey
 function svUnitsShow(){svOpenUi();SV=null;SVVIEW='units';
- $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>Tacheo</h1><span class="chip" id="svDevC" style="cursor:pointer"></span><span style="flex:1"></span><button class="ib" id="svXtB">⇄ CrossTalk</button><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 Messages</button>';
- $('svBk').onclick=function(){SVVIEW='';svClose();};$('svDevC').onclick=function(){svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};$('svXtB').onclick=xtShow;
- $('svBody').innerHTML='<div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots taken here aren\'t kept - open a survey in <b>Survey and sketch</b> to keep them.':'Bluetooth to the Tacheo is in the <b>Topside app for Android</b>.')+'</p><div id="svUnitsPg"></div></div>';
- svDevChip();svAutoConnect();svDevSheet();}
+ $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>Tacheo</h1><span class="chip" id="svDevC" style="cursor:pointer"></span><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 Messages</button>';
+ $('svBk').onclick=function(){SVVIEW='';xtStop();svClose();};$('svDevC').onclick=function(){svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};
+ $('svBody').innerHTML='<div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots taken here aren\'t kept - open a survey in <b>Survey and sketch</b> to keep them.':'Bluetooth to the Tacheo is in the <b>Topside app for Android</b>.')+'</p><div id="svUnitsPg"></div>'+
+  '<div class="card uPgSec">'+svDet('xt','⇄ CrossTalk - both units\' shots as they land','')+'<div id="xtPg"></div></div></details></div></div>';
+ svDetWire($('svBody'));XT.on=true;if(XT.timer)clearInterval(XT.timer);XT.timer=setInterval(function(){if(SVVIEW!='units'){xtStop();return;}xtPoll();},3000);xtPoll();
+ svDevChip();svAutoConnect();svDevSheet();xtDraw();}
+// tap-to-open sections, remembered (19 Nov 2026)
+function svDetOpen(){try{return JSON.parse(store('ct-tc-open')||'{}');}catch(e){return{};}}
+function svDet(id,title,sub,dflt){var o=svDetOpen(),op=o[id]!=null?o[id]:!!dflt;return'<details class="uDet" data-id="'+esc(id)+'"'+(op?' open':'')+'><summary><span>'+esc(title)+'</span>'+(sub?'<small class="mut">'+esc(sub)+'</small>':'')+'</summary><div class="uDetIn">';}
+function svDetWire(root){if(!root)return;Array.prototype.forEach.call(root.querySelectorAll('details.uDet'),function(d){d.ontoggle=function(){var o=svDetOpen();o[d.getAttribute('data-id')]=d.open;store('ct-tc-open',JSON.stringify(o));};});}
 function svUnitsRefresh(){svDevChip();var c=$('tTacheoS');if(c)c.textContent=svTacheoSub();}
 function svTacheoSub(){var on=svOnUnits();return on.length?on.map(function(u){return svShort(u)+(u.info&&u.info.batt!=null?' '+u.info.batt+'%':'');}).join(' · '):'Connect, battery, laser, messages';}
 window.svUnitsShow=svUnitsShow;window.svTacheoSub=svTacheoSub;
@@ -2655,24 +2794,24 @@ function svDevSheet(keepScan){svFwLoad();if(!svBleOk()){svDlg('<div class="big">
     (bt!=null?'<span class="uBatt"><span class="uBattBar"><i style="width:'+Math.max(4,Math.min(100,bt))+'%;background:'+bc+'"></i></span>'+bt+'%</span>':'')+'</div>'+
    (on?'<div class="uSigW">'+(svSig(u)!=null?svSigHtml(u,true)+svSigWord(svSig(u)):'<span class="mut">Signal: waiting…</span>')+'</div>':'')+
    '<div class="uMeta">'+(i.ver?esc(i.ver)+(i.sn?' · '+esc(i.sn):''):'Asking the unit…')+(i.shots>0?' · about '+i.shots+' shots left':'')+(i.cal?' · cal '+esc(i.cal):'')+(i.trip?'<br>On the unit: '+esc(i.trip):'')+'</div>'+svFwNote(i)+
-   '<button class="uMsg" data-b="msg"><span class="uI">💬</span><span><b>Send a message</b><small>Shows on '+esc(svShort(u))+'\'s screen'+(u.msg===false?' (needs firmware 1.17.8)':'')+'</small></span></button>'+
-   '<div class="uSec">Instrument</div><div class="uGrid">'+
-    [['shot','🎯','Take a shot'],['flash','✨','Flash its laser'],['lon','🔴','Laser on'],['loff','⚫','Laser off']].map(function(b){return'<button class="uB" data-b="'+b[0]+'"><span class="uI">'+b[1]+'</span>'+b[2]+'</button>';}).join('')+'</div>'+
-   '<div class="uSec">This unit in the survey</div>'+
+   '<div class="uQuick">'+[['xsgo','✚','Cross section'],['shot','🎯','Shot'],['flash','✨','Flash'],['lon','🔴','Laser on'],['loff','⚫','Laser off'],['msg','💬','Message']].map(function(b){return'<button class="uQ'+(b[0]=='xsgo'?' go':'')+'" data-b="'+b[0]+'"><span>'+b[1]+'</span>'+b[2]+'</button>';}).join('')+'</div>'+
+   svDet(u.addr+':survey','This unit in the survey',(u.role=='FS'?'Front sight':u.role=='BS'?'Backsight':'Either sight')+(u.follow?' · names follow':''))+
    '<div class="uRow"><span>Which sight it takes</span><span class="seg uSeg">'+[['','Either'],['FS','Front sight'],['BS','Backsight']].map(function(r){return'<button data-role="'+r[0]+'"'+(u.role==r[0]?' class="on"':'')+'>'+r[1]+'</button>';}).join('')+'</span></div>'+
    '<label class="uRow uChk"><input type="checkbox" data-k="follow"'+(u.follow?' checked':'')+'><span>Its station names follow this survey</span></label>'+
-   '<div class="uGrid"><button class="uB" data-b="xs"><span class="uI">✚</span>Cross sections on it</button><button class="uB" data-b="info"><span class="uI">↻</span>Refresh its details</button></div>'+
-   '<div class="uSec">Bluetooth</div>'+svRadioHtml(u)+
-   '<div class="uFoot"><button class="uB uDim" data-b="dis">Disconnect</button><button class="uB uRed" data-b="off"><span class="uI">⭘</span>Switch it off</button></div>'+
+   '<div class="uGrid"><button class="uB" data-b="xs"><span class="uI">✚</span>Cross sections on it</button><button class="uB" data-b="info"><span class="uI">↻</span>Refresh its details</button></div></div></details>'+
+   svDet(u.addr+':bt','Bluetooth','')+svRadioHtml(u)+'</div></details>'+
+   svDet(u.addr+':more','Disconnect or switch off','')+'<div class="uFoot"><button class="uB uDim" data-b="dis">Disconnect</button><button class="uB uRed" data-b="off"><span class="uI">⭘</span>Switch it off</button></div></div></details>'+
    '</div>';});
- h+='<div class="k">Connect '+(us.length?'another unit':'a unit')+'</div><div id="dvList"><p class="mut">Looking…</p></div><button class="btn alt" id="dvAgain">Look again</button>'+(us.length>1?'<button class="btn alt" id="dvAll">Disconnect all</button>':'')+(page?'':'<button class="btn alt" id="dvNo">Close</button>');
- if(page)page.innerHTML=h;else svDlg(h);if($('dvNo'))$('dvNo').onclick=svDlgClose;$('dvAgain').onclick=svScan;if($('dvAll'))$('dvAll').onclick=function(){svUnits().forEach(function(u){u.keep=false;u.state='off';});bClose('');svDevSave();svDlgClose();svDevChip();};
+ var cn='<div id="dvList"><p class="mut">Looking…</p></div><button class="btn alt" id="dvAgain">Look again</button>'+(us.length>1?'<button class="btn alt" id="dvAll">Disconnect all</button>':'');
+ if(page)h+='<div class="card uPgSec">'+svDet('connect','Connect '+(us.length?'another unit':'a unit'),'',!us.length)+cn+'</div></details></div>';
+ else h+='<div class="k">Connect '+(us.length?'another unit':'a unit')+'</div>'+cn+'<button class="btn alt" id="dvNo">Close</button>';
+ if(page)page.innerHTML=h;else svDlg(h);svDetWire(page?$('svUnitsPg'):$('svDlgIn'));if($('dvNo'))$('dvNo').onclick=svDlgClose;$('dvAgain').onclick=svScan;if($('dvAll'))$('dvAll').onclick=function(){svUnits().forEach(function(u){u.keep=false;u.state='off';});bClose('');svDevSave();svDlgClose();svDevChip();};
  Array.prototype.forEach.call(document.querySelectorAll((page?'#svUnitsPg':'#svDlgIn')+' .card[data-a]'),function(card){var u=SVDEV.units[card.getAttribute('data-a')];
   Array.prototype.forEach.call(card.querySelectorAll('[data-role]'),function(b){b.onclick=function(){u.role=b.getAttribute('data-role');svDevSave();svDevSheet();};});
   svWireRadio(u);
   card.querySelector('[data-k=follow]').onchange=function(e){u.follow=e.target.checked;svDevSave();if(u.follow)svTellStation(true,u);};
   Array.prototype.forEach.call(card.querySelectorAll('[data-b]'),function(b){b.onclick=function(){var k=b.getAttribute('data-b');
-   if(k=='shot')svCmd(0x38,u);else if(k=='lon')svCmd(0x36,u);else if(k=='loff')svCmd(0x37,u);else if(k=='flash')svFlash(u);else if(k=='msg'){svDlgClose();svChatShow(u.addr);}
+   if(k=='xsgo')svOpenXs(u);else if(k=='shot')svCmd(0x38,u);else if(k=='lon')svCmd(0x36,u);else if(k=='loff')svCmd(0x37,u);else if(k=='flash')svFlash(u);else if(k=='msg'){svDlgClose();svChatShow(u.addr);}
    else if(k=='xs')svXsList(u);else if(k=='info')svInfo(u).then(svDevSheet);else if(k=='off'){if(confirm('Switch '+svShort(u)+' off?'))svCmd(0x34,u);}
    else if(k=='dis'){u.keep=false;bClose(u.addr);u.state='off';svDevSave();svDevChip();svDevSheet();}};});});
  if(keepScan&&page)svFoundShow();else svScan();}
@@ -2699,6 +2838,12 @@ function svHello(u){svInfo(u).then(function(){var d=new Date();return svAsk1('TI
 function svTellStation(force,only){if(!SV)return;svOnUnits().forEach(function(u){if(only&&u!==only)return;if(!u.follow)return;var pre=(SV.prefix||'').replace(/[^A-Za-z]/g,'');
  var p=pre&&(force||!u.stnSent)?svAsk1('STNSET='+pre,/^OK|^ERR|^STN |^\?\?/,4000,u):Promise.resolve();u.stnSent=1;p.then(function(){return svAsk1('STNAT='+SV.cur,/^OK|^ERR|^STN |^\?\?/,4000,u);});});}
 // cross sections: XSEC? (the list), XSEC=id (one: XP i,t,d,u,v,ex,ey,ez,kept), placed at their station in the plan
+// command and control (Sully, 19 Nov 2026, 00:20: "When you tap 'cross section' button, the selected Tacheo will automatically switch the the
+// cross section function in the surveyors hands ... No words have to be spoken"): OPEN=xs over the link; the unit opens its cross-section
+// screen at once (firmware 1.17.11 and later)
+function svOpenXs(u){u=u||svPrimary();if(!u||u.state!='on'){toast('Connect the unit first',2500);return;}
+ svAsk1('OPEN=xs',/^OK OPEN|^\?\?|^ERR|^Unknown|^BAD/i,4000,u).then(function(l){var ok=l&&l.some(function(x){return /^OK OPEN/.test(x);});
+  toast(ok?'✚ '+esc(svShort(u))+' is on its cross section screen':'✚ '+esc(svShort(u))+' can\'t be switched from here yet - it needs Tacheo firmware 1.17.11',ok?2500:6000);});}
 function svXsList(u){u=u||svPrimary();svDlg('<div class="big">Cross sections on '+esc(svShort(u))+'</div><div id="xsL"><p class="mut">Asking the unit…</p></div><button class="btn alt" id="xsNo">Close</button>');$('xsNo').onclick=svDlgClose;
  svAsk1('XSEC?',/^XSEC end/,8000,u).then(function(l){var el=$('xsL');if(!el)return;if(!l){el.innerHTML='<p>The unit didn\'t answer (firmware 1.16.47 or newer has cross sections).</p>';return;}
   var xs=l.filter(function(x){return /^XS /.test(x);}).map(function(x){var o={};x.slice(3).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=kv.slice(i+1);});return o;});
@@ -2732,7 +2877,8 @@ function xtRx(u,line){var m=line.match(/^XCHK (AGREE|CHECK) (-?[\d.]+) (-?[\d.]+
 function xtPoll(){if(!XT.on)return;svOnUnits().forEach(function(u){if(u.waiters&&u.waiters.length)return;
  svAsk1('LINKS?',/^LINKS|^\?\?|^Unknown/i,2500,u).then(function(l){if(!l)return;var x=l.filter(function(y){return /^LINKS /.test(y);})[0],r={t:Date.now()};
   if(!x)r.old=true;else x.slice(6).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)r[kv.slice(0,i)]=kv.slice(i+1);});XT.links[u.addr]=r;if(XT.on)xtDrawSoon();});});}
-function xtShow(){svOpenUi();SV=null;SVVIEW='xt';XT.on=true;
+function xtShow(){var o=svDetOpen();o.xt=true;store('ct-tc-open',JSON.stringify(o));svUnitsShow();var d=document.querySelector('details.uDet[data-id=xt]');if(d)d.scrollIntoView({block:'start'});return;
+ svOpenUi();SV=null;SVVIEW='xt';XT.on=true;
  $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>CrossTalk live</h1><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 Messages</button>';
  $('svBk').onclick=function(){xtStop();svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};
  $('svBody').innerHTML='<div id="xtPg" style="padding:10px 12px 90px;max-width:640px;margin:0 auto"></div>';
@@ -2744,7 +2890,7 @@ function xtDraw(){var pg=$('xtPg');if(!pg||!XT.on)return;var on=svOnUnits(),h=''
  // how many are connected, and whether they are linked to each other
  var linked=null,old=false;on.forEach(function(u){var r=XT.links[u.addr];if(!r)return;if(r.old)old=true;else if(r.partner=='1')linked=true;else if(linked==null)linked=false;});
  h+='<div class="card" style="display:flex;align-items:center;gap:10px"><div style="font-size:30px;font-weight:700;min-width:34px;text-align:center">'+on.length+'</div><div style="flex:1"><b>'+(on.length==1?'Tacheo':'Tacheos')+' connected to this phone</b><div class="mut" style="font-size:13px">'+
-  (on.length<2?'Connect both units (FS and BS) on the <a href="#" id="xtUn">Tacheo page</a>.':linked?'<span style="color:#30a46c">● Linked to each other (CrossTalk)</span>':linked===false?'<span style="color:#f5a524">● Not linked to each other - pair them (Bluetooth → Pair now)</span>':old?'Linked to each other: update the units to firmware 1.17.10 to see it':'Checking whether they\'re linked to each other…')+'</div></div></div>';
+  (on.length<2?(SVVIEW=='units'?'Connect both units (FS and BS) above.':'Connect both units (FS and BS) on the <a href="#" id="xtUn">Tacheo page</a>.'):linked?'<span style="color:#30a46c">● Linked to each other (CrossTalk)</span>':linked===false?'<span style="color:#f5a524">● Not linked to each other - pair them (Bluetooth → Pair now)</span>':old?'Linked to each other: update the units to firmware 1.17.10 to see it':'Checking whether they\'re linked to each other…')+'</div></div></div>';
  // a card for each unit: signal, battery, role, its last shot
  on.forEach(function(u){var r=XT.links[u.addr]||{},last=null;for(var i=XT.shots.length-1;i>=0;i--)if(XT.shots[i].u==u.addr){last=XT.shots[i];break;}
   var role=r.role&&r.role!='Auto'?r.role:(u.role||'');
