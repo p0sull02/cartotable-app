@@ -1088,8 +1088,9 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
  h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
  h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
- h+=tileHtml('tSurvey','📐','#1A9850','Survey and sketch','Shots from the Tacheo, sketch as you go');   // 16 Nov 2026 (Sully: "Can you build in a digital sketching/survey suite too? Like sexytopo or Topodroid?")
- h+=tileHtml('tTacheo','📡','#0f766e','Tacheo',window.svTacheoSub?svTacheoSub():'Connect, battery, laser, messages');   // 16 Nov 2026 (Sully: "I don't see a tile regarding connecting to a Tacheo. Idk where the message function would be")
+ // 19 Nov 2026 (Sully, 08:28: "Fold Tacheo and Survey and Sketch into 1 tab. Organize how best you see fit."): the instrument and the
+ // survey it feeds are one job, so one tile opens one page with two pills - Surveys and Tacheo. The tile's own line says what is connected.
+ h+=tileHtml('tSurvey','📐','#1A9850','Survey',window.svTileSub?svTileSub():'Shots from the Tacheo, sketch as you go');   // 16 Nov 2026 (Sully: "Can you build in a digital sketching/survey suite too? Like sexytopo or Topodroid?")   // 16 Nov 2026 (Sully: "I don't see a tile regarding connecting to a Tacheo. Idk where the message function would be")
  h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages read into data on your computer');
  h+=tileHtml('tScan','📄','#0e7490','Scan sketches and data','Cave book pages and sketches, one PDF for your computer');   // 17 Nov 2026 (Sully: "Have the app record cave data picture like Google Pixel does its scans" / "Label it 'scan cave sketch and data'")   // 16 Nov 2026 (Sully: "a short description under it saying it automatically transcribes data from photos")
  h+=tileHtml('tGps','📍','#4285f4','GPS points','Take one with a tap - ridge walking, sinks, entrances');   // 18 Nov 2026 (Sully: "a button to take gps coords whenever, as in during ridge walking")
@@ -1099,7 +1100,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tTacheo'))e.onclick=function(){window.svUnitsShow&&window.svUnitsShow();};if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;
  $('hMode').onclick=function(){setCave(!CAVE);homeShow();};
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
@@ -1845,7 +1846,7 @@ function svReduce(){var legs=svLegs(),pairs={},adj={};
 // ---- the screen
 function svCss(){if($('svCss'))return;var st=document.createElement('style');st.id='svCss';st.textContent=
  '#svy{--sa:'+SVA+'}#svy .btn{background:var(--sa)}#svy .btn.alt{background:#2a3542}#svBar{position:absolute;left:0;right:0;top:0;height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;display:flex;align-items:center;gap:6px;background:var(--bar);border-bottom:2px solid var(--sa);overflow-x:auto;white-space:nowrap;scrollbar-width:none}'+
- '#svBar::-webkit-scrollbar{display:none}#svBar h1{font-size:15px;margin:0 4px;font-weight:700;max-width:30vw;overflow:hidden;text-overflow:ellipsis}@media(max-width:620px){#svBar h1{display:none}#svBar .seg button{padding:6px 9px}}#svy .seg button.on{background:var(--sa)}'+
+ '#svBar::-webkit-scrollbar{display:none}#svBar h1{font-size:15px;margin:0 4px;font-weight:700;max-width:30vw;overflow:hidden;text-overflow:ellipsis}@media(max-width:620px){#svBar h1{display:none}#svBar .seg button{padding:6px 9px}}@media(max-width:400px){#svBar .mw{display:none}}#svy .seg button.on{background:var(--sa)}'+
  '#svBody{position:absolute;left:0;right:0;bottom:0;top:calc(50px + env(safe-area-inset-top));overflow:hidden}#svList{position:absolute;inset:0;overflow:auto;padding:8px 10px 120px}'+
  '#svCv{position:absolute;left:0;top:0;width:100%;height:100%;touch-action:none;display:block;background:#f7f5ef}'+
  '#svTools{position:absolute;left:0;right:0;bottom:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(14,20,27,.94);border-top:2px solid var(--sa);display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}'+
@@ -1872,12 +1873,17 @@ function svCss(){if($('svCss'))return;var st=document.createElement('style');st.
 function svOpenUi(){xtStop();svCss();var o=$('svy');o.style.display='block';
  o.innerHTML='<div id="svBar"></div><div id="svBody"></div><div id="svDlg"><div class="in" id="svDlgIn"></div></div>';}
 function svClose(){$('svy').style.display='none';SV=null;homeShow();}
+// 19 Nov 2026: Surveys and Tacheo are two pills of one page. The bar is back, the pills, then whatever that view does.
+function svPills(which){return'<span class="seg svseg"><button data-p="list"'+(which=='list'?' class="on"':'')+'>Surveys</button><button data-p="units"'+(which=='units'?' class="on"':'')+'>Tacheo</button></span>';}
+function svPillsWire(){Array.prototype.forEach.call(document.querySelectorAll('#svBar .svseg button'),function(b){b.onclick=function(){if(b.classList.contains('on'))return;if(b.dataset.p=='units')svUnitsShow();else svListShow();};});}
+function svTileSub(){var on=window.svOnUnits?svOnUnits():[];return on.length?on.map(function(u){return svShort(u)+(u.info&&u.info.batt!=null?' '+u.info.batt+'%':'');}).join(' \u00b7 '):'Shots from the Tacheo, sketch as you go';}
+window.svTileSub=svTileSub;
 // ---- the list of surveys
 // the Tacheo page from the home screen (Sully, 16 Nov 2026: "I don't see a tile regarding connecting to a Tacheo. Idk where the message
 // function would be"): the units, their batteries and controls, and the messages, without opening a survey
 function svUnitsShow(){svOpenUi();SV=null;SVVIEW='units';
- $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>Tacheo</h1><span class="chip" id="svDevC" style="cursor:pointer"></span><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 Messages</button>';
- $('svBk').onclick=function(){SVVIEW='';xtStop();svClose();};$('svDevC').onclick=function(){svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};
+ $('svBar').innerHTML='<button class="ib" id="svBk">←</button>'+svPills('units')+'<span class="chip" id="svDevC" style="cursor:pointer"></span><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 <span class="mw">Messages</span></button>';
+ $('svBk').onclick=function(){SVVIEW='';xtStop();svClose();};$('svDevC').onclick=function(){svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};svPillsWire();
  $('svBody').innerHTML='<div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots taken here aren\'t kept - open a survey in <b>Survey and sketch</b> to keep them.':'Bluetooth to the Tacheo is in the <b>Topside app for Android</b>.')+'</p><div id="svUnitsPg"></div>'+
   '<div class="card uPgSec">'+svDet('xt','⇄ CrossTalk - both units\' shots as they land','')+'<div id="xtPg"></div></div></details></div></div>';
  svDetWire($('svBody'));XT.on=true;if(XT.timer)clearInterval(XT.timer);XT.timer=setInterval(function(){if(SVVIEW!='units'){xtStop();return;}xtPoll();},3000);xtPoll();
@@ -1886,12 +1892,12 @@ function svUnitsShow(){svOpenUi();SV=null;SVVIEW='units';
 function svDetOpen(){try{return JSON.parse(store('ct-tc-open')||'{}');}catch(e){return{};}}
 function svDet(id,title,sub,dflt){var o=svDetOpen(),op=o[id]!=null?o[id]:!!dflt;return'<details class="uDet" data-id="'+esc(id)+'"'+(op?' open':'')+'><summary><span>'+esc(title)+'</span>'+(sub?'<small class="mut">'+esc(sub)+'</small>':'')+'</summary><div class="uDetIn">';}
 function svDetWire(root){if(!root)return;Array.prototype.forEach.call(root.querySelectorAll('details.uDet'),function(d){d.ontoggle=function(){var o=svDetOpen();o[d.getAttribute('data-id')]=d.open;store('ct-tc-open',JSON.stringify(o));};});}
-function svUnitsRefresh(){svDevChip();var c=$('tTacheoS');if(c)c.textContent=svTacheoSub();}
+function svUnitsRefresh(){svDevChip();var c=$('tSurveyS');if(c)c.textContent=svTileSub();}
 function svTacheoSub(){var on=svOnUnits();return on.length?on.map(function(u){return svShort(u)+(u.info&&u.info.batt!=null?' '+u.info.batt+'%':'');}).join(' · '):'Connect, battery, laser, messages';}
 window.svUnitsShow=svUnitsShow;window.svTacheoSub=svTacheoSub;
 function svListShow(){svOpenUi();SV=null;SVVIEW='list';
- $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>Survey and sketch</h1><span style="flex:1"></span><button class="ib on" id="svNewB" style="background:'+SVA+';border-color:'+SVA+'">＋ New survey</button>';
- $('svBk').onclick=svClose;$('svNewB').onclick=svNewDlg;
+ $('svBar').innerHTML='<button class="ib" id="svBk">←</button>'+svPills('list')+'<span style="flex:1"></span><button class="ib on" id="svNewB" style="background:'+SVA+';border-color:'+SVA+'">＋ New survey</button>';
+ $('svBk').onclick=svClose;$('svNewB').onclick=svNewDlg;svPillsWire();
  $('svBody').innerHTML='<div id="svList"><p class="mut">Loading…</p></div>';
  svAll().then(function(l){var h='';
   h+='<div class="card"><b>Survey with a Tacheo, take shots and sketch as you go.</b><div class="mut" style="font-size:13px;margin-top:3px">Shots come in over Bluetooth'+(window.TopsideAndroid&&TopsideAndroid.bleScan?'':' in the Android app')+' or are typed; legs and splays are sorted as they arrive, and the plan and profile draw themselves. Sketch over them in NSS symbols, then send the trip to Topside.</div></div>';
@@ -2897,7 +2903,7 @@ function xtPoll(){if(!XT.on)return;svOnUnits().forEach(function(u){if(u.waiters&
   if(!x)r.old=true;else x.slice(6).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)r[kv.slice(0,i)]=kv.slice(i+1);});XT.links[u.addr]=r;if(XT.on)xtDrawSoon();});});}
 function xtShow(){var o=svDetOpen();o.xt=true;store('ct-tc-open',JSON.stringify(o));svUnitsShow();var d=document.querySelector('details.uDet[data-id=xt]');if(d)d.scrollIntoView({block:'start'});return;
  svOpenUi();SV=null;SVVIEW='xt';XT.on=true;
- $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>CrossTalk live</h1><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 Messages</button>';
+ $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>CrossTalk live</h1><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 <span class="mw">Messages</span></button>';
  $('svBk').onclick=function(){xtStop();svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};
  $('svBody').innerHTML='<div id="xtPg" style="padding:10px 12px 90px;max-width:640px;margin:0 auto"></div>';
  if(XT.timer)clearInterval(XT.timer);XT.timer=setInterval(xtPoll,3000);xtPoll();svAutoConnect();xtDraw();}
