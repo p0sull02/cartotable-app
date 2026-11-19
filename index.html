@@ -59,11 +59,11 @@ table.sh th{text-align:left;color:var(--muted);font-weight:600;padding:4px 4px;b
 table.sh td{padding:4px 4px;border-bottom:1px solid var(--line)}
 table.sh tr:hover td{background:rgba(255,255,255,.04);cursor:pointer}
 .r{text-align:right}
-.shelf{display:grid;grid-template-columns:1fr;gap:8px}
+.shelf{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .book{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer}
 .cover{flex:none;width:54px;height:72px;border-radius:3px 6px 6px 3px;background:linear-gradient(90deg,#c9a227 0,#e8c341 12%,#f2cf4c 100%);box-shadow:inset 4px 0 0 #a8861d;color:#2b2405;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;line-height:1.05}
 body.cave .cover{filter:brightness(.7)}
-.cover .f{font-size:9px;letter-spacing:.08em;opacity:.8}.cover .l{font-size:12px;margin-top:3px;max-width:48px;overflow:hidden}.cover .n{font-size:15px}
+.cover .f{font-size:9px;letter-spacing:.08em;opacity:.8}.cover .l{font-size:10px;letter-spacing:-.2px;margin-top:3px;max-width:48px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.cover .n{font-size:15px}
 .lab{display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer}
 .lab input{width:18px;height:18px}
 input[type=range]{width:100%}
@@ -544,7 +544,7 @@ function stationFacts(i){var s=S[i],h='<div class="k">Depth</div><div>'+ft(s[7])
  var ts=Object.keys(tripsAt[i]||{});if(ts.length)h+='<div class="k">Surveyed on</div>'+ts.map(function(t){var tr=D.trips[t];return'<div class="row" data-book="'+t+'"><div class="t">'+esc(tr.n)+'</div><div class="s">'+esc(tr.d||'')+(tr.team?' · '+esc(tr.team):'')+(tr.r?' · trip report':'')+'</div></div>';}).join('');
  return h;}
 // ---- in the cave
-function stationPicker(id,val,ph){return'<div style="display:flex;gap:6px;margin:4px 0"><input type="text" id="'+id+'" placeholder="'+(ph||'Station name')+'" value="'+esc(val!=null&&val>=0?S[val][0]:'')+'" style="flex:1;font-size:16px;padding:11px 10px" autocomplete="off" autocapitalize="characters"><button class="btn alt" data-usesel="'+id+'" style="margin:0">Selected</button></div>';}
+function stationPicker(id,val,ph){return'<div style="display:flex;gap:6px;margin:4px 0"><input type="text" id="'+id+'" placeholder="'+(ph||'Station name')+'" value="'+esc(val!=null&&val>=0?S[val][0]:'')+'" style="flex:1;min-width:0;font-size:16px;padding:11px 10px" autocomplete="off" autocapitalize="characters"><button class="btn alt" data-usesel="'+id+'" style="margin:0">Selected</button></div>';}
 function hereHtml(){var h='<div class="k">Where are you?</div>'+stationPicker('hereSt',sel,'The station you\'re at')+'<button class="btn" id="hereGo">That\'s me</button>';
  if(sel<0)return h+'<p class="mut">Type the station name off the nearest tag or book, or tap it on the plot. Then: the way out, the nearest leads, how far to anywhere.</p>'+entList();
  var s=S[sel];h+='<div class="big" style="margin-top:12px">'+esc(s[0])+'</div>';
@@ -607,7 +607,7 @@ function booksHtml(){if(openBook>=0)return bookHtml(openBook);
  if(bookSort=='long')L.sort(function(a,b){return D.trips[b].len-D.trips[a].len;});
  var lc={};D.leads.forEach(function(l){Object.keys(tripsAt[l.s]||{}).forEach(function(t){lc[t]=(lc[t]||0)+1;});});
  return'<div class="k">'+D.trips.length+' field books</div><input type="search" id="bq" placeholder="Find a book: name, team, year" value="'+esc(bookQ)+'" style="width:100%;margin-bottom:6px"><div class="seg" id="bs" style="margin-bottom:8px"><button data-s="file"'+(bookSort=='file'?' class="on"':'')+'>As filed</button><button data-s="new"'+(bookSort=='new'?' class="on"':'')+'>Newest</button><button data-s="weak"'+(bookSort=='weak'?' class="on"':'')+'>Weakest</button><button data-s="long"'+(bookSort=='long'?' class="on"':'')+'>Longest</button></div><div class="shelf">'+
- L.map(function(i){var t=D.trips[i],gr=t.g!=null?D.grades[t.g]:null;return'<div class="book" data-book="'+i+'">'+cover(t)+'<div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.n)+'</div><div class="mut" style="font-size:12.5px">'+esc(t.d||'no date')+(t.team?' · '+esc(t.team):'')+'</div><div style="font-size:12.5px;margin-top:3px">'+(gr?'<span class="dot" style="background:'+gr.c+'"></span>'+esc(gr.n)+' · ':'<span class="mut">not checked · </span>')+ft(t.len)+' · '+t.b.length+' shots'+(lc[i]?' · '+lc[i]+' lead'+(lc[i]>1?'s':''):'')+(t.r?' · 📝 report':'')+'</div></div></div>';}).join('')+'</div>';}
+ L.map(function(i){var t=D.trips[i],gr=t.g!=null?D.grades[t.g]:null;return'<div class="book" data-book="'+i+'">'+cover(t)+'<div style="min-width:0;flex:1;overflow:hidden"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.n)+'</div><div class="mut" style="font-size:12.5px">'+esc(t.d||'no date')+(t.team?' · '+esc(t.team):'')+'</div><div style="font-size:12.5px;margin-top:3px">'+(gr?'<span class="dot" style="background:'+gr.c+'"></span>'+esc(gr.n)+' · ':'<span class="mut">not checked · </span>')+ft(t.len)+' · '+t.b.length+' shots'+(lc[i]?' · '+lc[i]+' lead'+(lc[i]>1?'s':''):'')+(t.r?' · 📝 report':'')+'</div></div></div>';}).join('')+'</div>';}
 function bookHtml(i){var t=D.trips[i],gr=t.g!=null?D.grades[t.g]:null;
  var h='<button class="btn alt" id="bBack" style="margin-top:0">‹ All books</button><div style="display:flex;gap:12px;align-items:center;margin-top:10px">'+cover(t)+'<div><div class="big" style="margin:0">'+esc(t.n)+'</div><div class="mut">'+esc(t.d||'no date')+(t.team?' · '+esc(t.team):'')+'</div><div>'+(gr?'<span class="dot" style="background:'+gr.c+'"></span>'+esc(gr.n):'<span class="mut">not checked by a loop</span>')+' · '+ft(t.len)+'</div></div></div>'+
   '<button class="btn" id="bShow">Show it on the plot</button>';
