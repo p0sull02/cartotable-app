@@ -33,6 +33,8 @@ body.cave #homeBtn{background:#c9d2dc;border-color:#c9d2dc}   /* 17 Nov: the top
 #tabs button{flex:1 0 auto;background:none;border:0;color:var(--muted);padding:10px 10px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;font-size:13px}
 body.cave #tabs button{font-size:15px;padding:12px 12px}
 #tabs button.on{color:var(--ink);border-bottom-color:var(--accent)}
+.subseg{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 10px}
+.subseg button{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #pane{flex:1;overflow:auto;padding:12px 14px calc(14px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
 body.cave #pane{font-size:15.5px}
 #grip{display:none}
@@ -521,14 +523,24 @@ function select(i,zoom){sel=i;if(!measure.on)route=null;if(zoom){if(mode=='3d'){
  if(tab=='two'){two[two.next||'a']=i;two.next=two.next=='b'?'a':'b';showTab('two');}else if(tab=='plan'){plan.to=i;showTab('plan');}else showTab(CAVE?'here':'station');draw();openSheet();}
 // ======================================================================= the panel
 var tab='station';
-var TABS_TOP=[['station','Station'],['leads','Leads'],['plan','Trip plan'],['books','Books'],['layers','GIS'],['export','Export'],['about','About']];
-var TABS_CAVE=[['here','Here'],['out','Way out'],['two','Two stations'],['plan','Trip plan'],['leads','Leads'],['books','Books']];
+// Sully, 19 Nov 2026, 06:15: the same redesign as the desktop - the tabs no longer run off the side of the phone. Seven topside tabs
+// become five and six cave tabs become four; nothing is lost, the three navigation panels sit under Here and the three map ones under
+// Map, each a tap away on a pill row at the top of the panel.
+var TABS_TOP=[['station','Station'],['leads','Leads'],['plan','Trip plan'],['books','Books'],['map','Map']];
+var TABS_CAVE=[['here','Here'],['leads','Leads'],['plan','Trip plan'],['books','Books']];
+var sub={here:'here',map:'layers'};
+var SUBS={here:[['here','Where you are'],['out','The way out'],['two','Two stations']],map:[['layers','Layers'],['export','Take it with you'],['about','This cave']]};
+var INSUB={here:'here',out:'here',two:'here',layers:'map',export:'map',about:'map'};
+function pills(t){return'<div class="seg subseg">'+SUBS[t].map(function(x){return'<button data-sub="'+t+'" data-s="'+x[0]+'"'+(sub[t]==x[0]?' class="on"':'')+'>'+x[1]+'</button>';}).join('')+'</div>';}
+function hereTab(){return pills('here')+({here:hereHtml,out:outHtml,two:twoHtml})[sub.here]();}
+function mapTab(){return pills('map')+({layers:layersHtml,export:exportHtml,about:aboutHtml})[sub.map]();}
 function setTabs(){var T=CAVE?TABS_CAVE:TABS_TOP;$('tabs').innerHTML=T.map(function(t){return'<button data-t="'+t[0]+'">'+t[1]+'</button>';}).join('');
  [].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){if(sheetDragged)return;showTab(b.dataset.t);openSheet();};});
  document.body.classList.toggle('cave',CAVE);$('modeBtn').innerHTML=CAVE?'🔦 In the cave':'☀ Topside';$('measureBtn').style.display=CAVE||mode=='3d'?'none':'';}
 // 19 Nov 2026 (Sully: "Every time you click a button the menu flies back up to the top"): drawing the same tab again keeps its place
-function showTab(t,html){var same=t==tab,p=$('pane'),st=p.scrollTop;tab=t;[].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b.dataset.t==t);});
- p.innerHTML=html!=null?html:({station:stationHtml,here:hereHtml,out:outHtml,two:twoHtml,leads:leadsHtml,plan:planHtml,books:booksHtml,layers:layersHtml,export:exportHtml,about:aboutHtml})[t]();bind();p.scrollTop=same?st:0;}
+function showTab(t,html){if(html==null&&INSUB[t]){sub[INSUB[t]]=t;t=INSUB[t];}
+ var same=t==tab,p=$('pane'),st=p.scrollTop;tab=t;[].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b.dataset.t==t);});
+ p.innerHTML=html!=null?html:({station:stationHtml,here:hereTab,map:mapTab,leads:leadsHtml,plan:planHtml,books:booksHtml})[t]();bind();p.scrollTop=same?st:0;}
 function stationHtml(){if(sel<0)return draftedAsk()+'<div class="k">Station</div><p class="mut">Tap a station on the plot, or find one by name at the top, to see where it is, how long it takes to get there, and the way in.</p>'+entList();
  var s=S[sel],h='<div class="k">Station</div><div class="big">'+esc(s[0])+'</div>';
  if(s[4]>=0)h+='<div class="card"><div class="stat"><b>'+hm(s[4])+'</b><br><span class="mut">from the nearest entrance</span></div><div class="stat"><b>'+ft(s[8])+'</b><br><span class="mut">of passage</span></div><br><button class="btn" id="wayBtn">Show the way in</button><button class="btn alt" id="planTo">Plan a trip here</button></div>';
@@ -687,6 +699,7 @@ function bind(){unprefix($('pane'));var q=function(s){return document.querySelec
  [].forEach.call(q('[data-rt]'),function(r){r.onclick=function(){var s0=sel,rt=route;sel=+r.dataset.rt;route=rt;if(mode!='3d'){view.cx=X[sel];view.cy=Y[sel];view.cz=Z[sel];}draw();};});
  [].forEach.call(q('[data-shot]'),function(r){r.onclick=function(){var p=r.dataset.shot.split('|'),i=findStation(p[1]&&p[1]!='-'?p[1]:p[0]);if(i!=null){sel=i;view.cx=X[i];view.cy=Y[i];view.cz=Z[i];view.ppm=Math.max(view.ppm,3);draw();if(window.innerWidth<=760)minSheet(true);}};});
  [].forEach.call(q('[data-usesel]'),function(b){b.onclick=function(){if(sel>=0)$(b.dataset.usesel).value=S[sel][0];else toast('Tap a station on the plot first');};});
+ [].forEach.call(q('[data-sub]'),function(b){b.onclick=function(){sub[b.dataset.sub]=b.dataset.s;showTab(tab);$('pane').scrollTop=0;};});
  var e;
  [].forEach.call(document.querySelectorAll('[data-dfdel]'),function(b){b.onclick=function(){var i=+b.dataset.dfdel,r=D.rasters[i],ex={};D.rasters.splice(i,1);if(D.files)delete D.files[r.file];delete files[r.file];delete imgs[r.file];
   for(var k in lay.extra){k=+k;if(k<i)ex[k]=lay.extra[k];else if(k>i)ex[k-1]=lay.extra[k];}if(typeof lay.base=='number'&&lay.base>i)lay.base--;lay.extra=ex;saveDrafted();draw();showTab(tab);};});
