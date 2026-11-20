@@ -1989,7 +1989,7 @@ function svReduce(){var legs=svLegs(),pairs={},adj={};
 // ---- the screen
 function svCss(){if($('svCss'))return;var st=document.createElement('style');st.id='svCss';st.textContent=
  '#svy{--sa:'+SVA+'}#svy .btn{background:var(--sa)}#svy .btn.alt{background:#2a3542}#svBar{position:absolute;left:0;right:0;top:0;height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;display:flex;align-items:center;gap:6px;background:var(--bar);border-bottom:2px solid var(--sa);overflow-x:auto;white-space:nowrap;scrollbar-width:none}'+
- '#svBar::-webkit-scrollbar{display:none}#svBar h1{font-size:15px;margin:0 4px;font-weight:700;max-width:30vw;overflow:hidden;text-overflow:ellipsis}@media(max-width:620px){#svBar h1{display:none}#svBar .seg button{padding:6px 9px}}@media(max-width:400px){#svBar .mw{display:none}}#svy .seg button.on{background:var(--sa)}'+
+ '#svBar::-webkit-scrollbar{display:none}#svBar h1{font-size:15px;margin:0 4px;font-weight:700;max-width:30vw;overflow:hidden;text-overflow:ellipsis}@media(max-width:620px){#svBar h1{display:none}#svBar .seg button{padding:6px 9px}}@media(max-width:480px){#svBar .mw{display:none}}#svBar .chip{display:inline-block;flex:0 1 auto;min-width:0;max-width:44vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:20px}.svScroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#svy .seg button.on{background:var(--sa)}'+
  '#svBody{position:absolute;left:0;right:0;bottom:0;top:calc(50px + env(safe-area-inset-top));overflow:hidden}#svList{position:absolute;inset:0;overflow:auto;padding:8px 10px 120px}'+
  '#svCv{position:absolute;left:0;top:0;width:100%;height:100%;touch-action:none;display:block;background:#f7f5ef}'+
  '#svTools{position:absolute;left:0;right:0;bottom:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(14,20,27,.94);border-top:2px solid var(--sa);display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}'+
@@ -2027,8 +2027,8 @@ window.svTileSub=svTileSub;
 function svUnitsShow(){svOpenUi();SV=null;SVVIEW='units';
  $('svBar').innerHTML='<button class="ib" id="svBk">←</button>'+svPills('units')+'<span class="chip" id="svDevC" style="cursor:pointer"></span><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 <span class="mw">Messages</span></button>';
  $('svBk').onclick=function(){SVVIEW='';xtStop();svClose();};$('svDevC').onclick=function(){svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};svPillsWire();
- $('svBody').innerHTML='<div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots taken here aren\'t kept - open a survey in <b>Survey and sketch</b> to keep them.':'Bluetooth to the Tacheo is in the <b>Topside app for Android</b>.')+'</p><div id="svUnitsPg"></div>'+
-  '<div class="card uPgSec">'+svDet('xt','⇄ CrossTalk - both units\' shots as they land','')+'<div id="xtPg"></div></div></details></div></div>';
+ $('svBody').innerHTML='<div class="svScroll"><div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots taken here aren\'t kept - open one under <b>Surveys</b> to keep them.':'Bluetooth to the Tacheo is in the <b>Topside app for Android</b>.')+'</p><div id="svUnitsPg"></div>'+
+  '<div class="card uPgSec">'+svDet('xt','⇄ CrossTalk - both units\' shots as they land','')+'<div id="xtPg"></div></div></details></div></div>'+'</div>';
  svDetWire($('svBody'));XT.on=true;if(XT.timer)clearInterval(XT.timer);XT.timer=setInterval(function(){if(SVVIEW!='units'){xtStop();return;}xtPoll();},3000);xtPoll();
  svDevChip();svAutoConnect();svDevSheet();xtDraw();}
 // tap-to-open sections, remembered (19 Nov 2026)
@@ -3048,7 +3048,7 @@ function xtShow(){var o=svDetOpen();o.xt=true;store('ct-tc-open',JSON.stringify(
  svOpenUi();SV=null;SVVIEW='xt';XT.on=true;
  $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>CrossTalk live</h1><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 <span class="mw">Messages</span></button>';
  $('svBk').onclick=function(){xtStop();svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};
- $('svBody').innerHTML='<div id="xtPg" style="padding:10px 12px 90px;max-width:640px;margin:0 auto"></div>';
+ $('svBody').innerHTML='<div class="svScroll"><div id="xtPg" style="padding:10px 12px 90px;max-width:640px;margin:0 auto"></div></div>';
  if(XT.timer)clearInterval(XT.timer);XT.timer=setInterval(xtPoll,3000);xtPoll();svAutoConnect();xtDraw();}
 function xtStop(){XT.on=false;if(XT.timer)clearInterval(XT.timer);XT.timer=null;}
 function xtDrawSoon(){if(XT.drawT)return;XT.drawT=setTimeout(function(){XT.drawT=0;xtDraw();},300);}
