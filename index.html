@@ -1995,7 +1995,7 @@ function svReduce(){var legs=svLegs(),pairs={},adj={};
 // ---- the screen
 function svCss(){if($('svCss'))return;var st=document.createElement('style');st.id='svCss';st.textContent=
  '#svy{--sa:'+SVA+'}#svy .btn{background:var(--sa)}#svy .btn.alt{background:#2a3542}#svBar{position:absolute;left:0;right:0;top:0;height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;display:flex;align-items:center;gap:6px;background:var(--bar);border-bottom:2px solid var(--sa);overflow-x:auto;white-space:nowrap;scrollbar-width:none}'+
- '#svBar::-webkit-scrollbar{display:none}#svBar h1{font-size:15px;margin:0 4px;font-weight:700;max-width:30vw;overflow:hidden;text-overflow:ellipsis}@media(max-width:620px){#svBar h1{display:none}#svBar .seg button{padding:6px 9px}}@media(max-width:480px){#svBar .mw{display:none}}#svBar .chip{display:inline-block;flex:0 1 auto;min-width:0;max-width:44vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:20px}.svScroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#svy table.bk{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13.5px;table-layout:fixed;margin-top:6px}#svy .bk th{font-size:11.5px;color:var(--muted);font-weight:600;text-align:right;padding:3px 2px 4px;border-bottom:2px solid var(--sa);line-height:1.1;vertical-align:bottom}#svy .bk th small{font-weight:400;font-size:10px}#svy .bk td{text-align:right;padding:5px 2px;border-bottom:1px solid #24323f;height:30px;vertical-align:top;overflow:hidden;white-space:nowrap}#svy .bk .st{text-align:left;font-weight:700;width:17%}#svy .bk th:nth-child(2){width:14%}#svy .bk th:nth-child(3),#svy .bk th:nth-child(4){width:15%}#svy .bk .bs{display:block;color:var(--muted);font-size:11px;font-weight:400}#svy .bk td.lr{color:#c9d3dc;font-size:12.5px}#svy .bk tr[data-g]{cursor:pointer}#svy .bk tr.new td{background:rgba(26,152,80,.2)}#svy .bkNav{display:flex;align-items:center;gap:8px;margin-top:10px}#svy .bkNav .btn{width:60px;height:48px;margin:0;font-size:22px;flex:none;padding:0}#svy .bkNav .btn:disabled{opacity:.3}#svy .bkNav .pg{flex:1;text-align:center;min-width:0}#svy .bkNav a{color:#7fb0ff}#svy .bkAct{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}#svy .bkAct .btn{width:auto;flex:1 1 auto;margin:0;padding:9px 12px}#svy .seg button.on{background:var(--sa)}'+
+ '#svBar::-webkit-scrollbar{display:none}#svBar h1{font-size:15px;margin:0 4px;font-weight:700;max-width:30vw;overflow:hidden;text-overflow:ellipsis}@media(max-width:620px){#svBar h1{display:none}#svBar .seg button{padding:6px 9px}}@media(max-width:480px){#svBar .mw{display:none}}#svBar .chip{display:inline-block;flex:0 1 auto;min-width:0;max-width:44vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:20px}.svScroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#svy table.bk{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13.5px;table-layout:fixed;margin-top:6px}#svy .bk th{font-size:11.5px;color:var(--muted);font-weight:600;text-align:right;padding:3px 2px 4px;border-bottom:2px solid var(--sa);line-height:1.1;vertical-align:bottom}#svy .bk th small{font-weight:400;font-size:10px}#svy .bk td.lrNew{background:rgba(47,191,111,.35);color:#fff;font-weight:700;transition:background 2s}#svy .bk .xsC{display:inline-block;margin-left:3px;color:#2fbf6f;font-size:12px;cursor:pointer}#svy .bk .xsC.new{background:#2fbf6f;color:#06210f;border-radius:4px;padding:0 3px}#svy .xsLive{display:flex;gap:10px;align-items:center;border-color:#2fbf6f;cursor:pointer;margin:8px 0 2px}#svy .bk td{text-align:right;padding:5px 2px;border-bottom:1px solid #24323f;height:30px;vertical-align:top;overflow:hidden;white-space:nowrap}#svy .bk .st{text-align:left;font-weight:700;width:17%}#svy .bk th:nth-child(2){width:14%}#svy .bk th:nth-child(3),#svy .bk th:nth-child(4){width:15%}#svy .bk .bs{display:block;color:var(--muted);font-size:11px;font-weight:400}#svy .bk td.lr{color:#c9d3dc;font-size:12.5px}#svy .bk tr[data-g]{cursor:pointer}#svy .bk tr.new td{background:rgba(26,152,80,.2)}#svy .bkNav{display:flex;align-items:center;gap:8px;margin-top:10px}#svy .bkNav .btn{width:60px;height:48px;margin:0;font-size:22px;flex:none;padding:0}#svy .bkNav .btn:disabled{opacity:.3}#svy .bkNav .pg{flex:1;text-align:center;min-width:0}#svy .bkNav a{color:#7fb0ff}#svy .bkAct{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}#svy .bkAct .btn{width:auto;flex:1 1 auto;margin:0;padding:9px 12px}#svy .seg button.on{background:var(--sa)}'+
  '#svBody{position:absolute;left:0;right:0;bottom:0;top:calc(50px + env(safe-area-inset-top));overflow:hidden}#svList{position:absolute;inset:0;overflow:auto;padding:8px 10px 120px}'+
  '#svCv{position:absolute;left:0;top:0;width:100%;height:100%;touch-action:none;display:block;background:#f7f5ef}'+
  '#svTools{position:absolute;left:0;right:0;bottom:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(14,20,27,.94);border-top:2px solid var(--sa);display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}'+
@@ -2056,15 +2056,22 @@ function svBookDraw(hl){var b=$('svHubS');if(!b)return;var h='';
  h+='<div style="display:flex;gap:6px;align-items:center"><select id="bkPick" style="flex:1;min-width:0;margin:0">'+SVHUBL.map(function(x){return'<option value="'+esc(x.id)+'"'+(x.id==SV.id?' selected':'')+'>'+esc(x.date+' · '+x.name+(x.cave?' ('+x.cave+')':'')+(x.closed?' ✅':''))+'</option>';}).join('')+'<option value="+">＋ New survey…</option></select></div>';
  h+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 4px"><b style="font-size:16px">At '+esc(SV.cur)+'</b><span class="mut" style="font-size:12.5px;flex:1">next leg '+esc(SV.cur)+' → '+esc((SV.prefix||'')+SV.next)+'</span><button class="btn alt" id="bkCur" style="margin:0;width:auto;padding:6px 12px">Change</button></div>';
  if(SV.closed)h+='<div class="mut" style="font-size:12.5px;margin-bottom:4px">✅ Closed out '+esc(SV.closed)+' - shots aren\'t added. Reopen it on Trip.</div>';
- var rows=svBookRows(),per=svPerPg(),n=Math.max(1,Math.ceil(rows.length/per));if(SVPG!=null&&SVPG>=n)SVPG=null;var pg=SVPG==null?n-1:SVPG,part=rows.slice(pg*per,pg*per+per),u=svUn();
+ var rows=svBookRows(),per=svPerPg(),n=Math.max(1,Math.ceil(rows.length/per));if(SVPG!=null&&SVPG>=n)SVPG=null;var pg=SVPG==null?n-1:SVPG;
+ // 20 Nov 2026 (Sully, 19:11-19:12: a cross section the Tacheo sends - "either prompted by the app user or just initiated by the tach user, display it
+ // in the live data stream on the app" / "Same with LRUDs, show the LRUDs as it arrives"): what just landed is lit, on the page where it landed
+ var hs=hl?SV.shots.filter(function(x){return x.id==hl;})[0]:null,xn=SVXSNEW&&Date.now()<SVXSNEW.until?SVXSNEW:null,tgt=hs&&hs.kind=='lrud'?hs.from:xn?xn.at:null;
+ if(SVPG==null&&tgt)for(var ti=rows.length-1;ti>=0;ti--)if(rows[ti].st==tgt){pg=Math.floor(ti/per);break;}
+ var part=rows.slice(pg*per,pg*per+per),u=svUn();
  var dash=function(v){return v==null?'':svL(v,1);},ang=function(v){return v==null?'-':n1(v);};
  h+='<table class="bk"><thead><tr><th class="st">Stn</th><th>Dist<br><small>'+u+'</small></th><th>Azi<br><small>fs/bs</small></th><th>Inc<br><small>fs/bs</small></th><th>L</th><th>R</th><th>U</th><th>D</th></tr></thead><tbody>';
  part.forEach(function(r){var p=r.p,lr=svLrudOf(r.st),isNew=hl&&p&&svGroup(p.l.grp).some(function(x){return x.id==hl;});
-  h+='<tr'+(p?' data-g="'+esc(p.l.grp)+'"':'')+(isNew?' class="new"':'')+'><td class="st">'+esc(r.st)+(r.jump?'<small class="bs">from '+esc(r.from)+'</small>':'')+'</td>'+
+  var lrN=hs&&hs.kind=='lrud'&&hs.from==r.st?hs.lrud:'',xsAt=(SV.xs||[]).filter(function(x){return x.at==r.st;});
+  h+='<tr'+(p?' data-g="'+esc(p.l.grp)+'"':'')+(isNew?' class="new"':'')+'><td class="st">'+esc(r.st)+xsAt.map(function(x){return'<span class="xsC'+(xn&&String(xn.id)==String(x.id)?' new':'')+'" data-xs="'+esc(x.id)+'">✚</span>';}).join('')+(r.jump?'<small class="bs">from '+esc(r.from)+'</small>':'')+'</td>'+
    (p?'<td>'+svL(p.d,1)+'</td><td>'+ang(p.az)+(p.baz!=null?'<small class="bs">'+ang(p.baz)+'</small>':'')+'</td><td>'+ang(p.cl)+(p.bcl!=null?'<small class="bs">'+ang(p.bcl)+'</small>':'')+'</td>':'<td></td><td></td><td></td>')+
-   '<td class="lr">'+dash(lr.L)+'</td><td class="lr">'+dash(lr.R)+'</td><td class="lr">'+dash(lr.U)+'</td><td class="lr">'+dash(lr.D)+'</td></tr>';});
+   ['L','R','U','D'].map(function(k){return'<td class="lr'+(lrN==k?' lrNew':'')+'">'+dash(lr[k])+'</td>';}).join('')+'</tr>';});
  for(var k=part.length;k<per;k++)h+='<tr class="blank"><td class="st">&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
  h+='</tbody></table>';
+ if(xn){var xx=svXsById(xn.id);if(xx)h+='<div class="card xsLive" data-xs="'+esc(xx.id)+'">'+svXsMini(xx)+'<div style="min-width:0"><b>✚ Cross section at '+esc(xx.at)+'</b><div class="mut" style="font-size:12.5px">'+esc(xn.from||'from the Tacheo')+(xx.w?' · '+svL(xx.w,1)+' wide, '+svL(xx.h,1)+' high':'')+' · tap to see it</div></div></div>';}
  var sp=SV.shots.filter(function(x){return x.kind=='splay'&&!x.cmt;}).length;
  h+='<div class="bkNav"><button class="btn alt" id="bkPrev"'+(pg<=0?' disabled':'')+'>◀</button><div class="pg"><b>Page '+(pg+1)+' of '+n+'</b><div class="mut" style="font-size:12px">'+(part.length?esc(part[0].st)+' – '+esc(part[part.length-1].st)+' · ':'')+'<a href="#" id="bkPer">'+per+' stations a page</a>'+(sp?' · '+sp+' splays':'')+'</div></div><button class="btn alt" id="bkNext"'+(pg>=n-1?' disabled':'')+'>▶</button></div>';
  h+='<div class="bkAct"><button class="btn" id="bkAdd">＋ Add a shot</button><button class="btn alt" data-v="data">All shots</button><button class="btn alt" data-v="plan">Plan</button><button class="btn alt" data-v="prof">Profile</button><button class="btn alt" data-v="trip">Trip</button></div>';
@@ -2074,7 +2081,8 @@ function svBookDraw(hl){var b=$('svHubS');if(!b)return;var h='';
  $('bkPrev').onclick=function(){SVPG=Math.max(0,pg-1);svBookDraw();};$('bkNext').onclick=function(){SVPG=pg+1>=n-1?null:pg+1;svBookDraw();};
  $('bkPer').onclick=function(e){e.preventDefault();svAsk('Stations on a page',String(per),function(v){v=Math.round(+v);if(v>=4&&v<=60){store('ct-sv-ppg',String(v));SVPG=null;svBookDraw();}else toast('Between 4 and 60',2500);});};
  Array.prototype.forEach.call(b.querySelectorAll('.bkAct [data-v]'),function(x){x.onclick=function(){var s=SV;svPut(s).catch(function(){});SVVIEW=x.getAttribute('data-v');svOpen(s);};});
- Array.prototype.forEach.call(b.querySelectorAll('tr[data-g]'),function(r){r.onclick=function(){svEditDlg(svGroup(r.getAttribute('data-g')));};});}
+ Array.prototype.forEach.call(b.querySelectorAll('tr[data-g]'),function(r){r.onclick=function(){svEditDlg(svGroup(r.getAttribute('data-g')));};});
+ Array.prototype.forEach.call(b.querySelectorAll('[data-xs]'),function(e){e.onclick=function(ev){ev.stopPropagation();var id=e.getAttribute('data-xs'),s=SV;svPut(s).catch(function(){});SVVIEW='plan';svOpen(s);setTimeout(function(){var x=SV&&svXsById(id);if(x)svXsMenu(x);},400);};});}
 // tap-to-open sections, remembered (19 Nov 2026)
 function svDetOpen(){try{return JSON.parse(store('ct-tc-open')||'{}');}catch(e){return{};}}
 function svDet(id,title,sub,dflt){var o=svDetOpen(),op=o[id]!=null?o[id]:!!dflt;return'<details class="uDet" data-id="'+esc(id)+'"'+(op?' open':'')+'><summary><span>'+esc(title)+'</span>'+(sub?'<small class="mut">'+esc(sub)+'</small>':'')+'</summary><div class="uDetIn">';}
@@ -2746,7 +2754,7 @@ function svRxFetch(id,u){var x=SVRX&&SVRX.x;if(!x)return;svRxBar('📡 Receiving
   if(!l||l.some(function(v){return /^XSEC none/.test(v);})){SVRX.known.ids.push(id);svRxStatus();SVRX.timer=setTimeout(svRxPoll,2500);return;}
   var hd={},pts=[];l.forEach(function(v){if(/^XSH /.test(v))v.slice(4).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)hd[kv.slice(0,i)]=kv.slice(i+1);});else if(/^XP /.test(v)){var f=v.slice(3).split(',');if(f.length>=9)pts.push([+f[3],+f[4],f[8]=='1'?1:0]);}});
   if(pts.length<3){SVRX.known.ids.push(id);toast('That section came without its outline - take it again',3000);svRxStatus();SVRX.timer=setTimeout(svRxPoll,2500);return;}
-  var before=svClone(x),sn=u&&u.info&&u.info.sn;
+  var before=svClone(x),sn=u&&u.info&&u.info.sn;if(u.xsIds&&u.xsIds.indexOf(String(id))<0)u.xsIds.push(String(id));
   x.id=id;x.sn=sn;x.src='unit';x.w=+hd.w||0;x.h=+hd.h||0;x.closed=hd.closed=='1';x.pts=pts;x.off=null;svXsPlace(x);svXsOp(x,before);
   if(navigator.vibrate)navigator.vibrate([30,60,30]);toast('📡 Cross section from '+esc(svShort(u))+' put in at '+esc(x.at),2600);svXsRxStop(true);svDraw();});}
 function svXsRxStop(quiet){if(!SVRX)return;clearTimeout(SVRX.timer);var x=SVRX.x;
@@ -3026,14 +3034,46 @@ function svFlash(u){var k=0;(function step(){if(k>=6){toast('✨ '+esc(svShort(u
 // the unit's console (Nordic UART, the same commands as over USB): one command at a time per unit, its reply up to its end line
 function svAsk1(cmd,endRe,ms,u){u=u||svPrimary();return new Promise(function(ok){if(!u||u.state!='on')return ok(null);var w={re:endRe,lines:[],ok:ok,t:setTimeout(function(){done(true);},ms||6000)};
  function done(to){var i=u.waiters.indexOf(w);if(i>=0)u.waiters.splice(i,1);clearTimeout(w.t);ok(to&&!w.lines.length?null:w.lines);}w.done=done;u.waiters.push(w);bText(u.addr,cmd+'\r\n');});}
-function svRxLine(u,line){try{xtRx(u,line);}catch(e){}var m=line.match(/^MSG (SHOWN|READ|TIMEOUT) (\d+)/);if(m)svMsgState(u,+m[2],m[1]);
+function svRxLine(u,line){try{xtRx(u,line);}catch(e){}var xm=line.match(/^XSEC new id=(\d+)/);if(xm){svXsArrive(u,xm[1]);return;}var m=line.match(/^MSG (SHOWN|READ|TIMEOUT) (\d+)/);if(m)svMsgState(u,+m[2],m[1]);
  var w=u.waiters[0];if(!w)return;w.lines.push(line);if(w.re.test(line))w.done(false);}
 function svInfo(u){u=u||svPrimary();return svAsk1('INFO',/^END/,8000,u).then(function(l){if(!l||!u)return;var i=u.info||{};l.forEach(function(x){var p=x.split(' ');
   if(p[0]=='VER')i.ver=x.slice(4);else if(p[0]=='SN')i.sn=p[1];else if(p[0]=='BATT'){i.batt=Math.round(+p[2]);i.shots=+p[3]||0;}else if(p[0]=='CAL')i.cal=(+p[2]).toFixed(2)+'°';else if(p[0]=='SET'){var lr=x.match(/longrange=(\d)/);if(lr)i.longrange=lr[1]=='1';}else if(p[0]=='TRIP')i.trip=p[1]+' legs, '+svL(+p[2],0)+' '+svUn()+', '+p[3]+' LRUDs';});
  u.info=i;svDevChip();if(SVVIEW=='units'&&$('svUnitsPg'))svDevSheet(true);});}
+// ======================================================================= live cross sections (Sully, 20 Nov 2026, 19:11: "the button on app can still
+// auto start the cross section screen, but when the tach sends a cross section over, either prompted by the app user or just initiated by the
+// tach user, display it in the live data stream on the app"; 19:21: "whenever the tach takes a cross section, it sends it over via Bluetooth?"
+// / "The app doesn't need to sent a prompt every 3s"). Nothing is polled: firmware 1.17.12+ sends "XSEC new id=N" the moment a section is
+// saved, and only then is that one section fetched (XSEC=id), put in at its station (the unit's own 'at', else where the survey is) and shown
+// on the book page. Nothing is asked at connect either: sections already on the unit are left to Receive. If the Receive flow, a
+// Bluetooth update or another question is under way when the line comes, the fetch waits for it (2 s steps, 2 min at most).
+// Older firmware sends nothing: its sections come over with Receive.
+var SVXSNEW=null;
+function svXsIds(l){return(l||[]).filter(function(x){return /^XS /.test(x);}).map(function(x){var m=x.match(/\bid=(\d+)/);return m?m[1]:null;}).filter(function(v){return v!=null;});}
+function svXsWatchStart(u){if(u)u.xsIds=[];}   // nothing asked: the unit says when a section is new
+function svXsQuiet(u){return u.state!='on'||!!SVRX||(typeof FW!='undefined'&&FW&&FW.busy&&FW.busy.stage!='done'&&FW.busy.stage!='failed')||(u.waiters&&u.waiters.length>0);}   // (nothing of ours while another question is out)
+function svXsArrive(u,id,tries){tries=tries||0;if(u.state!='on')return;if(!u.xsIds)u.xsIds=[];
+ if(svXsQuiet(u)&&tries<60){setTimeout(function(){svXsArrive(u,id,tries+1);},2000);return;}   // after the Receive flow / an update / another question
+ svXsGot(u,id);}
+function svXsGot(u,id){if(u.xsIds&&u.xsIds.indexOf(String(id))<0)u.xsIds.push(String(id));
+ var sn=u.info&&u.info.sn,dup=SV&&(SV.xs||[]).some(function(x){return x.src=='unit'&&String(x.id)==String(id)&&(x.sn||'')==(sn||'');});if(dup)return Promise.resolve();
+ if(!SV){toast('✚ A cross section came in from '+esc(svShort(u))+' - open a survey to keep the next one',4000);return Promise.resolve();}
+ if(SV.closed){toast('✚ A cross section came in, but this survey is closed out - reopen it on the Trip page to keep sections',4000);return Promise.resolve();}
+ return svAsk1('XSEC='+id,/^XSEC (end|none)/,15000,u).then(function(l){if(!SV||!l||l.some(function(v){return /^XSEC none/.test(v);}))return;
+  var hd={},pts=[];l.forEach(function(v){if(/^XSH /.test(v))v.slice(4).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)hd[kv.slice(0,i)]=kv.slice(i+1);});else if(/^XP /.test(v)){var f=v.slice(3).split(',');if(f.length>=9)pts.push([+f[3],+f[4],f[8]=='1'?1:0]);}});
+  if(pts.length<3){toast('✚ A cross section from '+esc(svShort(u))+' came without its outline - take it again',3500);return;}
+  var R=svReduce(),at=SV.cur,a=hd.at||'';if(a&&a!='-'){if(R.P[a])at=a;else if(SV.prefix&&R.P[SV.prefix+a])at=SV.prefix+a;}
+  var x={id:String(id),sn:sn,src:'unit',at:at,view:'plan',sk:[],t:Date.now(),w:+hd.w||0,h:+hd.h||0,closed:hd.closed=='1',pts:pts,off:null};
+  SV.xs.push(x);svXsPlace(x);svOp({xsadd:x});SVXSNEW={id:x.id,at:at,from:'from '+svShort(u),until:Date.now()+20000};
+  if(navigator.vibrate)navigator.vibrate([30,60,30]);toast('✚ Cross section at '+esc(at)+' from '+esc(svShort(u)),3000);svRefresh();
+  setTimeout(function(){if(SVXSNEW&&SVXSNEW.id==x.id&&Date.now()>=SVXSNEW.until&&SVVIEW=='units'&&$('svHubS'))svBookDraw();},20500);});}
+// a small picture of a section's outline (the book page's line)
+function svXsMini(x){var P=(x.pts||[]).filter(function(p){return p[2];});if(P.length<3)P=x.pts||[];if(P.length<3)return'<span style="font-size:22px">✚</span>';
+ var u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;P.forEach(function(p){u0=Math.min(u0,p[0]);u1=Math.max(u1,p[0]);v0=Math.min(v0,p[1]);v1=Math.max(v1,p[1]);});
+ var k=Math.min(52/Math.max(1e-3,u1-u0),40/Math.max(1e-3,v1-v0)),pt=P.map(function(p){return((p[0]-u0)*k+4).toFixed(1)+','+(44-(p[1]-v0)*k).toFixed(1);}).join(' ');
+ return'<svg width="60" height="48" viewBox="0 0 60 48" style="flex:none"><polygon points="'+pt+'" fill="rgba(26,152,80,.18)" stroke="#2fbf6f" stroke-width="1.6" stroke-linejoin="round"/></svg>';}
 // on connecting: what it is, the clock (the messages' times), whether it has messages (1.17.8 / SAP6 1.16.30.5), the station names
 function svHello(u){svInfo(u).then(function(){var d=new Date();return svAsk1('TIME='+Math.floor(d.getTime()/1000)+','+(-d.getTimezoneOffset()),/^OK|^\?\?|^ERR/,3000,u);})
- .then(function(){return svAsk1('MSG?',/^MSG |^\?\?|^ERR|^Unknown/i,3000,u);}).then(function(l){u.msg=!!(l&&l.some(function(x){return /^MSG (IDLE|WAITING|SHOWING)/.test(x);}));if(u.follow)svTellStation(true,u);});}
+ .then(function(){return svAsk1('MSG?',/^MSG |^\?\?|^ERR|^Unknown/i,3000,u);}).then(function(l){u.msg=!!(l&&l.some(function(x){return /^MSG (IDLE|WAITING|SHOWING)/.test(x);}));if(u.follow)svTellStation(true,u);}).then(function(){svXsWatchStart(u);});}
 // the station names: the unit shows the station it's at and names its own legs to match (STNAT, STNSET; firmware 1.13+)
 function svTellStation(force,only){if(!SV)return;svOnUnits().forEach(function(u){if(only&&u!==only)return;if(!u.follow)return;var pre=(SV.prefix||'').replace(/[^A-Za-z]/g,'');
  var p=pre&&(force||!u.stnSent)?svAsk1('STNSET='+pre,/^OK|^ERR|^STN |^\?\?/,4000,u):Promise.resolve();u.stnSent=1;p.then(function(){return svAsk1('STNAT='+SV.cur,/^OK|^ERR|^STN |^\?\?/,4000,u);});});}
@@ -3043,7 +3083,8 @@ function svTellStation(force,only){if(!SV)return;svOnUnits().forEach(function(u)
 // screen at once (firmware 1.17.11 and later)
 function svOpenXs(u){u=u||svPrimary();if(!u||u.state!='on'){toast('Connect the unit first',2500);return;}
  svAsk1('OPEN=xs',/^OK OPEN|^\?\?|^ERR|^Unknown|^BAD/i,4000,u).then(function(l){var ok=l&&l.some(function(x){return /^OK OPEN/.test(x);});
-  toast(ok?'✚ '+esc(svShort(u))+' is on its cross section screen':'✚ '+esc(svShort(u))+' can\'t be switched from here yet - it needs Tacheo firmware 1.17.11',ok?2500:6000);});}
+  var vm=u.info&&u.info.ver&&u.info.ver.match(/(\d+)\.(\d+)\.(\d+)/),sends=!vm||(+vm[1]*1e6+ +vm[2]*1e3+ +vm[3])>=1017012;   // 1.17.12 sends it by itself
+  toast(ok?'✚ '+esc(svShort(u))+' is on its cross section screen — '+(sends?'the section comes over by itself when it\'s taken':'bring it over with Receive when it\'s taken (firmware 1.17.12 sends it by itself)'):'✚ '+esc(svShort(u))+' can\'t be switched from here yet - it needs Tacheo firmware 1.17.11',ok?2500:6000);});}
 function svXsList(u){u=u||svPrimary();svDlg('<div class="big">Cross sections on '+esc(svShort(u))+'</div><div id="xsL"><p class="mut">Asking the unit…</p></div><button class="btn alt" id="xsNo">Close</button>');$('xsNo').onclick=svDlgClose;
  svAsk1('XSEC?',/^XSEC end/,8000,u).then(function(l){var el=$('xsL');if(!el)return;if(!l){el.innerHTML='<p>The unit didn\'t answer (firmware 1.16.47 or newer has cross sections).</p>';return;}
   var xs=l.filter(function(x){return /^XS /.test(x);}).map(function(x){var o={};x.slice(3).split(' ').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=kv.slice(i+1);});return o;});
@@ -3132,17 +3173,24 @@ window.xtShow=xtShow;
 // its bootloader; nothing to open on the unit). Needs the Android app: a web page can't reach the radio, and iPhones give web apps none.
 var FW={list:null,err:'',busy:null,lock:null};
 var FW_URL='https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware.txt';
+// test builds (Sully, 20 Nov 2026: "with this firmware update, I can test the Bluetooth update mode"): firmware-test.txt beside it lists
+// builds not yet released - Topside never reads it; the phone does only with Test builds switched on at the foot of this page
+var FW_TEST_URL='https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware-test.txt';
+function fwTestOn(){return store('ct-fw-test')=='1';}
 setTimeout(function(){if(!window.TOPSIDE_PC)fwLoad().then(fwTileUpd);},1500);   // the list at start (Home may be drawn before this part of the page has run), so the tile knows
 function fwOk(){return!!(window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function');}
 function fwParse(txt){var out=[],cur=null;String(txt||'').split(/\r?\n/).forEach(function(l){if(/^\s*#/.test(l))return;var m=l.match(/^(\w+):\s*(.*)$/);
   if(!m){cur=null;return;}if(m[1]=='file'){cur={file:m[2].trim()};out.push(cur);var v=cur.file.match(/_v([\d.]+)_([A-Za-z0-9]+)\.zip$/);if(v){cur.ver=v[1];cur.build=v[2];}}else if(cur)cur[m[1]]=m[2].trim();});
  return out.filter(function(x){return x.ver&&x.build&&/^https:\/\/raw\.githubusercontent\.com\/p0sull02\/tacheo-topside-releases\//.test(x.url||'');});}
 function fwLoad(){return fetch(FW_URL+'?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text();})
- .then(function(t){store('ct-fw-list',t);store('ct-fw-when',String(Date.now()));FW.list=fwParse(t);FW.err='';},function(){var t=store('ct-fw-list');FW.list=t?fwParse(t):[];FW.err=t?'No signal - the list from '+fwWhen()+'.':'No signal, and the firmware list has never been downloaded. Open this page once with signal.';});}
+ .then(function(t){store('ct-fw-list',t);store('ct-fw-when',String(Date.now()));FW.list=fwParse(t);FW.err='';},function(){var t=store('ct-fw-list');FW.list=t?fwParse(t):[];FW.err=t?'No signal - the list from '+fwWhen()+'.':'No signal, and the firmware list has never been downloaded. Open this page once with signal.';})
+ .then(function(){if(!fwTestOn()){FW.test=[];return;}return fetch(FW_TEST_URL+'?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text();})
+  .then(function(t){store('ct-fw-test-list',t);FW.test=fwParse(t).map(function(p){p.test=true;return p;});},function(){var t=store('ct-fw-test-list');FW.test=t?fwParse(t).map(function(p){p.test=true;return p;}):[];});});}
 function fwWhen(){var w=+store('ct-fw-when');if(!w)return'earlier';var d=new Date(w);return ymd(d)+' '+hhmm(d);}
 function fwVB(u){var s=u&&u.info&&u.info.ver;if(!s)return null;var m=String(s).match(/(\d+\.\d+\.\d+(?:\.\d+)?)\s+([A-Za-z0-9]+)\s*$/);return m?{ver:m[1],build:m[2]}:null;}
 function fwCmp(a,b){a=String(a).split('.').map(Number);b=String(b).split('.').map(Number);for(var i=0;i<Math.max(a.length,b.length);i++){var x=a[i]||0,y=b[i]||0;if(x!=y)return x<y?-1:1;}return 0;}
-function fwFor(build){return(FW.list||[]).filter(function(p){return p.build==build;})[0]||null;}
+function fwFor(build){var r=(FW.list||[]).filter(function(p){return p.build==build;})[0]||null;
+ if(fwTestOn())(FW.test||[]).forEach(function(p){if(p.build==build&&(!r||fwCmp(p.ver,r.ver)>0))r=p;});return r;}   // a test build only when newer than the release
 // each unit's build and version as last seen (so Home can say an update is waiting with no unit connected)
 function fwKnown(){var k=load2('ct-fw-units')||{},ch=false;svOnUnits().forEach(function(u){var vb=fwVB(u);if(vb){var o=k[u.addr];if(!o||o.ver!=vb.ver||o.build!=vb.build){k[u.addr]={name:svShort(u),ver:vb.ver,build:vb.build};ch=true;}}});if(ch)try{localStorage.setItem('ct-fw-units',JSON.stringify(k));}catch(e){}return k;}
 function fwNews(){if(!FW||!FW.list)return 0;var n=0,k=fwKnown();Object.keys(k).forEach(function(a){var x=k[a],p=fwFor(x.build);if(p&&fwCmp(p.ver,x.ver)>0)n++;});return n;}
@@ -3168,13 +3216,16 @@ function fwRender(){var b=$('fwBody');if(!b)return;var h='';
   if(!vb)line='Asking it what it runs…';
   else if(!p)line=esc(vb.ver)+' ('+esc(vb.build)+') - no package for this build on the release list';
   else if(fwCmp(p.ver,vb.ver)<=0){line='✓ Up to date: '+esc(vb.ver);if(!fwCmp(p.ver,vb.ver)&&fwOk()&&!FW.busy&&!(b!=null&&b<30))btn='<button class="btn alt" data-fw="'+esc(u.addr)+'" style="margin-top:8px;font-size:13px">Put '+esc(p.ver)+' on again</button>';}   // the same version again: to try the update, or to repair a unit
-  else{line='Has '+esc(vb.ver)+' · <b style="color:#93b4ff">'+esc(p.ver)+' is out</b>';
+  else{line='Has '+esc(vb.ver)+' · <b style="color:#93b4ff">'+esc(p.ver)+(p.test?' test build':' is out')+'</b>';
    var low=b!=null&&b<30;btn=low?'<div class="mut" style="color:#e8a33d;font-size:13px;margin-top:6px">Battery '+b+' % - charge it (or plug it in) first: an update that stops part way leaves the unit needing USB.</div>':
     '<button class="btn" data-fw="'+esc(u.addr)+'" style="background:#1d4ed8;margin-top:8px;width:100%"'+(FW.busy||!fwOk()?' disabled':'')+'>⬆ Update to '+esc(p.ver)+'</button>';}
   h+='<div class="card"><b>'+esc(svShort(u))+'</b>'+(b!=null?' <span class="mut">· battery '+b+' %</span>':'')+'<div style="font-size:14px;margin-top:3px">'+line+'</div>'+btn+'</div>';});
  if(FW.list&&FW.list.length){h+='<div class="k">Newest releases</div>';FW.list.forEach(function(p){h+='<div class="row"><div class="t">'+esc(fwBuildName(p.build))+'</div><div class="s">'+esc(p.ver)+' · '+Math.round((+p.size||0)/1024)+' KB</div></div>';});}
+ if(fwTestOn()&&FW.test&&FW.test.length){h+='<div class="k">Test builds (not released)</div>';FW.test.forEach(function(p){h+='<div class="row"><div class="t">'+esc(fwBuildName(p.build))+'</div><div class="s">'+esc(p.ver)+' · '+Math.round((+p.size||0)/1024)+' KB</div></div>';});}
+ h+='<label class="row" style="gap:10px;align-items:center;margin-top:12px"><input type="checkbox" id="fwTest"'+(fwTestOn()?' checked':'')+'><div><div class="t">Test builds</div><div class="s">Offer firmware that isn\'t released yet, for trying on your own units</div></div></label>';
  h+='<p class="mut" style="font-size:12.5px;margin-top:14px">Takes about two minutes with the phone next to the unit. Keep the app open and the screen on. If it ever stops part way, the unit waits in its update mode: plug it into Topside on your computer and update it there.</p>';
  b.innerHTML=h;var e;if(e=$('fwConn'))e.onclick=function(){$('pcOver').style.display='none';svUnitsShow();};
+ if(e=$('fwTest'))e.onchange=function(){store('ct-fw-test',this.checked?'1':'0');fwLoad().then(function(){fwRender();fwTileUpd();});};
  [].forEach.call(b.querySelectorAll('[data-fw]'),function(x){x.onclick=function(){fwAsk(x.dataset.fw);};});
  if(e=$('fwStop'))e.onclick=function(){if(confirm('Stop the update? The unit will wait in its update mode until it gets firmware - over Bluetooth again, or USB.'))try{TopsideAndroid.dfuCancel();}catch(x){}};}
 function fwBuildName(b){return{cave:'Tacheo 1 (OLED)',cavec:'Tacheo 1 (colour screen)',cave2:'Tacheo 2',sap5xc:'SAP5 with the colour screen',sap6:'SAP6',sap6c:'SAP6 (colour screen)'}[b]||b;}
@@ -3187,7 +3238,7 @@ function fwBusyHtml(){var f=FW.busy,st=FW_STAGE[f.stage]||f.stage,c=f.stage=='fa
   (f.stage!='done'&&f.stage!='failed'?'<button class="btn alt" id="fwStop" style="margin-top:8px">Stop</button>':'')+'</div>';}
 function fwAsk(addr){var u=SVDEV.units[addr],vb=fwVB(u),p=vb&&fwFor(vb.build);if(!u||!p)return;
  if(vb.build!=p.build){toast('That package is for another build');return;}
- if(!confirm((fwCmp(p.ver,vb.ver)?'Update '+svShort(u)+' from '+vb.ver+' to '+p.ver:'Put '+p.ver+' on '+svShort(u)+' again')+'?\n\nAbout two minutes. The unit restarts into its update mode, takes the new firmware and restarts. Shots, calibration and settings stay. Keep the phone next to it with the app open.'))return;
+ if(!confirm((fwCmp(p.ver,vb.ver)?'Update '+svShort(u)+' from '+vb.ver+' to '+p.ver:'Put '+p.ver+' on '+svShort(u)+' again')+(p.test?' (a test build, not released)':'')+'?\n\nAbout two minutes. The unit restarts into its update mode, takes the new firmware and restarts. Shots, calibration and settings stay. Keep the phone next to it with the app open.'))return;
  FW.busy={addr:addr,name:svShort(u),ver:p.ver,stage:'reading',pct:0,msg:''};fwRender();
  try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(l){FW.lock=l;},function(){});}catch(x){}
  fetch(p.url+'?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('Couldn\'t download the firmware ('+r.status+')');return r.arrayBuffer();}).then(function(ab){
