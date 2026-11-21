@@ -121,6 +121,40 @@ body.cave .tile .tt{font-size:16px}
  #legend .hd{display:none} #attr{bottom:72px}
  #top h1{max-width:26vw}
 }
+/* MapViewer and the landing page (20 Nov 2026) - MapViewer is red (Sully, 21:40: "Make the color scheme of this one Red") */
+.land{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;text-align:left;border-radius:18px;padding:20px 18px 18px;margin:12px 0;cursor:pointer;color:#fff;border:1px solid transparent;font:inherit;-webkit-tap-highlight-color:transparent;min-height:150px}
+.land:active{transform:scale(.985)}
+.land .lic{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:rgba(255,255,255,.16);margin-bottom:4px}
+.land .lt{font-size:24px;font-weight:800;letter-spacing:.01em}.land .ls{font-size:14px;line-height:1.35;opacity:.92}
+.mvCard{background:linear-gradient(135deg,#dc2626 0,#991b1b 100%);border-color:#ef4444}
+.taCard{background:linear-gradient(135deg,#2a3542 0,#1a222c 100%);border-color:#3a4756}.taCard .lic{background:#b7791f}
+#mv{padding:0;z-index:21;overflow:hidden;display:none}
+#mvTop{position:absolute;left:0;right:0;top:0;height:calc(54px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 10px 0;display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,#b91c1c,#7f1d1d);color:#fff}
+#mvTop .ib{background:rgba(0,0,0,.22);border-color:rgba(255,255,255,.25);color:#fff}
+#mvBody{position:absolute;left:0;right:0;bottom:0;top:calc(54px + env(safe-area-inset-top));overflow:auto;padding:10px 12px calc(20px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+#mvBody .in{max-width:900px;margin:0 auto}
+#mvCaves{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 8px}#mvCaves::-webkit-scrollbar{display:none}
+.mvPill{flex:none;background:#2a1215;border:1px solid #7f1d1d;color:#fecaca;border-radius:16px;padding:6px 13px;font-weight:600;cursor:pointer}
+.mvPill.on{background:#ef4444;border-color:#ef4444;color:#fff}
+#mvPlot{position:relative;height:58vh;min-height:280px;background:#0b0f14;border:1px solid #3b1517;border-radius:14px;overflow:hidden}
+#mvCv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer}
+#mvTools{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+#mvTools button{width:40px;height:40px;border-radius:10px;background:rgba(14,20,27,.88);border:1px solid #7f1d1d;color:#fff;font-size:18px;cursor:pointer}
+#mvKey{position:absolute;left:8px;top:8px;background:rgba(14,20,27,.88);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:11.5px;pointer-events:none}
+#mvKey i{display:inline-block;width:16px;height:4px;border-radius:2px;margin:0 5px 2px 0;vertical-align:middle}
+#mv .btn,.mvth .btn{background:#dc2626}#mv .btn.alt,.mvth .btn.alt{background:#2a3542}
+.mvRow{display:flex;align-items:center;gap:10px}.mvRow.on{outline:2px solid #ef4444}
+.mvSw{width:14px;height:14px;border-radius:4px;flex:none;background:#ef4444}
+.mvBadge{font-size:11.5px;font-weight:700;color:#fecaca;background:#3b1517;border-radius:10px;padding:2px 8px;white-space:nowrap}.mvBadge.off{color:#cbd5e1;background:#2a3542}
+.mvNew{position:relative;border:2px solid #ef4444;border-radius:14px;overflow:hidden;background:var(--card);margin:4px 0 10px}
+.mvNew img{display:block;width:100%;max-height:46vh;object-fit:contain;background:#fff;cursor:zoom-in}
+.mvTag{position:absolute;left:10px;top:10px;background:#ef4444;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.06em;border-radius:8px;padding:3px 8px}
+.mvTh{width:54px;height:54px;object-fit:cover;border-radius:7px;background:#fff;flex:none}
+#mvView{padding:0;background:#fff;z-index:28;overflow:hidden;display:none}
+#mvvBar{position:absolute;left:0;right:0;top:0;height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;display:flex;align-items:center;gap:8px;background:#7f1d1d;color:#fff;z-index:2}
+#mvvBar .ib{background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.3);color:#fff}
+#mvvWrap{position:absolute;inset:0;touch-action:none;overflow:hidden}
+#mvvImg{position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;max-width:none}
 </style>
 </head>
 <body>
@@ -136,6 +170,9 @@ body.cave .tile .tt{font-size:16px}
 <div id="wrap"><canvas id="cv"></canvas><canvas id="gl"></canvas><div id="banner"></div><div id="north" title="North up">N</div><div id="locBtn" title="Show where I am"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12H5M19 12h3.5"/></svg></div><div id="legend"></div><div id="attr"></div><div id="scale"></div></div>
 <div id="side"><div id="grip"></div><div id="tabs"></div><div id="pane"></div></div>
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
+<div id="land" class="over" style="z-index:21"><div class="in" id="landIn"></div></div>
+<div id="mv" class="over"><div id="mvTop"><button class="ib" id="mvBack" title="Back">←</button><span style="display:inline-flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span><b style="font-size:18px">MapViewer</b><span style="flex:1"></span><button class="ib" id="mvUpB">＋ Upload</button></div><div id="mvBody"><div class="in"><div id="mvCaves"></div><div id="mvPlot"><canvas id="mvCv"></canvas><div id="mvKey"><span><i style="background:#ef4444"></i>Map available</span><br><span><i style="background:#5b6673"></i>No map yet</span></div><div id="mvTools"><button id="mvIn" title="Zoom in">＋</button><button id="mvOut" title="Zoom out">－</button><button id="mvFitB" title="Whole cave">⤢</button></div></div><div class="mut" id="mvHint" style="font-size:13.5px;margin:8px 2px"></div><button class="btn" id="mvUp2">＋ Upload a map</button><button class="btn alt" id="mvDl" style="display:none"></button><div id="mvList"></div><p class="mut" id="mvStore" style="font-size:12.5px;margin-top:12px"></p></div></div></div>
+<div id="mvView" class="over"><div id="mvvBar"><button class="ib" id="mvvX" title="Back">←</button><b id="mvvT" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button class="ib" id="mvvFit" title="Fit">⤢</button></div><div id="mvvWrap"><img id="mvvImg" alt=""></div></div>
 <div id="modePick" class="over"><div class="in" id="modeIn"></div></div>
 <div id="pcOver" class="over" style="z-index:22"><div class="in" id="pcIn"></div></div>
 <div id="svy" class="over" style="padding:0;z-index:24;overflow:hidden"></div>
@@ -197,8 +234,8 @@ function load(d){
  var pd=D.hosted?dbDo('readonly',function(s){return s.get('drafted:'+D.name);}).then(function(x){if(x&&x.rasters&&D===d){x.rasters.forEach(function(r){if(!D.rasters.some(function(q){return q.file==r.file;})){D.rasters.push(r);lay.extra[D.rasters.length-1]=r.op||0.85;}});D.files=D.files||{};for(var f in x.files)D.files[f]=x.files[f];}}).catch(function(){}):Promise.resolve();
  var p=pd.then(function(){return D.ground?getFile('data/ground.bin').then(function(a){ground=new Uint16Array(a);buildGround();}).catch(function(){D.ground=null;}):null;});
  return p.then(function(){return Promise.all(D.rasters.map(getImage));}).then(function(){
-  $('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}setTabs();if(mode=='3d')setMode('plan');resize();fit();legend();showTab(CAVE?'here':'station');draw();
-  if(store('ct-mode')==null)pickMode();
+  $('home').style.display='none';$('land').style.display='none';$('mv').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}setTabs();if(mode=='3d')setMode('plan');resize();fit();legend();showTab(CAVE?'here':'station');draw();
+  if(store('ct-mode')==null&&SIDE!='mv')pickMode();
   setTimeout(function(){draftOffer(false);},1200);   // 19 Nov 2026: "Do you want to download all the maps?" when the computer has some
  });
 }
@@ -1059,7 +1096,7 @@ function alignMap(shots,stations,segs,diag,pv){ // the same as CartoTable's MapA
 function saveDrafted(){if(!D.hosted){dbDo('readwrite',function(st){return st.put(D,D.name);}).catch(function(){});return;}
  var rs=D.rasters.filter(function(r){return r.kind=='drafted';}),fs={};rs.forEach(function(r){fs[r.file]=D.files[r.file];});
  dbDo('readwrite',function(st){return st.put({rasters:rs,files:fs},'drafted:'+D.name);}).catch(function(){});}
-function placeDrafted(pageCanvas,vt,fit,name){ // turn and scale the page onto the cave's grid, keep the part round the cave
+function placeDrafted(pageCanvas,vt,fit,name,opt){opt=opt||{}; // turn and scale the page onto the cave's grid, keep the part round the cave
  var lo=[1e9,1e9],hi=[-1e9,-1e9];for(var i=0;i<N;i++){lo[0]=Math.min(lo[0],X[i]);lo[1]=Math.min(lo[1],Y[i]);hi[0]=Math.max(hi[0],X[i]);hi[1]=Math.max(hi[1],Y[i]);}
  var m=Math.max(60,0.3*Math.max(hi[0]-lo[0],hi[1]-lo[1])),x0=lo[0]-m,y1=hi[1]+m,x1=hi[0]+m,y0=lo[1]-m,mpp=Math.max(0.02,1/fit.k/2),w=Math.ceil((x1-x0)/mpp),h=Math.ceil((y1-y0)/mpp);
  var big=Math.max(w,h);if(big>4096){mpp*=big/4096;w=Math.ceil((x1-x0)/mpp);h=Math.ceil((y1-y0)/mpp);}
@@ -1073,8 +1110,8 @@ function placeDrafted(pageCanvas,vt,fit,name){ // turn and scale the page onto t
  var Bi=inv(mul(R,vt)),PW=pageCanvas.width,PH=pageCanvas.height,border=[[0,0],[PW,0],[PW,PH],[0,PH]].map(function(p){return[p[0]*Bi[0]+p[1]*Bi[2]+Bi[4],p[0]*Bi[1]+p[1]*Bi[3]+Bi[5]];});
  var A=mul(mul(L,R),vt),Ai=inv(A),out=document.createElement('canvas');out.width=w;out.height=h;var g2=out.getContext('2d');g2.setTransform(Ai[0],Ai[1],Ai[2],Ai[3],Ai[4],Ai[5]);g2.drawImage(pageCanvas,0,0);
  out.toBlob(function(blob){blob.arrayBuffer().then(function(ab){var file='data/drafted'+Date.now()+'.png',u=new Uint8Array(ab),bin='';for(var i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
-  D.files[file]=btoa(bin);files[file]=ab;var r={name:'Drafted map: '+name.replace(/\.[^.]+$/,''),kind:'drafted',file:file,mime:'image/png',x0:x0,y0:y1,mpp:mpp,w:w,h:h,base:false,on:true,op:0.85,attr:'',border:border,method:fit.method||''};
-  D.rasters.push(r);var ix=D.rasters.length-1;lay.extra[ix]=0.85;getImage(r).then(function(){draw();saveDrafted();
+  D.files[file]=btoa(bin);files[file]=ab;var r={name:'Drafted map: '+name.replace(/\.[^.]+$/,''),kind:'drafted',file:file,mime:'image/png',x0:x0,y0:y1,mpp:mpp,w:w,h:h,base:false,on:true,op:0.85,attr:'',border:border,method:fit.method||'',quad:opt.quad||'',added:Date.now()};
+  D.rasters.push(r);var ix=D.rasters.length-1;lay.extra[ix]=0.85;getImage(r).then(function(){draw();saveDrafted();if(opt.done){opt.done(r);return;}
    toast(fit.method=='names'?'Lined up by the station names on it: '+fit.matched+' of '+fit.stations+' agree. It\'s on the GIS tab, and in Home > Drafted maps.':'Lined up: '+fit.matched+' of '+fit.stations+' stations on its line plot. It\'s on the GIS tab.',6000);if(tab=='station'||tab=='layers')showTab(tab);});});},'image/png');}
 // ======================================================================= views, find, sheet, modes
 function setMode(m){mode=m;setTimeout(locBtnSet,0);[].forEach.call(document.querySelectorAll('#views button'),function(b){b.classList.toggle('on',b.dataset.v==m);});
@@ -1127,7 +1164,7 @@ function pickMode(){$('modeIn').innerHTML=installHtml('mInstall')+'<div class="b
 // uploading pictures of data."). Each tile opens one thing; the details are on the page it opens.
 function tileHtml(id,ic,bg,title,sub,badge,wide){return'<button class="tile'+(wide?' wide':'')+'" id="'+id+'"><span class="ic" style="background:'+bg+'">'+ic+'</span><span style="min-width:0"><span class="tt" style="display:block">'+title+'</span><span class="ts" id="'+id+'S">'+(sub||'')+'</span></span>'+(badge?'<span class="badge" id="'+id+'B">'+badge+'</span>':'<span class="badge" id="'+id+'B" style="display:none"></span>')+'</button>';}
 function setBadge(id,n){var b=$(id+'B');if(!b)return;b.textContent=n;b.style.display=n?'':'none';}
-function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
+function homeShow(){SIDE='tacheo';$('land').style.display='none';$('mv').style.display='none';var h=updHtml()+installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><button class="ib" id="hLand" title="MapViewer or Tacheo" style="height:40px;min-width:40px">←</button><span style="width:40px;height:40px;border-radius:11px;background:#b7791f;display:flex;align-items:center;justify-content:center;font-size:21px">📐</span><div><div class="big" style="margin:0">Tacheo</div><div class="mut">Survey · caves · CartoTable</div></div></div>';
  // 19 Nov 2026 (Sully, 09:09: "Also organize these by In Cave and Outside Cave. Remove the option at the bottom that says In the Cave. The
  // difference is barely noticeable."): two groups. In Cave = what works underground with no signal (the open cave's map, Survey,
  // the caves on the phone); Outside Cave = the rest. The In the cave tile is gone (the top bar's mode button still switches).
@@ -1146,23 +1183,26 @@ h+='<div class="hgrp">In Cave</div><div class="tiles">';
  // list; a tap opens its cave with that map on under the line plot (offline - the lined-up picture is kept with the cave).
  h+=tileHtml('tDraft','✒','#a16207','Drafted maps',(D&&D.rasters&&hasDrafted())?'On '+esc(D.name)+' and your other caves':'Your map sheets, lined up on the survey');
  h+='</div>';
- var outN=4+((HOSTED||LOCALPC)?1:0);
+ var LEARN=HOSTED&&!window.TOPSIDE_PC,outN=4+(LEARN?1:0)+((HOSTED||LOCALPC)?1:0);
  h+='<div class="hgrp">Outside Cave</div><div class="tiles">';
  h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
  h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages read into data on your computer');
  h+=tileHtml('tScan','📄','#0e7490','Scan sketches and data','Cave book pages and sketches, one PDF for your computer');   // 17 Nov 2026 (Sully: "Have the app record cave data picture like Google Pixel does its scans" / "Label it 'scan cave sketch and data'")   // 16 Nov 2026 (Sully: "a short description under it saying it automatically transcribes data from photos")
  h+=tileHtml('tGps','📍','#4285f4','GPS points','Take one with a tap - ridge walking, sinks, entrances');   // 18 Nov 2026 (Sully: "a button to take gps coords whenever, as in during ridge walking")
+ // 20 Nov 2026 (Sully, 22:25-22:42: a cave survey tutorial - classic and shoot-through; analog, device + sketch book, digital; 1, 2 and 3 people -
+ // "It's actually the only way I can access it on my phone"): survey-tutorial.html beside this page, kept for no signal by sw.js
+ if(LEARN)h+=tileHtml('tLearn','🎓','#b45309','Learn to survey','Animated: 1, 2 or 3 people, any gear, classic or shoot-through');
  if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer','',outN%2==1);   // wide when it would sit alone
  h+='</div>';
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
- var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tDraft'))e.onclick=draftedSheet;if(e=$('tFw')){e.onclick=fwPage;if(FW&&!FW.list)fwLoad().then(fwTileUpd);}
+ var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');$('hLand').onclick=landingShow;
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tLearn'))e.onclick=function(){location.href='survey-tutorial.html';};if(e=$('tDraft'))e.onclick=draftedSheet;if(e=$('tFw')){e.onclick=fwPage;if(FW&&!FW.list)fwLoad().then(fwTileUpd);}
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
  if(PC&&$('tPc'))pcHello().then(function(hh){var s=$('tPcS');if(s)s.textContent='Connected · '+PCVIA;return pcInbox().then(function(l){setBadge('tPc',(l||[]).length);if(l&&l.length&&s)s.textContent=l.length+(l.length==1?' thing':' things')+' sent to this phone';});},function(){var s=$('tPcS');if(s)s.textContent=pcWhyShort();});}
 // a page over Home with a back arrow; Home's counts are refreshed on the way back
-function sheet(title,html){var o=$('pcOver');$('pcIn').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><button class="ib" id="pcBack">←</button><div class="big" style="margin:0">'+title+'</div></div>'+html;unprefix($('pcIn'));o.style.display='block';o.scrollTop=0;
+function sheet(title,html){var o=$('pcOver');o.classList.remove('mvth');$('pcIn').innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><button class="ib" id="pcBack">←</button><div class="big" style="margin:0">'+title+'</div></div>'+html;unprefix($('pcIn'));o.style.display='block';o.scrollTop=0;
  $('pcBack').onclick=function(){o.style.display='none';if($('home').style.display=='block')homeShow();};}
 function cavesSheet(){sheet('My caves','<div id="hList" class="mut">…</div><button class="btn alt" id="csAdd">＋ Add a cave</button>');$('csAdd').onclick=addSheet;
  savedCaves().then(function(keys){var L=$('hList');if(!L)return;if(!keys||!keys.length){L.innerHTML='None yet. Add one: a .ctcave file, or straight from your computer.';return;}
@@ -1267,7 +1307,7 @@ function draftPull(cave,maps){var i=0,got=0;
    var nm=dfName(r);D.rasters.forEach(function(q,ix){if(q.kind=='drafted'&&dfName(q)==nm)delete lay.extra[ix];});
    D.rasters=D.rasters.filter(function(q){return!(q.kind=='drafted'&&dfName(q)==nm);});
    var file='data/pc'+Date.now()+'-'+i+'.png';D.files=D.files||{};D.files[file]=r.data;delete files[file];
-   var nr={name:r.name,kind:'drafted',file:file,mime:r.mime||'image/png',x0:r.e0-dx,y0:r.n1-dy,mpp:r.mpp,w:r.w,h:r.h,base:false,on:true,op:0.85,attr:'',quad:r.quad||'',method:r.method||'',border:(r.border||[]).map(function(b){return[b[0]-dx,b[1]-dy];})};
+   var nr={name:r.name,kind:'drafted',file:file,mime:r.mime||'image/png',x0:r.e0-dx,y0:r.n1-dy,mpp:r.mpp,w:r.w,h:r.h,base:false,on:true,op:0.85,attr:'',quad:r.quad||'',method:r.method||'',added:Date.now(),border:(r.border||[]).map(function(b){return[b[0]-dx,b[1]-dy];})};
    D.rasters.push(nr);lay.extra[D.rasters.length-1]=0.85;got++;return getImage(nr);
   }).catch(function(e){toast('Couldn\'t get '+esc(dfName(m))+': '+esc(e.message||e),6000);}).then(function(){setTimeout(next,50);});})();}
 function dfName(r){return String(r.name||'Drafted map').replace(/^Drafted map: /,'');}
@@ -1557,9 +1597,9 @@ function camShow(onShot,onDone){var o=$('cam'),v=$('camV'),msg=$('camMsg'),strea
  function frame(){var c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);return new Promise(function(ok,no){c.toBlob(function(b){b?ok(b):no(new Error('no picture'));},'image/jpeg',0.92);});}
  $('camShot').onclick=function(){if(busy||!stream||v.readyState<2)return;busy=true;var f=$('camFlash');f.style.opacity='.8';setTimeout(function(){f.style.opacity='0';},120);if(navigator.vibrate)navigator.vibrate(20);
   grab().then(onShot).then(function(){n++;msg.textContent=n+(n==1?' photo':' photos')+' kept - take the next, or Done';busy=false;},function(x){msg.textContent='That one didn\'t take ('+esc(x.message)+') - try again';busy=false;});};}
-$('homeBtn').onclick=homeShow;
+$('homeBtn').onclick=function(){if(SIDE=='mv')mvShow();else homeShow();};
 // the phone's Back goes from a cave to Home (17 Nov: "Where's the back button to home?")
-window.addEventListener('popstate',function(){if(D&&$('home').style.display=='none')homeShow();});
+window.addEventListener('popstate',function(){if($('mvView').style.display=='block'){$('mvView').style.display='none';return;}if($('mv').style.display=='block'){mvClose();return;}if($('land').style.display=='block')return;if(D&&$('home').style.display=='none'){if(SIDE=='mv')mvShow();else homeShow();}});
 function openCaveText(t){try{var d=JSON.parse(t);if(!d.st)throw new Error('not a CartoTable cave file');
   dbDo('readwrite',function(s){return s.put(d,d.name);}).catch(function(){toast('Opened, but this browser won\'t keep it');}).then(function(){load(d);});}catch(x){toast('Couldn\'t open it: '+esc(x.message));}}
 window.CTopenCaveB64=function(b){try{var bin=atob(b),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);openCaveText(new TextDecoder().decode(u));}catch(x){toast('Couldn\'t open it: '+esc(x.message));}};   // the Android app hands over a shared .ctcave
@@ -3376,13 +3416,238 @@ function pcTailscale(){var S=function(t,l){return'<div class="k">'+t+'</div><ol 
   S('Connect Topside',['Pair this phone once, at home on the Wi-Fi: Topside\'s <b>Connect a phone</b> window shows a QR code. Here: <b>☰</b> → <b>📷 Scan the code on the computer</b> and point it at the code - it connects by itself.','That\'s all. When it pairs, this app learns the computer\'s Tailscale name and address too. Away from home it tries the home address, gets no answer, and uses Tailscale by itself.','Test it: turn this phone\'s Wi-Fi off (mobile data only), leave Tailscale on, and open <b>☰</b> → My computer. It should say <b>Connected · Tailscale</b>.'])+
   '<div class="k">If it doesn\'t connect</div><ul style="padding-left:20px;margin:4px 0"><li>Is the computer on and awake, with Topside open and Phone link on?</li><li>Does Tailscale show Connected on both, with the same account?</li><li>Works at home but not away: Windows\' firewall. On the computer: Windows Security → Firewall &amp; network protection → Allow an app through firewall → Change settings → <b>Tacheo Topside</b>: tick Private and Public → OK.</li><li>The name doesn\'t work but the 100.x address does: MagicDNS is off. Turn it on at login.tailscale.com → DNS, or add the 100.x address here (☰ → My computer → ⋯).</li><li>The screen view is slow on a weak signal: it sends pictures. Caves, Check, Reckon and Send send very little and work on one bar.</li></ul>'+
   '<a class="btn" style="text-decoration:none" href="https://tailscale.com/download" target="_blank" rel="noopener">Get Tailscale</a>');}
+// ======================================================================= MapViewer (placeholder name) and the landing page
+// Sully, 20 Nov 2026, 21:27-21:40: "build a map draft/finished draft viewer for desktop and on the phone app ... opening a projects
+// lineplot, having it show a box over certain sections, being able to click or tap it, and it pulling up the most recent draft. Let there
+// be an upload section ... within that cave have a list of specific Quadrant sections, within each will be a highlighted most recent map,
+// and below it all the previous drafts of that version." / "Most often we show maps via our cell phones, so the phone app needs to be
+// robust ... We need a new landing page with 2 options, like on the desktop app. One will be MapViewer (placeholder) the other will be
+// Tacheo" / "Make sure the maps are offered to be downloaded and available offline too" / "a user should be able to zoom in and tap on the
+// section of the lineplot (which will be highlighted with the name of the quadrant - add that as well) and the map will pull up" /
+// "Color code the lineplot by maps available, and maps unavailable." / "Make sure I can upload maps from my phone to the app too. I think
+// most people will just upload physical files to the app and desktop." / "Make the color scheme of this one Red".
+//   The landing page: two cards, MapViewer (red) and Tacheo (the old Home, now Tacheo's page). MapViewer: a cave's line plot, pinch to
+//   zoom; each quad (the drafted sheets of one quad, grouped by the quad name or the sheet name without its version) is a red tint with
+//   its name on it; a tap inside it opens the quad: the newest sheet highlighted, every earlier one below. The line plot is red where a
+//   map covers it and grey where none does. Everything is read from the phone's own storage, so it works with no signal; maps from the
+//   computer (Phone link) are offered for download, and a phone upload is kept on the phone - lined up by the station names / line plot
+//   when it can be, else kept as a plain sheet of the quad the user picked (photos of printed sheets too).
+var MV_RED='#ef4444',MV_DEEP='#b91c1c',MV_GREY='#5b6673',SIDE=store('ct-side')||'';
+var MVS={cave:null,caves:null,by:null,view:null,sel:null,online:{}};
+function mvVerKey(n){var m=String(n).match(/v?(\d+(?:\.\d+)*)[a-z]?\s*$/i);return m?m[1].split('.').map(Number):null;}
+function mvStem(n){var s=String(n).replace(/[\s_-]*v?\d+(\.\d+)*[a-z]?\s*$/i,'').trim();return s||String(n);}
+function mvAdded(r){if(r.added)return r.added;var m=String(r.file||'').match(/(\d{12,})/);return m?+m[1]:0;}
+function mvNewer(a,b){var va=mvVerKey(a.name),vb=mvVerKey(b.name);if(va&&vb){for(var i=0;i<Math.max(va.length,vb.length);i++){var x=va[i]||0,y=vb[i]||0;if(x!=y)return y-x;}}return (b.added||0)-(a.added||0);}
+function mvWhen(t){if(!t)return'';var d=new Date(t);return isNaN(d)?'':d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}
+function mvKb(b){return b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';}
+// ---- the landing page
+function landingShow(){SIDE='';store('ct-side','');
+ var h=updHtml()+installHtml('lInstall')+
+  '<div style="display:flex;align-items:center;gap:12px;margin:4px 0 14px"><svg width="46" height="46" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#e6ecf2" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="5" fill="#fbbf24"/></svg>'+
+  '<div><div style="font-size:26px;font-weight:700;line-height:1.1">Topside</div><div class="mut">Cave maps and the Tacheo</div></div></div>';
+ if(!window.TOPSIDE_PC&&!FW_OFF&&typeof fwHot=='function'&&fwHot())h+='<div class="tiles" style="margin:0 0 4px">'+tileHtml('lFw','⬆','#1e40af','Update the Survey Device',fwTileSub(),'',true).replace('class="tile wide"','class="tile wide fwTile"')+'</div>';
+ h+='<button class="land mvCard" id="lMv"><span class="lic">'+mvIcon(34)+'</span><span class="lt">MapViewer</span><span class="ls" id="lMvS">Your cave maps on the line plot - tap a quad, the map comes up. Works with no signal.</span></button>'+
+  '<button class="land taCard" id="lTa"><span class="lic">📐</span><span class="lt">Tacheo</span><span class="ls">Survey with the Tacheo, your caves, data photos and scans, GPS points, your computer.</span></button>';
+ if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:16px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="survey-tutorial.html" style="color:#7fb0ff">🎓 Learn to survey</a><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a></p>';
+ $('landIn').innerHTML=h;$('land').style.display='block';hookInstall('lInstall');
+ var e;if(e=$('lFw'))e.onclick=fwPage;
+ $('lMv').onclick=function(){mvShow();};
+ $('lTa').onclick=function(){SIDE='tacheo';store('ct-side','tacheo');$('land').style.display='none';homeShow();if(store('ct-mode')==null)pickMode();};
+ mvGather().then(function(){var n=0,c=0;MVS.caves.forEach(function(k){var g=MVS.by[k];if(g.quads.length){c++;n+=g.quads.length;}});var s=$('lMvS');if(s&&n)s.textContent=n+(n==1?' quad':' quads')+' of '+c+(c==1?' cave':' caves')+' on this phone - tap a quad on the line plot, the map comes up.';});}
+function mvIcon(s){return'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>';}
+// ---- every cave on the phone with its drafted maps, grouped into quads
+function mvGather(){var by={},order=[],att={};
+ function cave(n){if(!by[n]){by[n]={name:n,st:null,sh:null,maps:[],seen:{},quads:[]};order.push(n);}return by[n];}
+ function add(n,r,b64,plain){if(!r)return;var g=cave(n);var key=r.file||r.id;if(g.seen[key])return;g.seen[key]=1;g.maps.push({r:r,b64:b64,plain:!!plain,name:dfName(r),added:mvAdded(r)});}
+ if(D&&D.st){var g0=cave(D.name);g0.st=D.st;g0.sh=D.sh;(D.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(D.name,r,D.files&&D.files[r.file]);});}
+ return dbDo('readonly',function(st){return st.getAllKeys();}).catch(function(){return[];}).then(function(keys){keys=(keys||[]).map(String);
+  return keys.reduce(function(p,k){return p.then(function(){return dbDo('readonly',function(st){return st.get(k);}).then(function(x){if(!x)return;
+   if(k.indexOf('drafted:')==0){var n=k.slice(8);(x.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(n,r,x.files&&x.files[r.file]);});}
+   else if(k.indexOf('mvsheet:')==0){var n2=k.slice(8);(x.sheets||[]).forEach(function(s){if(s.of){(att[n2]=att[n2]||{})[s.of]=s;}else add(n2,s,s.data,true);});}
+   else if(x.st){var g=cave(k);if(!g.st){g.st=x.st;g.sh=x.sh;}(x.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(k,r,x.files&&x.files[r.file]);});}}).catch(function(){});});},Promise.resolve());
+ }).then(function(){
+  order.forEach(function(n){var g=by[n],q={},ql=[];g.maps.forEach(function(m){var a=att[n]&&m.r.file&&att[n][m.r.file];if(a){m.sheet=a;if(!m.added&&a.added)m.added=a.added;}});
+   g.maps.forEach(function(m){var k=(m.r.quad||mvStem(m.name)).trim()||m.name;var kk=k.toLowerCase();if(!q[kk]){q[kk]={name:k,maps:[],poly:null};ql.push(q[kk]);}q[kk].maps.push(m);});
+   ql.forEach(function(Q){Q.maps.sort(mvNewer);});
+   ql.sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'});});g.quads=ql;});
+  MVS.by=by;MVS.caves=order.filter(function(n){return by[n].st||by[n].maps.length;});
+  return Promise.all(order.map(function(n){return Promise.all(by[n].quads.map(function(Q){
+   // the quad's outline: the newest lined-up sheet's border (a plain sheet has none - the next version that has one)
+   var ms=Q.maps.filter(function(m){return!m.plain;});return ms.reduce(function(p,m){return p.then(function(poly){return poly||dfBorder(m.r,m.b64);});},Promise.resolve(null)).then(function(b){Q.poly=b&&b.length>2?b:null;Q.area=Q.poly?dfArea(Q.poly):0;});}));}));});}
+// ---- the MapViewer page
+function mvShow(cave){SIDE='mv';store('ct-side','mv');$('land').style.display='none';$('home').style.display='none';$('mv').style.display='block';
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(x){}   // downloaded maps are kept, not cleared when the phone is short of space
+ $('mvHint').textContent='Loading the maps on this phone…';
+ return mvGather().then(function(){var l=MVS.caves;
+  if(!l.length){MVS.cave=null;mvPills();$('mvHint').innerHTML='No caves on this phone yet. Add one from <b>Tacheo → Add a cave</b> (a .ctcave file, or straight from your computer), then its maps here.';mvSize();mvPaint();mvList();return;}
+  var c=cave||(MVS.cave&&MVS.by[MVS.cave]?MVS.cave:null)||(D&&MVS.by[D.name]?D.name:null)||store('ct-mvcave');if(!c||!MVS.by[c])c=l.filter(function(n){return MVS.by[n].quads.length;})[0]||l[0];
+  mvOpenCave(c);mvOnline();});}
+function mvClose(){$('mv').style.display='none';landingShow();}
+function mvPills(){var l=MVS.caves||[];$('mvCaves').innerHTML=l.map(function(c){return'<button class="mvPill'+(c==MVS.cave?' on':'')+'" data-mvc="'+esc(c)+'">'+esc(c)+'</button>';}).join('');
+ [].forEach.call($('mvCaves').querySelectorAll('[data-mvc]'),function(b){b.onclick=function(){mvOpenCave(b.dataset.mvc);mvOnline();};});}
+function mvOpenCave(c){MVS.cave=c;store('ct-mvcave',c);MVS.sel=null;var g=MVS.by[c];mvPills();
+ // which shots a map covers: both ends inside a quad that has a lined-up sheet on this phone (the Quadrants rule)
+ g.cls=null;if(g.st&&g.sh){var polys=g.quads.filter(function(Q){return Q.poly;}),cls=new Uint8Array(g.sh.length/4),inQ=new Int32Array(g.st.length);
+  for(var i=0;i<g.st.length;i++){inQ[i]=-1;for(var j=0;j<polys.length;j++)if(dfInside([g.st[i][1],g.st[i][2]],polys[j].poly)){inQ[i]=j;break;}}
+  for(var k=0;k<cls.length;k++){var a=g.sh[4*k],b=g.sh[4*k+1];if(inQ[a]>=0&&inQ[b]>=0)cls[k]=1;else if(inQ[a]>=0||inQ[b]>=0)cls[k]=2;}
+  g.cls=cls;g.quads.forEach(function(Q){Q.n=0;});for(i=0;i<g.st.length;i++)if(inQ[i]>=0)polys[inQ[i]].n++;}
+ var n=g.quads.length,un=g.st?g.st.length:0;
+ $('mvHint').innerHTML=!g.st?'This cave\'s survey isn\'t on the phone - only its maps. Open the quads from the list below.':n?'<b>'+n+(n==1?' quad':' quads')+'</b> with maps. Pinch to zoom, then tap the line plot inside a quad and its map comes up.':'No maps of '+esc(c)+' on this phone yet. <b>＋ Upload a map</b> below'+(PC?', or get them from '+esc(PC.name):'')+'.';
+ mvSize();mvFit();mvPaint();mvList();}
+function mvSize(){var cv=$('mvCv'),dpr=window.devicePixelRatio||1,W=cv.clientWidth||300,H=cv.clientHeight||300;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);MVS.W=W;MVS.H=H;MVS.dpr=dpr;}
+function mvBounds(g){var lo=[1e9,1e9],hi=[-1e9,-1e9];function grow(x,y){lo[0]=Math.min(lo[0],x);lo[1]=Math.min(lo[1],y);hi[0]=Math.max(hi[0],x);hi[1]=Math.max(hi[1],y);}
+ (g.st||[]).forEach(function(p){grow(p[1],p[2]);});g.quads.forEach(function(Q){(Q.poly||[]).forEach(function(p){grow(p[0],p[1]);});});if(lo[0]>hi[0])return null;return[lo,hi];}
+function mvFit(poly){var g=MVS.by[MVS.cave];if(!g)return;var b;if(poly){var lo=[1e9,1e9],hi=[-1e9,-1e9];poly.forEach(function(p){lo[0]=Math.min(lo[0],p[0]);lo[1]=Math.min(lo[1],p[1]);hi[0]=Math.max(hi[0],p[0]);hi[1]=Math.max(hi[1],p[1]);});b=[lo,hi];}else b=mvBounds(g);
+ if(!b){MVS.view={s:1,cx:0,cy:0};return;}var pad=18,W=MVS.W,H=MVS.H,s=Math.min((W-2*pad)/Math.max(1,b[1][0]-b[0][0]),(H-2*pad)/Math.max(1,b[1][1]-b[0][1]));MVS.view={s:s,cx:(b[0][0]+b[1][0])/2,cy:(b[0][1]+b[1][1])/2};}
+function mvP(x,y){var v=MVS.view;return[MVS.W/2+(x-v.cx)*v.s,MVS.H/2-(y-v.cy)*v.s];}
+function mvW(px,py){var v=MVS.view;return[v.cx+(px-MVS.W/2)/v.s,v.cy-(py-MVS.H/2)/v.s];}
+function mvPaint(){var cv=$('mvCv'),c=cv.getContext('2d');c.setTransform(MVS.dpr,0,0,MVS.dpr,0,0);c.clearRect(0,0,MVS.W,MVS.H);var g=MVS.by&&MVS.by[MVS.cave];if(!g||!MVS.view)return;
+ // the quads: a red tint, the one picked stronger; online-only quads (on the computer, not this phone) dashed
+ g.quads.forEach(function(Q){if(!Q.poly)return;c.beginPath();Q.poly.forEach(function(p,i){var q=mvP(p[0],p[1]);if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();
+  var on=Q===MVS.sel;c.globalAlpha=on?0.28:0.12;c.fillStyle=MV_RED;c.fill();c.globalAlpha=1;c.lineWidth=on?3:1.5;c.strokeStyle=on?'#fca5a5':MV_RED;c.stroke();});
+ // the line plot: red where a map covers it, grey where none does (a shot half in a quad is red too, thinner)
+ if(g.st&&g.sh){var lw=Math.max(1,Math.min(2.6,0.6+MVS.view.s*0.4));[0,2,1].forEach(function(want){c.beginPath();c.strokeStyle=want?MV_RED:MV_GREY;c.lineWidth=want==1?lw*1.25:lw;
+  for(var k=0;k+1<g.sh.length;k+=4){if((g.cls?g.cls[k/4]:0)!=want)continue;var a=g.st[g.sh[k]],b=g.st[g.sh[k+1]];if(!a||!b)continue;var qa=mvP(a[1],a[2]),qb=mvP(b[1],b[2]);
+   if(Math.max(qa[0],qb[0])<-5||Math.min(qa[0],qb[0])>MVS.W+5||Math.max(qa[1],qb[1])<-5||Math.min(qa[1],qb[1])>MVS.H+5)continue;c.moveTo(qa[0],qa[1]);c.lineTo(qb[0],qb[1]);}c.stroke();});}
+ // the quads' names, the same size at every zoom; the biggest quads first, a label that would sit on one already drawn is left off
+ var placed=[];c.font='700 13px system-ui,-apple-system,Roboto,sans-serif';c.textAlign='center';c.textBaseline='middle';
+ g.quads.filter(function(Q){return Q.poly;}).sort(function(a,b){return (b===MVS.sel)-(a===MVS.sel)||b.area-a.area;}).forEach(function(Q){var mx=0,my=0;Q.poly.forEach(function(p){mx+=p[0];my+=p[1];});var q=mvP(mx/Q.poly.length,my/Q.poly.length);
+  var w=c.measureText(Q.name).width+14,h=22,r=[q[0]-w/2,q[1]-h/2,w,h];if(q[0]<-w||q[0]>MVS.W+w||q[1]<-h||q[1]>MVS.H+h)return;
+  if(Q!==MVS.sel&&placed.some(function(o){return r[0]<o[0]+o[2]&&o[0]<r[0]+r[2]&&r[1]<o[1]+o[3]&&o[1]<r[1]+r[3];}))return;placed.push(r);
+  c.fillStyle=Q===MVS.sel?MV_RED:'rgba(20,8,8,.82)';mvRound(c,r[0],r[1],w,h,7);c.fill();c.lineWidth=1;c.strokeStyle=MV_RED;c.stroke();c.fillStyle='#fff';c.fillText(Q.name,q[0],q[1]+0.5);});
+ // the scale
+ var ft1=MVS.view.s*FT,steps=[10,25,50,100,250,500,1000,2500,5000,10000],len=steps.filter(function(x){return x*ft1>=60;})[0]||10000,px=len*ft1;
+ c.strokeStyle='#cbd5e1';c.lineWidth=2;c.beginPath();c.moveTo(12,MVS.H-14);c.lineTo(12+px,MVS.H-14);c.moveTo(12,MVS.H-19);c.lineTo(12,MVS.H-9);c.moveTo(12+px,MVS.H-19);c.lineTo(12+px,MVS.H-9);c.stroke();
+ c.fillStyle='#cbd5e1';c.font='600 11px system-ui,sans-serif';c.textAlign='left';c.fillText(len.toLocaleString('en-US')+' ft',16+px,MVS.H-14);}
+function mvRound(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+// pinch, drag, wheel; a tap inside a quad opens it (overlapping quads: the smallest; still unclear - ask)
+function mvHook(){var cv=$('mvCv'),pts={},d0=null,moved=0,t0=0,tapOk=false;
+ function two(){var k=Object.keys(pts);return k.length>=2?[pts[k[0]],pts[k[1]]]:null;}
+ cv.addEventListener('pointerdown',function(e){cv.setPointerCapture(e.pointerId);pts[e.pointerId]={x:e.offsetX,y:e.offsetY};moved=0;t0=Date.now();var t=two();d0=t?{d:Math.hypot(t[0].x-t[1].x,t[0].y-t[1].y),s:MVS.view.s}:null;});
+ cv.addEventListener('pointermove',function(e){var p=pts[e.pointerId];if(!p||!MVS.view)return;var dx=e.offsetX-p.x,dy=e.offsetY-p.y;var t=two();
+  if(t&&d0){var mid=[(t[0].x+t[1].x)/2,(t[0].y+t[1].y)/2],w0=mvW(mid[0],mid[1]);p.x=e.offsetX;p.y=e.offsetY;var d=Math.hypot(t[0].x-t[1].x,t[0].y-t[1].y);MVS.view.s=Math.max(0.01,Math.min(400,d0.s*d/Math.max(10,d0.d)));var w1=mvW(mid[0],mid[1]);MVS.view.cx+=w0[0]-w1[0];MVS.view.cy+=w0[1]-w1[1];moved+=99;}
+  else{p.x=e.offsetX;p.y=e.offsetY;MVS.view.cx-=dx/MVS.view.s;MVS.view.cy+=dy/MVS.view.s;moved+=Math.abs(dx)+Math.abs(dy);}
+  if(!mvPaint.q){mvPaint.q=requestAnimationFrame(function(){mvPaint.q=0;mvPaint();});}});
+ function up(e){var was=pts[e.pointerId];delete pts[e.pointerId];if(Object.keys(pts).length<2)d0=null;tapOk=!!(was&&moved<10&&Date.now()-t0<600&&!Object.keys(pts).length);}
+ // the quad opens on the click that follows, not on pointerup: opened at pointerup, the page under the finger took the click (the map went full screen by itself)
+ cv.addEventListener('click',function(e){if(tapOk){tapOk=false;mvTap(e.offsetX,e.offsetY);}});
+ cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',function(e){delete pts[e.pointerId];d0=null;});
+ cv.addEventListener('wheel',function(e){e.preventDefault();if(!MVS.view)return;var w0=mvW(e.offsetX,e.offsetY);MVS.view.s*=Math.exp(-e.deltaY*0.0015);var w1=mvW(e.offsetX,e.offsetY);MVS.view.cx+=w0[0]-w1[0];MVS.view.cy+=w0[1]-w1[1];mvPaint();},{passive:false});
+ cv.addEventListener('dblclick',function(e){if(!MVS.view)return;var w0=mvW(e.offsetX,e.offsetY);MVS.view.s*=2;var w1=mvW(e.offsetX,e.offsetY);MVS.view.cx+=w0[0]-w1[0];MVS.view.cy+=w0[1]-w1[1];mvPaint();});
+ $('mvFitB').onclick=function(){mvFit();mvPaint();};$('mvIn').onclick=function(){MVS.view.s*=1.6;mvPaint();};$('mvOut').onclick=function(){MVS.view.s/=1.6;mvPaint();};
+ window.addEventListener('resize',function(){if($('mv').style.display=='block'){mvSize();mvPaint();}});}
+function mvTap(px,py){var g=MVS.by&&MVS.by[MVS.cave];if(!g)return;var w=mvW(px,py),hit=g.quads.filter(function(Q){return Q.poly&&dfInside(w,Q.poly);});
+ if(!hit.length){MVS.sel=null;mvPaint();mvList();toast(g.quads.length?'No map covers that part of the cave yet':'No maps of this cave on the phone yet',2200);return;}
+ hit.sort(function(a,b){return a.area-b.area;});
+ // two quads of nearly the same size under the finger: ask which
+ if(hit.length>1&&hit[1].area<hit[0].area*1.15){mvSheet('Which quad?',hit.map(function(Q,i){return'<button class="choice" data-wq="'+i+'"><b>'+esc(Q.name)+'</b><span class="mut">'+Q.maps.length+(Q.maps.length==1?' map':' maps')+'</span></button>';}).join(''));
+  [].forEach.call(document.querySelectorAll('[data-wq]'),function(b){b.onclick=function(){mvQuad(hit[+b.dataset.wq]);};});return;}
+ mvQuad(hit[0]);}
+function mvList(){var g=MVS.by&&MVS.by[MVS.cave],L=$('mvList');if(!g){L.innerHTML='';return;}
+ var h='';if(g.quads.length)h+='<div class="k" style="margin-top:10px">Quads of '+esc(g.name)+'</div>'+g.quads.map(function(Q,i){var m=Q.maps[0];return'<div class="row mvRow'+(Q===MVS.sel?' on':'')+'" data-mq="'+i+'"><span class="mvSw"></span><span style="flex:1;min-width:0"><span class="t">'+esc(Q.name)+'</span><span class="s" style="display:block">'+esc(m.name)+(m.added?' · '+mvWhen(m.added):'')+(Q.maps.length>1?' · '+Q.maps.length+' versions':'')+'</span></span><span class="mvBadge">'+(Q.poly?'on phone':'on phone · not lined up')+'</span></div>';}).join('');
+ var on=MVS.online[g.name];if(on&&on.length){var miss=on.filter(function(m){return!m.have;});if(miss.length)h+='<div class="k">On '+esc(PC.name)+' only - not on this phone yet</div>'+miss.map(function(m){return'<div class="row mvRow"><span class="mvSw" style="background:none;border:2px dashed '+MV_RED+'"></span><span style="flex:1;min-width:0"><span class="t">'+esc(m.quad||mvStem(dfName(m)))+'</span><span class="s" style="display:block">'+esc(dfName(m))+' · '+esc(m.when||'')+' · '+mvKb(m.bytes||0)+'</span></span><span class="mvBadge off">online only</span></div>';}).join('');}
+ L.innerHTML=h;[].forEach.call(L.querySelectorAll('[data-mq]'),function(r){r.onclick=function(){var Q=g.quads[+r.dataset.mq];if(Q.poly){MVS.sel=Q;mvFit(Q.poly);mvPaint();}mvQuad(Q);};});
+ var dl=$('mvDl');if(dl){var miss2=(on||[]).filter(function(m){return!m.have;});dl.style.display=PC&&(HOSTED||LOCALPC)?'':'none';dl.innerHTML='⬇ '+(miss2.length?'Download '+miss2.length+(miss2.length==1?' map':' maps')+' for offline ('+mvKb(miss2.reduce(function(t,m){return t+(m.bytes||0);},0))+')':'Get maps from '+(PC?esc(PC.name):'my computer'));}
+ if(navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(function(es){var s=$('mvStore');if(s)s.textContent='Maps and caves on this phone: '+mvKb(es.usage||0)+' · they open with no signal.';}).catch(function(){});}
+// the computer's list (Phone link): what it has that the phone doesn't - for the "online only" rows and the download button
+function mvOnline(){var c=MVS.cave;if(!c||!PC||!(HOSTED||LOCALPC))return;
+ pcJson('GET','/api/drafts?name='+encodeURIComponent(c),null,6000).then(function(j){var g=MVS.by[c];if(!g)return;var have={};g.maps.forEach(function(m){have[m.name.toLowerCase()]=1;});
+  MVS.online[c]=(j.maps||[]).map(function(m){m.have=!!have[dfName(m).toLowerCase()];return m;});
+  // a quad the computer has a newer sheet of: say so on the quad
+  g.quads.forEach(function(Q){Q.newer=MVS.online[c].filter(function(m){return!m.have&&(m.quad||mvStem(dfName(m))).toLowerCase()==Q.name.toLowerCase();});Q.local=true;});
+  if(MVS.cave==c)mvList();}).catch(function(){});
+ var g=MVS.by[c];if(g)g.quads.forEach(function(Q){Q.local=true;});}
+// ---- a quad: the newest sheet highlighted, the earlier ones below
+function mvSheet(t,h){sheet(t,h);$('pcOver').classList.add('mvth');}
+function mvQuad(Q){MVS.sel=Q;mvPaint();mvList();var g=MVS.by[MVS.cave],m0=Q.maps[0];
+ var h='<div class="mut" style="margin:-2px 0 8px">'+esc(g.name)+(Q.n?' · '+Q.n+(Q.n==1?' station':' stations'):'')+'</div>';
+ if(Q.newer&&Q.newer.length)h+='<div class="card" style="border-color:'+MV_RED+'"><b>A newer map is on '+esc(PC.name)+'</b><div class="mut">'+Q.newer.map(function(m){return esc(dfName(m))+' · '+esc(m.when||'');}).join('<br>')+'</div><button class="btn" id="mqGet">⬇ Download it</button></div>';
+ h+='<div class="mvNew" id="mqNew"><span class="mvTag">NEWEST</span><img id="mqImg" alt=""><div style="padding:10px 12px"><b style="font-size:16px">'+esc(m0.name)+'</b><div class="mut">'+(m0.added?mvWhen(m0.added)+' · ':'')+(m0.plain?'on this phone · not lined up':'on this phone')+'</div>'+
+  '<button class="btn" id="mqFull">⤢ Open the map</button>'+(m0.plain?'':'<button class="btn alt" id="mqOn">Show it on the survey</button>')+'</div></div>';
+ if(Q.maps.length>1)h+='<div class="k">Earlier versions ('+(Q.maps.length-1)+')</div>'+Q.maps.slice(1).map(function(m,i){return'<div class="row mvRow" data-mv="'+(i+1)+'"><img class="mvTh" data-th="'+(i+1)+'" alt=""><span style="flex:1;min-width:0"><span class="t">'+esc(m.name)+'</span><span class="s" style="display:block">'+(m.added?mvWhen(m.added):'')+(m.plain?' · not lined up':'')+'</span></span><span class="mvBadge">open</span></div>';}).join('');
+ h+='<button class="btn" id="mqUp">＋ Upload a new version of '+esc(Q.name)+'</button>';
+ mvSheet('🗺 '+esc(Q.name),h);
+ mvImgUrl(m0).then(function(u){var im=$('mqImg');if(im&&u)im.src=u;});
+ [].forEach.call(document.querySelectorAll('[data-th]'),function(im){mvImgUrl(Q.maps[+im.dataset.th]).then(function(u){if(u)im.src=u;});});
+ $('mqFull').onclick=function(){mvView(m0);};$('mqImg').onclick=function(){mvView(m0);};
+ var e;if(e=$('mqOn'))e.onclick=function(){$('mv').style.display='none';openDrafted(g.name,m0.r.file);};
+ if(e=$('mqGet'))e.onclick=function(){mvDownload(Q.newer);};
+ [].forEach.call(document.querySelectorAll('[data-mv]'),function(r){r.onclick=function(){mvView(Q.maps[+r.dataset.mv]);};});
+ $('mqUp').onclick=function(){mvUpload(Q.name);};}
+function mvB64Url(b64,mime){try{var bin=atob(b64),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return URL.createObjectURL(new Blob([u],{type:mime||'image/png'}));}catch(x){return null;}}
+function mvImgUrl(m){if(m.url)return Promise.resolve(m.url);
+ if(m.sheet){m.url=mvB64Url(m.sheet.data,m.sheet.mime);return Promise.resolve(m.url);}
+ if(!m.b64)return Promise.resolve(null);var full=mvB64Url(m.b64,m.r.mime);if(m.plain||!m.r.border||!m.r.mpp){m.url=full;return Promise.resolve(full);}
+ // a lined-up picture covers the whole cave with the sheet somewhere in it: cut it to the sheet's border, on white
+ return new Promise(function(ok){var im=new Image();im.onload=function(){var r=m.r,xs=r.border.map(function(b){return(b[0]-r.x0)/r.mpp;}),ys=r.border.map(function(b){return(r.y0-b[1])/r.mpp;});
+  var x0=Math.max(0,Math.floor(Math.min.apply(null,xs))),x1=Math.min(im.width,Math.ceil(Math.max.apply(null,xs))),y0=Math.max(0,Math.floor(Math.min.apply(null,ys))),y1=Math.min(im.height,Math.ceil(Math.max.apply(null,ys)));
+  if(x1-x0<8||y1-y0<8){m.url=full;ok(full);return;}var c=document.createElement('canvas');c.width=x1-x0;c.height=y1-y0;var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,-x0,-y0);
+  c.toBlob(function(b){URL.revokeObjectURL(full);m.url=b?URL.createObjectURL(b):null;ok(m.url);},'image/jpeg',0.9);};im.onerror=function(){ok(full);};im.src=full;});}
+// ---- the map full screen: pinch, drag, double-tap
+function mvView(m){mvImgUrl(m).then(function(u){if(!u){toast('That map\'s picture isn\'t on this phone',4000);return;}
+ var o=$('mvView');o.style.display='block';$('mvvT').textContent=m.name;var im=$('mvvImg');im.style.transform='';im.onload=function(){fitIt();};im.src=u;
+ var V={s:1,x:0,y:0},pts={},d0=null,last=0;
+ function apply(){im.style.transform='translate('+V.x+'px,'+V.y+'px) scale('+V.s+')';}
+ function fitIt(){var W=o.clientWidth,H=o.clientHeight-50,w=im.naturalWidth||1,h=im.naturalHeight||1;V.s=Math.min(W/w,H/h);V.x=(W-w*V.s)/2;V.y=50+(H-h*V.s)/2;apply();}
+ function zoomAt(px,py,f){V.x=px-(px-V.x)*f;V.y=py-(py-V.y)*f;V.s*=f;apply();}
+ var wr=$('mvvWrap');
+ wr.onpointerdown=function(e){wr.setPointerCapture(e.pointerId);pts[e.pointerId]={x:e.clientX,y:e.clientY};var k=Object.keys(pts);if(k.length==2){var a=pts[k[0]],b=pts[k[1]];d0={d:Math.hypot(a.x-b.x,a.y-b.y)};}
+  var t=Date.now();if(k.length==1&&t-last<300){zoomAt(e.clientX,e.clientY,2.2);last=0;}else last=t;};
+ wr.onpointermove=function(e){var p=pts[e.pointerId];if(!p)return;var k=Object.keys(pts);
+  if(k.length>=2&&d0){var a=pts[k[0]],b=pts[k[1]],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;p.x=e.clientX;p.y=e.clientY;var d=Math.hypot(a.x-b.x,a.y-b.y);zoomAt(mx,my,d/Math.max(10,d0.d));d0.d=d;}
+  else{V.x+=e.clientX-p.x;V.y+=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;apply();}};
+ wr.onpointerup=wr.onpointercancel=function(e){delete pts[e.pointerId];if(Object.keys(pts).length<2)d0=null;};
+ wr.onwheel=function(e){e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(-e.deltaY*0.0015));};
+ $('mvvFit').onclick=fitIt;$('mvvX').onclick=function(){o.style.display='none';};});}
+// ---- maps from the computer, for offline
+function mvEnsure(c){if(D&&D.name==c&&D.st)return Promise.resolve(true);return dbDo('readonly',function(st){return st.get(c);}).then(function(d){if(!d||!d.st){toast(esc(c)+'\'s survey isn\'t on this phone - add the cave first (Tacheo → Add a cave)',6000);return false;}return load(d).then(function(){$('mv').style.display='block';return true;});});}
+function mvDownload(list){var c=MVS.cave;if(!c)return;if(!PC){toast('Connect this phone to Topside on your computer first (Tacheo → My computer)',6000);return;}
+ mvEnsure(c).then(function(ok){if(!ok)return;$('pcOver').style.display='none';
+  if(list&&list.length){draftPull(c,list);var t=setInterval(function(){if(!/Downloading/.test($('toast').textContent)){clearInterval(t);mvShow(c);}},800);}
+  else{draftOffer(true);var t2=setInterval(function(){if($('pcOver').style.display=='none'&&!/Downloading/.test($('toast').textContent)){clearInterval(t2);setTimeout(function(){mvShow(c);},300);}},900);}});}
+// ---- upload from the phone: the quad, then the file
+function mvUpload(quad){var c=MVS.cave;if(!c){toast('Add a cave first (Tacheo → Add a cave)',5000);return;}var g=MVS.by[c];
+ if(quad==null){mvSheet('＋ Upload a map',
+  '<p class="mut" style="margin-top:0">Which quad of <b>'+esc(c)+'</b> is it? A PDF or Illustrator (.ai) sheet lines itself up on the survey by its station names or line plot. A photo of a printed sheet is kept as the quad\'s map as it is.</p>'+
+  (g.quads.length?'<div class="k">A quad it already has</div>'+g.quads.map(function(Q,i){return'<button class="choice" data-uq="'+i+'" style="padding:12px 14px"><b style="font-size:17px">'+esc(Q.name)+'</b><span class="mut">Newest: '+esc(Q.maps[0].name)+'</span></button>';}).join(''):'')+
+  '<div class="k">A new quad</div><input class="fld" id="uqName" placeholder="e.g. Q19S2 or Junction Box" autocomplete="off"><button class="btn" id="uqGo">Choose the file…</button>'+
+  '<p class="mut" style="font-size:13px">It stays on this phone and works with no signal.</p>');
+  [].forEach.call(document.querySelectorAll('[data-uq]'),function(b){b.onclick=function(){mvUpload(g.quads[+b.dataset.uq].name);};});
+  $('uqGo').onclick=function(){var n=$('uqName').value.trim();if(!n){toast('Give the quad a name',2500);return;}mvUpload(n);};return;}
+ var inp=document.createElement('input');inp.type='file';inp.accept='.pdf,.ai,application/pdf,image/*';inp.onchange=function(){var f=inp.files[0];if(!f)return;$('pcOver').style.display='none';
+  if(/^image\//.test(f.type)||/\.(png|jpe?g|webp|heic)$/i.test(f.name))mvKeepPlain(c,quad,f);
+  else mvEnsure(c).then(function(ok){if(ok)mvImportPdf(c,quad,f);});};inp.click();}
+function mvImportPdf(c,quad,file){toast('Reading '+esc(file.name)+'…',60000);var buf,pgRef;
+ file.arrayBuffer().then(function(b){buf=b;return loadPdfJs();}).then(function(pdfjs){return pdfjs.getDocument({data:new Uint8Array(buf)}).promise;}).then(function(doc){return doc.getPage(1);}).then(function(pg){pgRef=pg;
+  return Promise.all([pg.getOperatorList(),pg.getTextContent()]).then(function(res){var segs=pdfSegments(res[0],window.pdfjsLib.OPS),vp=pg.getViewport({scale:1});
+   var shots=[],sts={};for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];shots.push([X[a],Y[a],X[b],Y[b]]);sts[a]=1;sts[b]=1;}
+   var st=Object.keys(sts).map(function(i){return[X[i],Y[i]];});
+   var fit=draftByNames(res[1].items||[]);if(fit)fit.method='names';else{fit=alignMap(shots,st,segs,Math.hypot(vp.width,vp.height),pg.view);if(fit)fit.method='line plot';}
+   var sc=Math.min(4,4096/Math.max(vp.width,vp.height)),v2=pg.getViewport({scale:sc}),cv0=document.createElement('canvas');cv0.width=Math.ceil(v2.width);cv0.height=Math.ceil(v2.height);
+   var g2=cv0.getContext('2d');g2.fillStyle='#fff';
+   return pg.render({canvasContext:g2,viewport:v2}).promise.then(function(){
+    if(fit&&fit.good){var wj=document.createElement('canvas');wj.width=cv0.width;wj.height=cv0.height;var gj=wj.getContext('2d');gj.fillStyle='#fff';gj.fillRect(0,0,wj.width,wj.height);gj.drawImage(cv0,0,0);
+     wj.toBlob(function(bl){placeDrafted(cv0,v2.transform,fit,file.name,{quad:quad,done:function(r){mvSavePlain(c,quad,file.name,bl,'image/jpeg',r.file).then(function(){toast('Saved to '+esc(quad)+' - lined up by its '+(fit.method=='names'?'station names':'line plot')+'.',5000);mvShow(c);});}});},'image/jpeg',0.88);return;}
+    // not lined up: kept anyway as the quad's sheet (it opens full screen; its outline is the quad's other versions')
+    var w=document.createElement('canvas');w.width=cv0.width;w.height=cv0.height;var gw=w.getContext('2d');gw.fillStyle='#fff';gw.fillRect(0,0,w.width,w.height);gw.drawImage(cv0,0,0);
+    w.toBlob(function(bl){mvSavePlain(c,quad,file.name,bl,'image/jpeg').then(function(){toast('Saved to '+esc(quad)+'. It couldn\'t be lined up on the survey'+(fit&&fit.note?' ('+esc(fit.note)+')':'')+' - it opens as a sheet; Topside on the computer can line it up.',8000);mvShow(c);});},'image/jpeg',0.9);});});
+ }).catch(function(e){toast('Couldn\'t read it: '+esc(e.message),8000);});}
+function mvKeepPlain(c,quad,file){toast('Saving '+esc(file.name)+'…',30000);var im=new Image(),u=URL.createObjectURL(file);
+ im.onload=function(){var f=Math.min(1,4096/Math.max(im.width,im.height)),w=document.createElement('canvas');w.width=Math.round(im.width*f);w.height=Math.round(im.height*f);w.getContext('2d').drawImage(im,0,0,w.width,w.height);URL.revokeObjectURL(u);
+  w.toBlob(function(bl){mvSavePlain(c,quad,file.name,bl,'image/jpeg').then(function(){toast('Saved to '+esc(quad)+'.',3500);mvShow(c);});},'image/jpeg',0.9);};
+ im.onerror=function(){toast('That picture couldn\'t be read here (HEIC? share it as a JPEG)',6000);};im.src=u;}
+function mvSavePlain(c,quad,fname,blob,mime,of){return blob.arrayBuffer().then(function(ab){var u=new Uint8Array(ab),bin='';for(var i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
+ var s={id:'sheet'+Date.now(),name:'Drafted map: '+fname.replace(/\.[^.]+$/,''),quad:quad,mime:mime,data:btoa(bin),added:Date.now(),kind:'sheet'};if(of)s.of=of;
+ return dbDo('readonly',function(st){return st.get('mvsheet:'+c);}).catch(function(){return null;}).then(function(x){x=x||{sheets:[]};x.sheets.push(s);return dbDo('readwrite',function(st){return st.put(x,'mvsheet:'+c);});});}).catch(function(e){toast('Couldn\'t keep it on this phone: '+esc(e.message||e),8000);});}
+
+mvHook();$('mvBack').onclick=mvClose;$('mvUpB').onclick=function(){mvUpload();};$('mvUp2').onclick=function(){mvUpload();};$('mvDl').onclick=function(){var on=MVS.online[MVS.cave]||[];mvDownload(on.filter(function(m){return!m.have;}));};
 // ======================================================================= start
 setTabs();
 setTimeout(pcFromUrl,300);setTimeout(function(){if(PC)pcInbox();},1500);
 if(D&&D.st)load(D).catch(function(e){toast('Couldn\'t load: '+esc(e.message),8000);});
 else{D=null;var last=store('ct-last');   // the app opens on the cave used last, kept on the device
- (last?dbDo('readonly',function(s){return s.get(last);}).catch(function(){return null;}):Promise.resolve(null)).then(function(d){if(d&&d.st)load(d);else{homeShow();if(store('ct-mode')==null)pickMode();}});}
-window.CT={get view(){return view;},select:select,setMode:setMode,showTab:showTab,findStation:findStation,get route(){return route;},layers:lay,draw:draw,setCave:setCave,get gl3(){return gl3;}};
+ (last?dbDo('readonly',function(s){return s.get(last);}).catch(function(){return null;}):Promise.resolve(null)).then(function(d){if(d&&d.st)return load(d).then(landingShow,landingShow);landingShow();}).catch(landingShow);}
+window.CT={get mv(){return MVS;},mvP:function(x,y){return mvP(x,y);},get view(){return view;},select:select,setMode:setMode,showTab:showTab,findStation:findStation,get route(){return route;},layers:lay,draw:draw,setCave:setCave,get gl3(){return gl3;}};
 })();
 </script>
 </body>
