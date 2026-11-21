@@ -1040,6 +1040,7 @@ function importDrafted(file){toast('Reading '+esc(file.name)+'…',60000);
    var fit=draftByNames(tc.items||[]);if(fit)fit.method='names';
    else{fit=alignMap(shots,st,segs,Math.hypot(vp.width,vp.height),pg.view);if(fit)fit.method='line plot';}
    if(!fit||!fit.good){toast('Couldn\'t line it up: no station names or line plot on it that match the survey'+(fit&&fit.note?' ('+esc(fit.note)+')':'')+'. Line it up on the computer (Topside: Cartography > Drafted maps - a click or two), then Home > Drafted maps > Get maps.',9000);return;}
+   try{fit.frame=draftFrame(ol,tc.items||[],pg.view,fit.toPage,fitInv(fit),openStations());}catch(x){fit.frame=null;}
    var sc=Math.min(4,4096/Math.max(vp.width,vp.height)),v2=pg.getViewport({scale:sc}),cv0=document.createElement('canvas');cv0.width=Math.ceil(v2.width);cv0.height=Math.ceil(v2.height);
    return pg.render({canvasContext:cv0.getContext('2d'),viewport:v2}).promise.then(function(){placeDrafted(cv0,v2.transform,fit,file.name);});});
  }).catch(function(e){toast('Couldn\'t read it: '+esc(e.message),8000);});}
@@ -1076,6 +1077,40 @@ function pdfSegments(ol,OPS){var segs=[],m=[1,0,0,1,0,0],stack=[],pending=[];
   else if(fn==OPS.stroke||fn==OPS.closeStroke||fn==OPS.fillStroke||fn==OPS.eoFillStroke||fn==OPS.closeFillStroke||fn==OPS.closeEOFillStroke){pending.forEach(function(sp){if(!sp.s)return;for(var k=1;k<sp.p.length;k++)segs.push([sp.p[k-1][0],sp.p[k-1][1],sp.p[k][0],sp.p[k][1]]);});pending=[];}
   else if(fn==OPS.fill||fn==OPS.eoFill||fn==OPS.endPath)pending=[];}
  return segs;}
+// ---- the sheet's plan frame (21 Nov 2026, Sully: "the quad boundary display should only show the plan drafted area, not the entire
+// drafted map dimensions"): CartoTable's DraftedRender.Frame - the smallest rectangle drawn on the page (an outline or a clipping path, square
+// to the page, at least a twelfth of it) holding 85% of the survey's stations whose own label is printed beside them (or, with fewer than 5
+// labelled, every station the line-up puts on the page). The title, legend, profile and survey record sit outside it.
+function pdfRects(ol,OPS,view){var rs=[],m=[1,0,0,1,0,0],stack=[],pw=view[2]-view[0],ph=view[3]-view[1],tol=Math.max(0.5,0.002*Math.max(pw,ph));
+ function mul(a,b){return[a[0]*b[0]+a[1]*b[2],a[0]*b[1]+a[1]*b[3],a[2]*b[0]+a[3]*b[2],a[2]*b[1]+a[3]*b[3],a[4]*b[0]+a[5]*b[2]+b[4],a[4]*b[1]+a[5]*b[3]+b[5]];}
+ function P(x,y){return[m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]];}
+ function test(sp){if(sp.length<4||sp.length>6)return;var xs=sp.map(function(q){return q[0];}),ys=sp.map(function(q){return q[1];}),x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs),y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
+  if(!sp.every(function(q){return(Math.abs(q[0]-x0)<tol||Math.abs(q[0]-x1)<tol)&&(Math.abs(q[1]-y0)<tol||Math.abs(q[1]-y1)<tol);}))return;if((x1-x0)*(y1-y0)<pw*ph/12)return;rs.push([x0,y0,x1,y1]);}
+ for(var i=0;i<ol.fnArray.length;i++){var fn=ol.fnArray[i],a=ol.argsArray[i];
+  if(fn==OPS.save)stack.push(m.slice());else if(fn==OPS.restore){if(stack.length)m=stack.pop();}else if(fn==OPS.transform)m=mul(a,m);
+  else if(fn==OPS.paintFormXObjectBegin){stack.push(m.slice());if(a&&a[0])m=mul(a[0],m);}else if(fn==OPS.paintFormXObjectEnd){if(stack.length)m=stack.pop();}
+  else if(fn==OPS.constructPath){var ops=a[0],c=a[1],j=0,subs=[],cur=null,bent=false;
+   for(var q=0;q<ops.length;q++){var o=ops[q];
+    if(o==OPS.moveTo){if(cur&&!bent)subs.push(cur);cur=[P(c[j],c[j+1])];bent=false;j+=2;}
+    else if(o==OPS.lineTo){if(!cur){cur=[];bent=false;}cur.push(P(c[j],c[j+1]));j+=2;}
+    else if(o==OPS.curveTo){bent=true;j+=6;}else if(o==OPS.curveTo2||o==OPS.curveTo3){bent=true;j+=4;}
+    else if(o==OPS.rectangle){var x=c[j],y=c[j+1],w=c[j+2],h=c[j+3];subs.push([P(x,y),P(x+w,y),P(x+w,y+h),P(x,y+h)]);j+=4;}}
+   if(cur&&!bent)subs.push(cur);subs.length==1&&test(subs[0]);}}
+ return rs;}
+// ol: the page's operator list; items: its text; toUser/toWorld: the line-up both ways; st: [[x, y, name]] on the cave's grid. A polygon on the grid, or null
+function draftFrame(ol,items,view,toUser,toWorld,st){var pw=view[2]-view[0],ph=view[3]-view[1];if(!(pw>0&&ph>0))return null;
+ var on=[];st.forEach(function(s){var q=toUser(s[0],s[1]);if(q[0]>=view[0]&&q[0]<=view[2]&&q[1]>=view[1]&&q[1]<=view[3])on.push([q[0],q[1],String(s[2]||'')]);});
+ var lab={};(items||[]).forEach(function(it){var t=String(it.str||'').trim().toUpperCase();if(!t||!it.transform)return;(lab[t]=lab[t]||[]).push([it.transform[4],it.transform[5]]);});
+ var near=0.04*Math.max(pw,ph);
+ var drawn=on.filter(function(s){var n=s[2].toUpperCase(),k=n.lastIndexOf(':'),names=[n];if(k>=0&&k<n.length-1)names.push(n.slice(k+1));
+  return names.some(function(nm){return(lab[nm]||[]).some(function(q){return Math.abs(q[0]-s[0])<near&&Math.abs(q[1]-s[1])<near;});});});
+ var target=drawn.length>=5?drawn:on;if(target.length<3)return null;
+ var best=null;pdfRects(ol,window.pdfjsLib.OPS,view).forEach(function(r){var inside=0;target.forEach(function(q){if(q[0]>=r[0]&&q[0]<=r[2]&&q[1]>=r[1]&&q[1]<=r[3])inside++;});
+  if(inside<target.length*0.85)return;if(!best||(r[2]-r[0])*(r[3]-r[1])<(best[2]-best[0])*(best[3]-best[1]))best=r;});
+ if(!best||(best[2]-best[0])*(best[3]-best[1])>pw*ph*0.97)return null;   // the page itself: nothing to cut
+ return[[best[0],best[1]],[best[2],best[1]],[best[2],best[3]],[best[0],best[3]]].map(function(q){return toWorld(q[0],q[1]);});}
+function fitInv(f){var c=Math.cos(f.th),s=Math.sin(f.th);return function(u,v){var x=(u-f.tx)/f.k,y=(v-f.ty)/f.k;return[c*x+s*y,-s*x+c*y];};}
+function openStations(){var o=[];for(var i=0;i<N;i++)o.push([X[i],Y[i],S[i][0]]);return o;}
 function alignMap(shots,stations,segs,diag,pv){ // the same as CartoTable's MapAlign: corners first, then shots end to end, then least squares
  function len(s){return Math.hypot(s[2]-s[0],s[3]-s[1]);}
  var S=shots.filter(function(s){return len(s)>0.3;}),P=segs.filter(function(s){return len(s)>diag*0.0012;}).sort(function(a,b){return len(b)-len(a);}).slice(0,40000);
@@ -1125,7 +1160,7 @@ function placeDrafted(pageCanvas,vt,fit,name,opt){opt=opt||{}; // turn and scale
  var Bi=inv(mul(R,vt)),PW=pageCanvas.width,PH=pageCanvas.height,border=[[0,0],[PW,0],[PW,PH],[0,PH]].map(function(p){return[p[0]*Bi[0]+p[1]*Bi[2]+Bi[4],p[0]*Bi[1]+p[1]*Bi[3]+Bi[5]];});
  var A=mul(mul(L,R),vt),Ai=inv(A),out=document.createElement('canvas');out.width=w;out.height=h;var g2=out.getContext('2d');g2.setTransform(Ai[0],Ai[1],Ai[2],Ai[3],Ai[4],Ai[5]);g2.drawImage(pageCanvas,0,0);
  out.toBlob(function(blob){blob.arrayBuffer().then(function(ab){var file='data/drafted'+Date.now()+'.png',u=new Uint8Array(ab),bin='';for(var i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
-  D.files[file]=btoa(bin);files[file]=ab;var r={name:'Drafted map: '+name.replace(/\.[^.]+$/,''),kind:'drafted',file:file,mime:'image/png',x0:x0,y0:y1,mpp:mpp,w:w,h:h,base:false,on:true,op:0.85,attr:'',border:border,method:fit.method||'',quad:opt.quad||'',added:Date.now()};
+  D.files[file]=btoa(bin);files[file]=ab;var r={name:'Drafted map: '+name.replace(/\.[^.]+$/,''),kind:'drafted',file:file,mime:'image/png',x0:x0,y0:y1,mpp:mpp,w:w,h:h,base:false,on:true,op:0.85,attr:'',border:border,frame:fit.frame||null,method:fit.method||'',quad:opt.quad||'',added:Date.now()};
   D.rasters.push(r);var ix=D.rasters.length-1;lay.extra[ix]=0.85;getImage(r).then(function(){draw();saveDrafted();if(opt.done){opt.done(r);return;}
    toast(fit.method=='names'?'Lined up by the station names on it: '+fit.matched+' of '+fit.stations+' agree. It\'s on the GIS tab, and in Home > Drafted maps.':'Lined up: '+fit.matched+' of '+fit.stations+' stations on its line plot. It\'s on the GIS tab.',6000);if(tab=='station'||tab=='layers')showTab(tab);});});},'image/png');}
 // ======================================================================= views, find, sheet, modes
@@ -1234,7 +1269,7 @@ var DF_COL=['#f59e0b','#38bdf8','#c084fc','#34d399','#f472b6','#facc15','#fb7185
 function dfHull(P){P=P.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1];});if(P.length<3)return P;function cr(o,a,b){return(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);}
  var lo=[],up=[];P.forEach(function(p){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);});
  for(var i=P.length-1;i>=0;i--){var p=P[i];while(up.length>1&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}lo.pop();up.pop();return lo.concat(up);}
-function dfBorder(r,b64){if(r.border&&r.border.length>2)return Promise.resolve(r.border);if(!b64)return Promise.resolve(null);
+function dfBorder(r,b64){if(r.frame&&r.frame.length>2)return Promise.resolve(r.frame);if(r.border&&r.border.length>2)return Promise.resolve(r.border);if(!b64)return Promise.resolve(null);
  return new Promise(function(ok){var im=new Image();im.onload=function(){var f=Math.min(1,256/Math.max(im.width,im.height)),w=Math.max(1,Math.round(im.width*f)),h=Math.max(1,Math.round(im.height*f));
   var c=document.createElement('canvas');c.width=w;c.height=h;var g=c.getContext('2d');g.drawImage(im,0,0,w,h);var px=g.getImageData(0,0,w,h).data,pts=[];
   for(var y=0;y<h;y++){var a=-1,b=-1;for(var x=0;x<w;x++)if(px[4*(y*w+x)+3]>128){if(a<0)a=x;b=x;}if(a>=0){pts.push([a,y]);pts.push([b+1,y]);pts.push([a,y+1]);pts.push([b+1,y+1]);}}
@@ -1322,7 +1357,7 @@ function draftPull(cave,maps){var i=0,got=0;
    var nm=dfName(r);D.rasters.forEach(function(q,ix){if(q.kind=='drafted'&&dfName(q)==nm)delete lay.extra[ix];});
    D.rasters=D.rasters.filter(function(q){return!(q.kind=='drafted'&&dfName(q)==nm);});
    var file='data/pc'+Date.now()+'-'+i+'.png';D.files=D.files||{};D.files[file]=r.data;delete files[file];
-   var nr={name:r.name,kind:'drafted',file:file,mime:r.mime||'image/png',x0:r.e0-dx,y0:r.n1-dy,mpp:r.mpp,w:r.w,h:r.h,base:false,on:true,op:0.85,attr:'',quad:r.quad||'',method:r.method||'',added:Date.now(),border:(r.border||[]).map(function(b){return[b[0]-dx,b[1]-dy];})};
+   var nr={name:r.name,kind:'drafted',file:file,mime:r.mime||'image/png',x0:r.e0-dx,y0:r.n1-dy,mpp:r.mpp,w:r.w,h:r.h,base:false,on:true,op:0.85,attr:'',quad:r.quad||'',method:r.method||'',added:Date.now(),border:(r.border||[]).map(function(b){return[b[0]-dx,b[1]-dy];}),frame:r.frame&&r.frame.length>2?r.frame.map(function(b){return[b[0]-dx,b[1]-dy];}):null};
    D.rasters.push(nr);lay.extra[D.rasters.length-1]=0.85;got++;return Promise.resolve(getImage(nr)).then(function(){toast('Downloading '+esc(dfName(m))+' - the sharp copy ('+i+' of '+maps.length+')…',240000);return mvPullPdf(cave,m.n,nr);});
   }).catch(function(e){toast('Couldn\'t get '+esc(dfName(m))+': '+esc(e.message||e),6000);}).then(function(){setTimeout(next,50);});})();}
 function dfName(r){return String(r.name||'Drafted map').replace(/^Drafted map: /,'');}
@@ -3532,7 +3567,37 @@ function mvOpenCave(c){MVS.cave=c;store('ct-mvcave',c);MVS.sel=null;var g=MVS.by
  var n=g.quads.length,un=g.st?g.st.length:0;
  $('mvHint').innerHTML=!g.st?'This cave\'s survey isn\'t on the phone - only its maps. Open the quads from the list below.':n?'<b>'+n+(n==1?' quad':' quads')+'</b> with maps. Pinch to zoom, then tap the line plot inside a quad and its map comes up.':'No maps of '+esc(c)+' on this phone yet. <b>＋ Upload a map</b> below'+(PC?', or get them from '+esc(PC.name):'')+'.';
  if(g.st&&!g.gh)$('mvHint').innerHTML+='<span style="display:block;margin-top:6px">No elevation came with this cave, so no contours. '+(PC?'Open it in CartoTable on '+esc(PC.name)+' (it fetches the ground), then add it from the computer again.':'Open it in CartoTable on your computer (it fetches the ground), then send it to the phone again.')+'</span>';
- mvSize();mvFit();mvPaint();mvList();}
+ mvSize();mvFit();mvPaint();mvList();mvRefineFrames(c);}
+// ---- maps lined up before 21 Nov 2026 kept the whole sheet as their outline: with the sheet's PDF on the phone, find its plan frame once
+// (in the background, one sheet at a time) and keep it with the map; a sheet with no frame to find is marked so it isn't read again
+var MV_FR={};
+function mvAp(M,x,y){return[M[0]*x+M[2]*y+M[4],M[1]*x+M[3]*y+M[5]];}
+function mvInv(a){var d=a[0]*a[3]-a[1]*a[2];if(!d)return null;return[a[3]/d,-a[1]/d,-a[2]/d,a[0]/d,(a[2]*a[5]-a[3]*a[4])/d,(a[1]*a[4]-a[0]*a[5])/d];}
+function mvAff3(p0,p1,p2,q0,q1,q2){var ux=p1[0]-p0[0],uy=p1[1]-p0[1],vx=p2[0]-p0[0],vy=p2[1]-p0[1],det=ux*vy-uy*vx;if(Math.abs(det)<1e-9)return null;
+ var qux=q1[0]-q0[0],quy=q1[1]-q0[1],qvx=q2[0]-q0[0],qvy=q2[1]-q0[1],a=(qux*vy-qvx*uy)/det,c=(qvx*ux-qux*vx)/det,b=(quy*vy-qvy*uy)/det,d=(qvy*ux-quy*vx)/det;
+ return[a,b,c,d,q0[0]-(a*p0[0]+c*p0[1]),q0[1]-(b*p0[0]+d*p0[1])];}
+function mvRefineFrames(c){var g=MVS.by&&MVS.by[c];if(!g||!g.st||MV_FR[c])return;
+ var todo=[];g.quads.forEach(function(Q){Q.maps.forEach(function(m){if(!m.plain&&m.r&&((m.sheet&&m.sheet.pdf)||m.r.pdf)&&!m.r.frame&&!m.r.frameNone&&m.r.border&&m.r.border.length==4)todo.push(m);});});
+ if(!todo.length)return;MV_FR[c]=1;var st=g.st.map(function(s){return[s[1],s[2],s[0]];}),got=0;
+ todo.reduce(function(p,m){return p.then(function(){return mvFrameOf(m,st).catch(function(){return undefined;}).then(function(fr){if(fr===undefined)return;return mvSetFrame(c,m,fr).then(function(){if(fr)got++;});});});},Promise.resolve())
+  .then(function(){if(got&&MVS.cave==c&&$('mv').style.display=='block')mvShow(c);});}
+// the PDF's own units onto the grid from the kept corners: the phone keeps them as the page picture's TL, TR, BR, BL; the computer as the
+// page's corners in its own order - both are tried, and the one that puts the printed station names on their stations is used
+function mvFrameOf(m,st){return mvPdfGet((m.sheet&&m.sheet.pdf)||m.r.pdf).then(function(b){if(!b)return undefined;
+ return loadPdfJs().then(function(pdfjs){return b.arrayBuffer().then(function(ab){return pdfjs.getDocument({data:new Uint8Array(ab)}).promise;});}).then(function(doc){return doc.getPage(1);}).then(function(pg){
+  return Promise.all([pg.getOperatorList(),pg.getTextContent()]).then(function(res){var vp=pg.getViewport({scale:1}),Ti=mvInv(vp.transform),W=vp.width,H=vp.height,v=pg.view,B=m.r.border;
+   var tl=mvAp(Ti,0,0),tr=mvAp(Ti,W,0),bl=mvAp(Ti,0,H),br=mvAp(Ti,W,H),pdfC=[[v[0],v[1]],[v[2],v[1]],[v[2],v[3]],[v[0],v[3]]];
+   var cands=[mvAff3(tl,tr,bl,B[0],B[1],B[3]),mvAff3(pdfC[0],pdfC[1],pdfC[3],B[0],B[1],B[3])].filter(Boolean);
+   var lab={};(res[1].items||[]).forEach(function(it){var t=String(it.str||'').trim().toUpperCase();if(t&&it.transform)(lab[t]=lab[t]||[]).push([it.transform[4],it.transform[5]]);});
+   var near=0.04*Math.max(v[2]-v[0],v[3]-v[1]);
+   function hits(A){var Ai=mvInv(A);if(!Ai)return 0;var n=0;st.forEach(function(s){var q=mvAp(Ai,s[0],s[1]);if(q[0]<v[0]||q[0]>v[2]||q[1]<v[1]||q[1]>v[3])return;var nm=String(s[2]||'').toUpperCase(),k=nm.lastIndexOf(':'),names=[nm];if(k>=0&&k<nm.length-1)names.push(nm.slice(k+1));
+    if(names.some(function(x){return(lab[x]||[]).some(function(o){return Math.abs(o[0]-q[0])<near&&Math.abs(o[1]-q[1])<near;});}))n++;});return n;}
+   var best=null,bh=-1;cands.forEach(function(A){var h=hits(A);if(h>bh){bh=h;best=A;}});if(!best)return null;var Ai=mvInv(best);
+   return draftFrame(res[0],res[1].items||[],v,function(x,y){return mvAp(Ai,x,y);},function(x,y){return mvAp(best,x,y);},st);});});});}
+function mvSetFrame(c,m,fr){function upd(r){if(fr)r.frame=fr;else r.frameNone=1;}
+ function rec(key){return dbDo('readonly',function(st){return st.get(key);}).catch(function(){return null;}).then(function(x){if(!x||!x.rasters)return;var hit=false;x.rasters.forEach(function(r){if(r.file==m.r.file){upd(r);hit=true;}});if(hit)return dbDo('readwrite',function(st){return st.put(x,key);});});}
+ upd(m.r);if(D&&D.name==c&&D.rasters)D.rasters.forEach(function(r){if(r.file==m.r.file)upd(r);});
+ return Promise.all([rec(c),rec('drafted:'+c)]).catch(function(){});}
 function mvSize(){var cv=$('mvCv'),dpr=window.devicePixelRatio||1,W=cv.clientWidth||300,H=cv.clientHeight||300;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);MVS.W=W;MVS.H=H;MVS.dpr=dpr;}
 function mvBounds(g){var lo=[1e9,1e9],hi=[-1e9,-1e9];function grow(x,y){lo[0]=Math.min(lo[0],x);lo[1]=Math.min(lo[1],y);hi[0]=Math.max(hi[0],x);hi[1]=Math.max(hi[1],y);}
  (g.st||[]).forEach(function(p){grow(p[1],p[2]);});g.quads.forEach(function(Q){(Q.poly||[]).forEach(function(p){grow(p[0],p[1]);});});if(lo[0]>hi[0])return null;return[lo,hi];}
@@ -3778,6 +3843,7 @@ function mvImportPdf(c,quad,file){toast('Reading '+esc(file.name)+'…',60000);v
    var shots=[],sts={};for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];shots.push([X[a],Y[a],X[b],Y[b]]);sts[a]=1;sts[b]=1;}
    var st=Object.keys(sts).map(function(i){return[X[i],Y[i]];});
    var fit=draftByNames(res[1].items||[]);if(fit)fit.method='names';else{fit=alignMap(shots,st,segs,Math.hypot(vp.width,vp.height),pg.view);if(fit)fit.method='line plot';}
+   if(fit&&fit.good)try{fit.frame=draftFrame(res[0],res[1].items||[],pg.view,fit.toPage,fitInv(fit),openStations());}catch(x){fit.frame=null;}
    var sc=Math.min(4,4096/Math.max(vp.width,vp.height)),v2=pg.getViewport({scale:sc}),cv0=document.createElement('canvas');cv0.width=Math.ceil(v2.width);cv0.height=Math.ceil(v2.height);
    var g2=cv0.getContext('2d');g2.fillStyle='#fff';
    return pg.render({canvasContext:g2,viewport:v2}).promise.then(function(){
