@@ -76,6 +76,7 @@ input[type=range]{width:100%}
 #legend span{display:inline-flex;align-items:center;margin:1px 9px 1px 0;white-space:nowrap}
 #legend i{display:inline-block;width:16px;height:5px;border-radius:3px;margin-right:5px}
 #legend.folded{padding:7px 12px;font-weight:600}
+#layBtn{position:absolute;left:10px;top:10px;background:rgba(14,20,27,.92);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-weight:600;font-size:13px;cursor:pointer;color:var(--ink);z-index:3}
 #scale{position:absolute;right:10px;bottom:10px;background:rgba(14,20,27,.92);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;pointer-events:none}
 #north{position:absolute;right:10px;top:10px;width:40px;height:40px;border-radius:50%;background:rgba(14,20,27,.85);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700}
 #locBtn{position:absolute;right:10px;top:58px;width:40px;height:40px;border-radius:50%;background:rgba(14,20,27,.85);border:1px solid var(--line);display:none;align-items:center;justify-content:center;cursor:pointer;color:#c9d2dc}
@@ -136,6 +137,7 @@ body.cave .tile .tt{font-size:16px}
 #mvCaves{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 8px}#mvCaves::-webkit-scrollbar{display:none}
 .mvPill{flex:none;background:#2a1215;border:1px solid #7f1d1d;color:#fecaca;border-radius:16px;padding:6px 13px;font-weight:600;cursor:pointer}
 .mvPill.on{background:#ef4444;border-color:#ef4444;color:#fff}
+.mvPill.add{background:transparent;border-style:dashed;color:#fca5a5}
 #mvPlot{position:relative;height:58vh;min-height:280px;background:#0b0f14;border:1px solid #3b1517;border-radius:14px;overflow:hidden}
 #mvCv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer}
 #mvTools{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
@@ -168,7 +170,7 @@ body.cave .tile .tt{font-size:16px}
  <select id="colour" title="Colour the passages by"><option value="travel">Travel time</option><option value="grade">Precision</option><option value="depth">Depth</option><option value="trip">Trip</option><option value="plain">One colour</option></select>
  <input type="search" id="find" placeholder="Find a station" style="width:140px">
 </div>
-<div id="wrap"><canvas id="cv"></canvas><canvas id="gl"></canvas><div id="banner"></div><div id="north" title="North up">N</div><div id="locBtn" title="Show where I am"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12H5M19 12h3.5"/></svg></div><div id="legend"></div><div id="attr"></div><div id="scale"></div></div>
+<div id="wrap"><canvas id="cv"></canvas><canvas id="gl"></canvas><div id="banner"></div><div id="north" title="North up">N</div><div id="locBtn" title="Show where I am"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12H5M19 12h3.5"/></svg></div><div id="legend"></div><div id="layBtn">Layers ▸</div><div id="attr"></div><div id="scale"></div></div>
 <div id="side"><div id="grip"></div><div id="tabs"></div><div id="pane"></div></div>
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
 <div id="land" class="over" style="z-index:21"><div class="in" id="landIn"></div></div>
@@ -461,6 +463,7 @@ function legend(){var L=$('legend'),h='';
  var full=h+(sym?(h?'<div style="height:3px"></div>':'')+sym:'');
  L.innerHTML=full?(keyOpen?full+' <span class="mut" style="font-size:10.5px">▾ hide</span>':'<span style="margin:0">Key ▸</span>'):'';L.classList.toggle('folded',!keyOpen);L.style.display=full?'':'none';}
 $('legend').onclick=function(){keyOpen=!keyOpen;store('ct-key2',keyOpen?'1':'0');legend();};
+$('layBtn').onclick=function(){showTab('layers');openSheet();};   // 21 Nov 2026 (Sully: "There's no layer option... so I can disable overlays like that"): Map > Layers in one tap - drafted maps from the computer are switched there
 function keyCheck(){var k=[colour,lay.ents,lay.leads,sel>=0,route&&route.length,route&&route[route.length-1],lay.contours,lay.cint,lay.sinks,lay.squeezes,keyOpen].join('|');if(k!=keySig){keySig=k;legend();}}
 // ======================================================================= 2-D view
 var cv=$('cv'),g=cv.getContext('2d'),P2=new Float64Array(0);
@@ -1605,7 +1608,9 @@ $('homeBtn').onclick=function(){if(SIDE=='mv')mvShow();else homeShow();};
 window.addEventListener('popstate',function(){if($('mvView').style.display=='block'){$('mvView').style.display='none';return;}if($('mv').style.display=='block'){mvClose();return;}if($('land').style.display=='block')return;if(D&&$('home').style.display=='none'){if(SIDE=='mv')mvShow();else homeShow();}});
 function openCaveText(t){try{var d=JSON.parse(t);if(!d.st)throw new Error('not a CartoTable cave file or map pack');
   if(d.mapPack){mvImportPack(d);return;}
-  dbDo('readwrite',function(s){return s.put(d,d.name);}).catch(function(){toast('Opened, but this browser won\'t keep it');}).then(function(){load(d);});}catch(x){toast('Couldn\'t open it: '+esc(x.message));}}
+  dbDo('readwrite',function(s){return s.put(d,d.name);}).catch(function(){toast('Opened, but this browser won\'t keep it');}).then(function(){
+   if($('mv').style.display=='block'){$('pcOver').style.display='none';mvShow(d.name);return;}   // added from MapViewer (its + Another cave): open it there
+   load(d);});}catch(x){toast('Couldn\'t open it: '+esc(x.message));}}
 window.CTopenCaveB64=function(b){try{var bin=atob(b),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);openCaveText(new TextDecoder().decode(u));}catch(x){toast('Couldn\'t open it: '+esc(x.message));}};   // the Android app hands over a shared .ctcave
 $('pick').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){openCaveText(r.result);};r.readAsText(f);e.target.value='';};
 // updates (Sully, 16 Nov 2026: "Is there a way for the phone app to detect updates? Perhaps without it flagged as a trojan?"):
@@ -3488,7 +3493,8 @@ function mvShow(cave){SIDE='mv';store('ct-side','mv');$('land').style.display='n
   var c=cave||(MVS.cave&&MVS.by[MVS.cave]?MVS.cave:null)||(D&&MVS.by[D.name]?D.name:null)||store('ct-mvcave');if(!c||!MVS.by[c])c=l.filter(function(n){return MVS.by[n].quads.length;})[0]||l[0];
   mvOpenCave(c);mvOnline();});}
 function mvClose(){$('mv').style.display='none';landingShow();}
-function mvPills(){var l=MVS.caves||[];$('mvCaves').innerHTML=l.map(function(c){return'<button class="mvPill'+(c==MVS.cave?' on':'')+'" data-mvc="'+esc(c)+'">'+esc(c)+'</button>';}).join('');
+function mvPills(){var l=MVS.caves||[];$('mvCaves').innerHTML=l.map(function(c){return'<button class="mvPill'+(c==MVS.cave?' on':'')+'" data-mvc="'+esc(c)+'">'+esc(c)+'</button>';}).join('')+'<button class="mvPill add" id="mvAddCave">＋ Another cave</button>';   // 21 Nov 2026 (Sully: "There's no option to open other caves")
+ $('mvAddCave').onclick=addSheet;
  [].forEach.call($('mvCaves').querySelectorAll('[data-mvc]'),function(b){b.onclick=function(){mvOpenCave(b.dataset.mvc);mvOnline();};});}
 function mvOpenCave(c){MVS.cave=c;store('ct-mvcave',c);MVS.sel=null;var g=MVS.by[c];mvPills();
  // which shots a map covers: both ends inside a quad that has a lined-up sheet on this phone (the Quadrants rule)
@@ -3638,17 +3644,20 @@ function mvOpenPack(){var inp=document.createElement('input');inp.type='file';in
 // ---- upload from the phone: the quad, then the file
 function mvUpload(quad){var c=MVS.cave;if(!c){toast('Add a cave first (Tacheo → Add a cave)',5000);return;}var g=MVS.by[c];
  if(quad==null){mvSheet('＋ Upload a map',
-  '<p class="mut" style="margin-top:0">Which quad of <b>'+esc(c)+'</b> is it? A PDF or Illustrator (.ai) sheet lines itself up on the survey by its station names or line plot. A photo of a printed sheet is kept as the quad\'s map as it is.</p>'+
+  '<p class="mut" style="margin-top:0">Which quad of <b>'+esc(c)+'</b> is it? A PDF or Illustrator (.ai) sheet lines itself up on the survey by its station names or line plot (an .ai needs "Create PDF Compatible File", Illustrator\'s default). A photo of a printed sheet is kept as the quad\'s map as it is.</p>'+
   (g.quads.length?'<div class="k">A quad it already has</div>'+g.quads.map(function(Q,i){return'<button class="choice" data-uq="'+i+'" style="padding:12px 14px"><b style="font-size:17px">'+esc(Q.name)+'</b><span class="mut">Newest: '+esc(Q.maps[0].name)+'</span></button>';}).join(''):'')+
   '<div class="k">A new quad</div><input class="fld" id="uqName" placeholder="e.g. Q19S2 or Junction Box" autocomplete="off"><button class="btn" id="uqGo">Choose the file…</button>'+
   '<p class="mut" style="font-size:13px">It stays on this phone and works with no signal.</p>');
   [].forEach.call(document.querySelectorAll('[data-uq]'),function(b){b.onclick=function(){mvUpload(g.quads[+b.dataset.uq].name);};});
   $('uqGo').onclick=function(){var n=$('uqName').value.trim();if(!n){toast('Give the quad a name',2500);return;}mvUpload(n);};return;}
- var inp=document.createElement('input');inp.type='file';inp.accept='.pdf,.ai,application/pdf,image/*';inp.onchange=function(){var f=inp.files[0];if(!f)return;$('pcOver').style.display='none';
+ var inp=document.createElement('input');inp.type='file';inp.accept=/TopsideApp/.test(navigator.userAgent)?'.pdf,.ai,application/pdf,application/postscript,application/illustrator':'.pdf,.ai,application/pdf,image/*';   // 21 Nov 2026 (Sully: "App can't see PDFs"): the Android app 1.9's chooser shows only pictures when the list has image/*; without it, every file (photos too)
+inp.onchange=function(){var f=inp.files[0];if(!f)return;$('pcOver').style.display='none';
   if(/^image\//.test(f.type)||/\.(png|jpe?g|webp|heic)$/i.test(f.name))mvKeepPlain(c,quad,f);
   else mvEnsure(c).then(function(ok){if(ok)mvImportPdf(c,quad,f);});};inp.click();}
 function mvImportPdf(c,quad,file){toast('Reading '+esc(file.name)+'…',60000);var buf,pgRef;
- file.arrayBuffer().then(function(b){buf=b;return loadPdfJs();}).then(function(pdfjs){return pdfjs.getDocument({data:new Uint8Array(buf)}).promise;}).then(function(doc){return doc.getPage(1);}).then(function(pg){pgRef=pg;
+ file.arrayBuffer().then(function(b){buf=b;var head=new TextDecoder('latin1').decode(new Uint8Array(b,0,Math.min(1024,b.byteLength)));
+  if(head.indexOf('%PDF')<0)throw new Error(/\.ai$/i.test(file.name)?'this .ai was saved without PDF compatibility. In Illustrator: File > Save As, tick "Create PDF Compatible File", then upload it again':'it isn\'t a PDF');   // (21 Nov 2026: "See if you can import .ai files too" - an .ai saved PDF-compatible, Illustrator\'s default, is a PDF inside)
+  return loadPdfJs();}).then(function(pdfjs){return pdfjs.getDocument({data:new Uint8Array(buf)}).promise;}).then(function(doc){return doc.getPage(1);}).then(function(pg){pgRef=pg;
   return Promise.all([pg.getOperatorList(),pg.getTextContent()]).then(function(res){var segs=pdfSegments(res[0],window.pdfjsLib.OPS),vp=pg.getViewport({scale:1});
    var shots=[],sts={};for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];shots.push([X[a],Y[a],X[b],Y[b]]);sts[a]=1;sts[b]=1;}
    var st=Object.keys(sts).map(function(i){return[X[i],Y[i]];});
