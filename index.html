@@ -89,6 +89,7 @@ input[type=range]{width:100%}
 @media(min-width:560px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .tile{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 12px 12px;min-height:112px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;color:var(--ink);font:inherit;-webkit-tap-highlight-color:transparent}
 .tile:active{transform:scale(.98);border-color:var(--accent)}
+.tile.fwTile{background:#1d4ed8;border-color:#1d4ed8;color:#fff;min-height:0}.tile.fwTile .ts{color:#dbe6ff}.tile.fwTile:active{border-color:#93b4ff}
 .tile .ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;flex:none}
 .tile .tt{font-weight:700;font-size:15px;line-height:1.2}
 .tile .ts{color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -1124,6 +1125,10 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  // list; a tap opens its cave with that map on under the line plot (offline - the lined-up picture is kept with the cave).
  h+=tileHtml('tDraft','✒','#a16207','Drafted maps',(D&&D.rasters&&hasDrafted())?'On '+esc(D.name)+' and your other caves':'Your map sheets, lined up on the survey');
  h+='</div>';
+ // 20 Nov 2026 (Sully, 17:59: "Create a new 'update the Survey Device' tab and make it a different color so it's noticable. Perhaps solid
+ // blue"): a tile of its own, solid blue, the width of the page, between the two groups (not on Topside's own Phone link page - the
+ // computer updates units itself)
+ if(!window.TOPSIDE_PC)h+='<div class="tiles" style="margin-top:12px">'+tileHtml('tFw','⬆','#1e40af','Update the Survey Device',fwTileSub(),'',true).replace('class="tile wide"','class="tile wide fwTile"')+'</div>';
  var outN=4+((HOSTED||LOCALPC)?1:0);
  h+='<div class="hgrp">Outside Cave</div><div class="tiles">';
  h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
@@ -1135,7 +1140,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tDraft'))e.onclick=draftedSheet;
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tDraft'))e.onclick=draftedSheet;if(e=$('tFw')){e.onclick=fwPage;if(FW&&!FW.list)fwLoad().then(function(){var s=$('tFwS');if(s)s.innerHTML=fwTileSub();});}
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
  if(PC&&$('tPc'))pcHello().then(function(hh){var s=$('tPcS');if(s)s.textContent='Connected · '+PCVIA;return pcInbox().then(function(l){setBadge('tPc',(l||[]).length);if(l&&l.length&&s)s.textContent=l.length+(l.length==1?' thing':' things')+' sent to this phone';});},function(){var s=$('tPcS');if(s)s.textContent=pcWhyShort();});}
@@ -3118,8 +3123,82 @@ function xtPairHtml(p,big){var ok=xtOk(p),v=p.unit||p,col=ok?'#30a46c':'#e5484d'
   '<div style="font-size:'+(big?15:13)+'px;margin-top:6px">'+esc(fs.name)+': '+xtNum(fs)+'<br>'+esc(bs.name)+': '+xtNum(bs)+'</div>'+
   '<div style="font-size:'+(big?15:13)+'px;margin-top:6px">Off by: azimuth <span'+bad(v.dA,XT_TOLA)+'>'+(p.steep?'- (steep)':(v.dA>=0?'+':'')+v.dA.toFixed(1)+'°')+'</span> · clino <span'+bad(v.dI,XT_TOLA)+'>'+(v.dI>=0?'+':'')+v.dI.toFixed(1)+'°</span> · distance <span'+bad(v.dD,XT_TOLD)+'>'+(v.dD>=0?'+':'')+svL(v.dD,2)+' '+svUn()+'</span></div></div>';}
 window.xtShow=xtShow;
+// ======================================================================= Update the Survey Device (Sully, 20 Nov 2026, 17:59: "build into the
+// topside app, the ability to update the survey units over Bluetooth. Create a new 'update the Survey Device' tab and make it a different
+// color so it's noticable. Perhaps solid blue" / 18:05 "Remember to get the 5xc too"). The firmware list is the one Topside reads
+// (firmware.txt in tacheo-topside-releases); each connected unit is matched to the package for its OWN build (INFO's VER line: a cavec
+// never gets the cave package); the Android app 1.9 flashes it over Bluetooth (Nordic legacy DFU - the unit's application jumps into
+// its bootloader; nothing to open on the unit). Needs the Android app: a web page can't reach the radio, and iPhones give web apps none.
+var FW={list:null,err:'',busy:null,lock:null};
+var FW_URL='https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware.txt';
+function fwOk(){return!!(window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function');}
+function fwParse(txt){var out=[],cur=null;String(txt||'').split(/\r?\n/).forEach(function(l){if(/^\s*#/.test(l))return;var m=l.match(/^(\w+):\s*(.*)$/);
+  if(!m){cur=null;return;}if(m[1]=='file'){cur={file:m[2].trim()};out.push(cur);var v=cur.file.match(/_v([\d.]+)_([A-Za-z0-9]+)\.zip$/);if(v){cur.ver=v[1];cur.build=v[2];}}else if(cur)cur[m[1]]=m[2].trim();});
+ return out.filter(function(x){return x.ver&&x.build&&/^https:\/\/raw\.githubusercontent\.com\/p0sull02\/tacheo-topside-releases\//.test(x.url||'');});}
+function fwLoad(){return fetch(FW_URL+'?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text();})
+ .then(function(t){store('ct-fw-list',t);store('ct-fw-when',String(Date.now()));FW.list=fwParse(t);FW.err='';},function(){var t=store('ct-fw-list');FW.list=t?fwParse(t):[];FW.err=t?'No signal - the list from '+fwWhen()+'.':'No signal, and the firmware list has never been downloaded. Open this page once with signal.';});}
+function fwWhen(){var w=+store('ct-fw-when');if(!w)return'earlier';var d=new Date(w);return ymd(d)+' '+hhmm(d);}
+function fwVB(u){var s=u&&u.info&&u.info.ver;if(!s)return null;var m=String(s).match(/(\d+\.\d+\.\d+(?:\.\d+)?)\s+([A-Za-z0-9]+)\s*$/);return m?{ver:m[1],build:m[2]}:null;}
+function fwCmp(a,b){a=String(a).split('.').map(Number);b=String(b).split('.').map(Number);for(var i=0;i<Math.max(a.length,b.length);i++){var x=a[i]||0,y=b[i]||0;if(x!=y)return x<y?-1:1;}return 0;}
+function fwFor(build){return(FW.list||[]).filter(function(p){return p.build==build;})[0]||null;}
+function fwNews(){var n=0;svOnUnits().forEach(function(u){var vb=fwVB(u),p=vb&&fwFor(vb.build);if(p&&fwCmp(p.ver,vb.ver)>0)n++;});return n;}
+function fwTileSub(){if(!FW)return'New unit firmware, over Bluetooth - no computer needed';if(FW.busy)return'Updating '+esc(FW.busy.name)+' - '+(FW.busy.pct||0)+' %';var n=FW.list?fwNews():0;return n?'New firmware for '+n+(n==1?' unit':' units'):'New unit firmware, over Bluetooth - no computer needed';}
+var FW_STAGE={reading:'Opening the firmware',connecting:'Connecting to the unit',jump:'Asking the unit to go into update mode',finding:'Waiting for the unit\'s update mode',
+ starting:'Starting - the unit clears its old firmware',sending:'Sending the new firmware',checking:'The unit is checking it',done:'Done',failed:'Stopped'};
+function fwPage(){sheet('⬆ Update the Survey Device','<div id="fwBody"><div class="mut">Looking for new firmware…</div></div>');
+ svOnUnits().forEach(function(u){if(!fwVB(u))svInfo(u);});
+ fwLoad().then(fwRender);}
+function fwRender(){var b=$('fwBody');if(!b)return;var h='';
+ h+='<p class="mut" style="margin-top:0">New firmware for your Tacheo, SAP6 and SAP5 colour units goes on over Bluetooth from here - the same releases Topside offers on the computer. Each unit only ever gets the package made for its own build.</p>';
+ if(FW.err)h+='<div class="card" style="border-color:#b7791f">'+esc(FW.err)+'</div>';
+ if(!fwOk()){h+='<div class="card" style="border-color:#1d4ed8"><b>'+(IOS?'iPhones can\'t do this yet':'This needs the Topside app for Android')+'</b><div class="mut" style="font-size:13px;margin-top:4px">'+
+   (IOS?'iPhones don\'t let web apps use Bluetooth. Update units with Topside on your computer (plug the unit in, Updates and Upgrades).':
+   (/TopsideApp\//.test(navigator.userAgent)?'This copy of the app is too old for Bluetooth updates - update the Topside app (1.9 or newer) from Home.':'A web page can\'t reach the unit\'s radio. Install the Topside app for Android (Home has the button), or update the unit with Topside on your computer.'))+'</div></div>';}
+ var on=svOnUnits();
+ if(FW.busy)h+=fwBusyHtml();
+ if(on.length||!FW.busy)h+='<div class="k">Units connected</div>';
+ if(!on.length&&!(FW.busy))h+='<div class="mut">None. Connect the unit first: switch it on, then Survey → Connect a unit.</div><button class="btn" id="fwConn" style="background:#1d4ed8">📡 Connect a unit</button>';
+ on.forEach(function(u){var vb=fwVB(u),p=vb&&fwFor(vb.build),b=u.info&&u.info.batt,line,btn='';
+  if(!vb)line='Asking it what it runs…';
+  else if(!p)line=esc(vb.ver)+' ('+esc(vb.build)+') - no package for this build on the release list';
+  else if(fwCmp(p.ver,vb.ver)<=0){line='✓ Up to date: '+esc(vb.ver);if(!fwCmp(p.ver,vb.ver)&&fwOk()&&!FW.busy&&!(b!=null&&b<30))btn='<button class="btn alt" data-fw="'+esc(u.addr)+'" style="margin-top:8px;font-size:13px">Put '+esc(p.ver)+' on again</button>';}   // the same version again: to try the update, or to repair a unit
+  else{line='Has '+esc(vb.ver)+' · <b style="color:#93b4ff">'+esc(p.ver)+' is out</b>';
+   var low=b!=null&&b<30;btn=low?'<div class="mut" style="color:#e8a33d;font-size:13px;margin-top:6px">Battery '+b+' % - charge it (or plug it in) first: an update that stops part way leaves the unit needing USB.</div>':
+    '<button class="btn" data-fw="'+esc(u.addr)+'" style="background:#1d4ed8;margin-top:8px;width:100%"'+(FW.busy||!fwOk()?' disabled':'')+'>⬆ Update to '+esc(p.ver)+'</button>';}
+  h+='<div class="card"><b>'+esc(svShort(u))+'</b>'+(b!=null?' <span class="mut">· battery '+b+' %</span>':'')+'<div style="font-size:14px;margin-top:3px">'+line+'</div>'+btn+'</div>';});
+ if(FW.list&&FW.list.length){h+='<div class="k">Newest releases</div>';FW.list.forEach(function(p){h+='<div class="row"><div class="t">'+esc(fwBuildName(p.build))+'</div><div class="s">'+esc(p.ver)+' · '+Math.round((+p.size||0)/1024)+' KB</div></div>';});}
+ h+='<p class="mut" style="font-size:12.5px;margin-top:14px">Takes about two minutes with the phone next to the unit. Keep the app open and the screen on. If it ever stops part way, the unit waits in its update mode: plug it into Topside on your computer and update it there.</p>';
+ b.innerHTML=h;var e;if(e=$('fwConn'))e.onclick=function(){$('pcOver').style.display='none';svUnitsShow();};
+ [].forEach.call(b.querySelectorAll('[data-fw]'),function(x){x.onclick=function(){fwAsk(x.dataset.fw);};});
+ if(e=$('fwStop'))e.onclick=function(){if(confirm('Stop the update? The unit will wait in its update mode until it gets firmware - over Bluetooth again, or USB.'))try{TopsideAndroid.dfuCancel();}catch(x){}};}
+function fwBuildName(b){return{cave:'Tacheo 1 (OLED)',cavec:'Tacheo 1 (colour screen)',cave2:'Tacheo 2',sap5xc:'SAP5 with the colour screen',sap6:'SAP6',sap6c:'SAP6 (colour screen)'}[b]||b;}
+function fwBusyHtml(){var f=FW.busy,st=FW_STAGE[f.stage]||f.stage,c=f.stage=='failed'?'#c0392b':f.stage=='done'?SVA:'#1d4ed8';
+ return'<div class="card" style="border:2px solid '+c+'"><b>'+(f.stage=='done'?'✅ ':f.stage=='failed'?'⚠ ':'⬆ ')+esc(f.name)+' → '+esc(f.ver)+'</b><div style="margin:6px 0 4px;font-size:14px">'+esc(st)+(f.stage=='sending'?' - '+f.pct+' %':'')+'</div>'+
+  '<div style="height:10px;background:#1f2935;border-radius:5px;overflow:hidden"><div style="height:100%;width:'+(f.stage=='done'?100:f.pct||0)+'%;background:'+c+'"></div></div>'+
+  (f.msg?'<div class="mut" style="font-size:13px;margin-top:6px">'+esc(f.msg)+'</div>':'')+
+  (f.stage=='done'?'<div class="mut" style="font-size:13px;margin-top:6px">The unit restarts on '+esc(f.ver)+'. Reconnecting…</div>':'')+
+  (f.stage=='failed'?'<div class="mut" style="font-size:13px;margin-top:6px">Nothing is lost - shots, calibration and settings stay on the unit. Try again with the phone close to it; if its screen is frozen, plug it into Topside on your computer.</div><button class="btn alt" id="fwClr">OK</button>':'')+
+  (f.stage!='done'&&f.stage!='failed'?'<button class="btn alt" id="fwStop" style="margin-top:8px">Stop</button>':'')+'</div>';}
+function fwAsk(addr){var u=SVDEV.units[addr],vb=fwVB(u),p=vb&&fwFor(vb.build);if(!u||!p)return;
+ if(vb.build!=p.build){toast('That package is for another build');return;}
+ if(!confirm((fwCmp(p.ver,vb.ver)?'Update '+svShort(u)+' from '+vb.ver+' to '+p.ver:'Put '+p.ver+' on '+svShort(u)+' again')+'?\n\nAbout two minutes. The unit restarts into its update mode, takes the new firmware and restarts. Shots, calibration and settings stay. Keep the phone next to it with the app open.'))return;
+ FW.busy={addr:addr,name:svShort(u),ver:p.ver,stage:'reading',pct:0,msg:''};fwRender();
+ try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(l){FW.lock=l;},function(){});}catch(x){}
+ fetch(p.url+'?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('Couldn\'t download the firmware ('+r.status+')');return r.arrayBuffer();}).then(function(ab){
+  if(p.size&&ab.byteLength!=+p.size)throw new Error('The firmware download came in the wrong size - try again');
+  var u8=new Uint8Array(ab),s='';for(var i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
+  var r=TopsideAndroid.dfuStart(addr,btoa(s));if(r!='ok')throw new Error(r);
+ }).catch(function(e){fwEvent({addr:addr,stage:'failed',pct:0,msg:e.message||String(e)});});}
+function fwEvent(d){if(!FW.busy)FW.busy={addr:d.addr,name:d.addr,ver:'',stage:'',pct:0};var f=FW.busy;f.stage=d.stage;if(d.pct!=null)f.pct=+d.pct;f.msg=d.msg||'';
+ var s=$('tFwS');if(s)s.innerHTML=fwTileSub();
+ if(d.stage=='done'||d.stage=='failed'){try{if(FW.lock)FW.lock.release();}catch(x){}FW.lock=null;if(navigator.vibrate)navigator.vibrate(d.stage=='done'?[60,80,60]:[300]);}
+ if(d.stage=='done'){toast('✅ '+esc(f.name)+' updated to '+esc(f.ver),5000);var a=f.addr;setTimeout(function(){try{var u=svUnitOf(a);if(u.state=='off')bOpen(a);}catch(x){}},9000);
+  setTimeout(function(){if(FW.busy&&FW.busy.stage=='done'){FW.busy=null;if($('fwBody'))fwRender();}},25000);}
+ if($('fwBody')){fwRender();var c=$('fwClr');if(c)c.onclick=function(){FW.busy=null;fwRender();};}}
 // events from the Android app: window.svBle(kind, data); app 1.7 tags each with its unit's addr
 window.svBle=function(kind,data){try{if(typeof data=='string'&&kind!='rx'){try{data=JSON.parse(data);}catch(e){}}
+ if(kind=='dfu'){fwEvent(data);return;}   // 1.9: Update the Survey Device
+ if(kind=='state'&&$('fwBody')&&!(FW.busy&&FW.busy.stage!='done'&&FW.busy.stage!='failed'))setTimeout(function(){if($('fwBody'))fwRender();},3000);   // a unit (re)connected: what it runs now
  if(kind=='found'){if(!SVDEV.found.some(function(f){return f.addr==data.addr;}))SVDEV.found.push(data);svFoundShow();}
  else if(kind=='scanDone'){svFoundShow(data&&data.err);}
  else if(kind=='state'){var u=svUnitOf(data.addr);if(data.addr)SVDEV.last=data.addr;if(data.name)u.name=data.name;var was=u.state;u.state=data.state=='connected'?'on':data.state=='connecting'?'connecting':'off';svDevChip();
