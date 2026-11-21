@@ -3490,7 +3490,23 @@ function mvGather(){var by={},order=[],att={};
   MVS.by=by;MVS.caves=order.filter(function(n){return by[n].st||by[n].maps.length;});
   return Promise.all(order.map(function(n){return Promise.all(by[n].quads.map(function(Q){
    // the quad's outline: the newest lined-up sheet's border (a plain sheet has none - the next version that has one)
-   var ms=Q.maps.filter(function(m){return!m.plain;});return ms.reduce(function(p,m){return p.then(function(poly){return poly||dfBorder(m.r,m.b64);});},Promise.resolve(null)).then(function(b){Q.poly=b&&b.length>2?b:null;Q.area=Q.poly?dfArea(Q.poly):0;});}));}));});}
+   var ms=Q.maps.filter(function(m){return!m.plain;});return ms.reduce(function(p,m){return p.then(function(poly){return poly||dfBorder(m.r,m.b64);});},Promise.resolve(null)).then(function(b){Q.poly=b&&b.length>2?b:null;Q.area=Q.poly?dfArea(Q.poly):0;});}));})).then(function(){order.forEach(function(n){mvMergeQuads(by[n]);});});});}
+// 21 Nov 2026 (Sully: "2 quads are overlapping on a 1 sheet cave"): versions of one sheet can come in under two names (a quad given on
+// upload, the file's own name from the computer). Quads whose outlines are mostly the same ground are one quad: every sheet a version of
+// it, newest first. The name kept: one given as a quad (on upload, or the computer's quad folder) over one taken from a file name.
+function mvOverlap(a,b){   // the share of the smaller outline that lies inside the other (sampled on a 24 x 24 grid)
+ var sm=a.area<=b.area?a:b,bg=sm===a?b:a,lo=[1e9,1e9],hi=[-1e9,-1e9];sm.poly.forEach(function(p){lo[0]=Math.min(lo[0],p[0]);lo[1]=Math.min(lo[1],p[1]);hi[0]=Math.max(hi[0],p[0]);hi[1]=Math.max(hi[1],p[1]);});
+ var n=0,k=0;for(var i=0;i<24;i++)for(var j=0;j<24;j++){var pt=[lo[0]+(i+0.5)*(hi[0]-lo[0])/24,lo[1]+(j+0.5)*(hi[1]-lo[1])/24];if(!dfInside(pt,sm.poly))continue;n++;if(dfInside(pt,bg.poly))k++;}
+ return n?k/n:0;}
+function mvMergeQuads(g){var named=function(Q){return Q.maps.some(function(m){return m.r&&m.r.quad&&String(m.r.quad).trim().toLowerCase()==Q.name.toLowerCase();});};
+ for(var again=true;again;){again=false;
+  for(var i=0;i<g.quads.length&&!again;i++)for(var j=i+1;j<g.quads.length&&!again;j++){var A=g.quads[i],B=g.quads[j];
+   if(!A.poly||!B.poly||!A.area||!B.area)continue;
+   if(Math.min(A.area,B.area)/Math.max(A.area,B.area)<0.5||mvOverlap(A,B)<0.75)continue;   // (a small quad inside a big one stays its own)
+   var keep=named(B)&&!named(A)?B:A,drop=keep===A?B:A;
+   keep.maps=keep.maps.concat(drop.maps).sort(mvNewer);
+   var newest=keep.maps.filter(function(m){return!m.plain;})[0];if(newest&&drop.maps.indexOf(newest)>=0){keep.poly=drop.poly;keep.area=drop.area;}
+   keep.n=(keep.n||0)+(drop.n||0);g.quads.splice(g.quads.indexOf(drop),1);again=true;}}}
 // ---- the MapViewer page
 function mvShow(cave){SIDE='mv';store('ct-side','mv');$('land').style.display='none';$('home').style.display='none';$('mv').style.display='block';
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(x){}   // downloaded maps are kept, not cleared when the phone is short of space
