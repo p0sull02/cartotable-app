@@ -172,7 +172,7 @@ body.cave .tile .tt{font-size:16px}
 <div id="side"><div id="grip"></div><div id="tabs"></div><div id="pane"></div></div>
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
 <div id="land" class="over" style="z-index:21"><div class="in" id="landIn"></div></div>
-<div id="mv" class="over"><div id="mvTop"><button class="ib" id="mvBack" title="Back">←</button><span style="display:inline-flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span><b style="font-size:18px">MapViewer</b><span style="flex:1"></span><button class="ib" id="mvUpB">＋ Upload</button></div><div id="mvBody"><div class="in"><div id="mvCaves"></div><div id="mvPlot"><canvas id="mvCv"></canvas><div id="mvKey"><span><i style="background:#ef4444"></i>Map available</span><br><span><i style="background:#5b6673"></i>No map yet</span></div><div id="mvTools"><button id="mvIn" title="Zoom in">＋</button><button id="mvOut" title="Zoom out">－</button><button id="mvFitB" title="Whole cave">⤢</button></div></div><div class="mut" id="mvHint" style="font-size:13.5px;margin:8px 2px"></div><button class="btn" id="mvUp2">＋ Upload a map</button><button class="btn alt" id="mvDl" style="display:none"></button><div id="mvList"></div><p class="mut" id="mvStore" style="font-size:12.5px;margin-top:12px"></p></div></div></div>
+<div id="mv" class="over"><div id="mvTop"><button class="ib" id="mvBack" title="Back">←</button><span style="display:inline-flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span><b style="font-size:18px">MapViewer</b><span style="flex:1"></span><button class="ib" id="mvShareB" title="Share this cave and its maps as one file">⇪ Share</button><button class="ib" id="mvUpB">＋ Upload</button></div><div id="mvBody"><div class="in"><div id="mvCaves"></div><div id="mvPlot"><canvas id="mvCv"></canvas><div id="mvKey"><span><i style="background:#ef4444"></i>Map available</span><br><span><i style="background:#5b6673"></i>No map yet</span></div><div id="mvTools"><button id="mvIn" title="Zoom in">＋</button><button id="mvOut" title="Zoom out">－</button><button id="mvFitB" title="Whole cave">⤢</button></div></div><div class="mut" id="mvHint" style="font-size:13.5px;margin:8px 2px"></div><button class="btn" id="mvUp2">＋ Upload a map</button><button class="btn alt" id="mvShare2">⇪ Share these maps</button><button class="btn alt" id="mvOpenP">📦 Open a map pack</button><button class="btn alt" id="mvDl" style="display:none"></button><div id="mvList"></div><p class="mut" id="mvStore" style="font-size:12.5px;margin-top:12px"></p></div></div></div>
 <div id="mvView" class="over"><div id="mvvBar"><button class="ib" id="mvvX" title="Back">←</button><b id="mvvT" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button class="ib" id="mvvFit" title="Fit">⤢</button></div><div id="mvvWrap"><img id="mvvImg" alt=""></div></div>
 <div id="modePick" class="over"><div class="in" id="modeIn"></div></div>
 <div id="pcOver" class="over" style="z-index:22"><div class="in" id="pcIn"></div></div>
@@ -1319,7 +1319,7 @@ function openDrafted(cave,file){
   try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();draw();toast('Drafted map on. Its layer is on the GIS tab.',3500);}
  if(D&&D.name==cave&&D.st){on();return;}
  dbDo('readonly',function(st){return st.get(cave);}).then(function(d){if(!d||!d.st){toast('Open '+esc(cave)+' from its link first - it isn\'t saved on this phone',6000);return;}$('pcOver').style.display='none';return load(d).then(on);}).catch(function(e){toast('Couldn\'t open it: '+esc(e&&e.message||e),6000);});}
-function addSheet(){sheet('Add a cave','<div class="card"><b>From a file</b><div class="mut">A .ctcave file from Drive, Files, a message or a download.</div><button class="btn" id="asFile">Open a cave file (.ctcave)</button></div>'+
+function addSheet(){sheet('Add a cave','<div class="card"><b>From a file</b><div class="mut">A .ctcave file, or a .ctmaps map pack (the cave with its maps), from Drive, Files, a message or a download.</div><button class="btn" id="asFile">Open a cave file (.ctcave)</button></div>'+
   ((HOSTED||LOCALPC)?'<div class="card"><b>From your computer</b><div class="mut">'+(PC?'Copy any cave Topside has on '+esc(PC.name)+'.':'Pair this phone with Topside once (Topside\'s first screen > <b>Connect a phone</b>), then your caves come straight over.')+'</div><button class="btn'+(PC?'':' alt')+'" id="asPc">'+(PC?'Caves on '+esc(PC.name):'Connect to my computer')+'</button></div>':'')+
   '<p class="mut" style="font-size:13px">The app keeps every cave you open - they work with no signal.</p>');
  $('asFile').onclick=function(){$('pick').click();};var e;if(e=$('asPc'))e.onclick=function(){if(PC)pcCaves();else pcSheet();};}
@@ -1601,7 +1601,8 @@ function camShow(onShot,onDone){var o=$('cam'),v=$('camV'),msg=$('camMsg'),strea
 $('homeBtn').onclick=function(){if(SIDE=='mv')mvShow();else homeShow();};
 // the phone's Back goes from a cave to Home (17 Nov: "Where's the back button to home?")
 window.addEventListener('popstate',function(){if($('mvView').style.display=='block'){$('mvView').style.display='none';return;}if($('mv').style.display=='block'){mvClose();return;}if($('land').style.display=='block')return;if(D&&$('home').style.display=='none'){if(SIDE=='mv')mvShow();else homeShow();}});
-function openCaveText(t){try{var d=JSON.parse(t);if(!d.st)throw new Error('not a CartoTable cave file');
+function openCaveText(t){try{var d=JSON.parse(t);if(!d.st)throw new Error('not a CartoTable cave file or map pack');
+  if(d.mapPack){mvImportPack(d);return;}
   dbDo('readwrite',function(s){return s.put(d,d.name);}).catch(function(){toast('Opened, but this browser won\'t keep it');}).then(function(){load(d);});}catch(x){toast('Couldn\'t open it: '+esc(x.message));}}
 window.CTopenCaveB64=function(b){try{var bin=atob(b),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);openCaveText(new TextDecoder().decode(u));}catch(x){toast('Couldn\'t open it: '+esc(x.message));}};   // the Android app hands over a shared .ctcave
 $('pick').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){openCaveText(r.result);};r.readAsText(f);e.target.value='';};
@@ -3606,6 +3607,31 @@ function mvDownload(list){var c=MVS.cave;if(!c)return;if(!PC){toast('Connect thi
  mvEnsure(c).then(function(ok){if(!ok)return;$('pcOver').style.display='none';
   if(list&&list.length){draftPull(c,list);var t=setInterval(function(){if(!/Downloading/.test($('toast').textContent)){clearInterval(t);mvShow(c);}},800);}
   else{draftOffer(true);var t2=setInterval(function(){if($('pcOver').style.display=='none'&&!/Downloading/.test($('toast').textContent)){clearInterval(t2);setTimeout(function(){mvShow(c);},300);}},900);}});}
+// ---- map packs (Sully, 20 Nov 2026, 22:52-22:53: "Let me export and share a project here, so someone else can open a file and it's all ready.
+// Allow other topside programs and apps to import." / "Create a file type for the import"). A .ctmaps file is a .ctcave with the maps in
+// it: the cave (survey, layers, lined-up drafted maps and their pictures) as the .ctcave has it, plus mapPack: the plain sheets (photos and
+// sheets that didn't line up) and the full-size pictures kept beside lined-up ones. Anything that opens a .ctcave opens it as a cave;
+// this app and Topside also take the sheets. Opening one: the cave is saved (a cave already here keeps its own drafted maps too) and
+// MapViewer opens on it.
+function mvPack(c){return Promise.all([dbDo('readonly',function(s){return s.get(c);}).catch(function(){return null;}),dbDo('readonly',function(s){return s.get('drafted:'+c);}).catch(function(){return null;}),dbDo('readonly',function(s){return s.get('mvsheet:'+c);}).catch(function(){return null;})]).then(function(r){
+ var d=r[0]||(D&&D.name==c?D:null);if(!d||!d.st)throw new Error(c+'\'s survey isn\'t on this phone');d=JSON.parse(JSON.stringify(d));delete d.hosted;d.files=d.files||{};d.rasters=d.rasters||[];
+ if(r[1])(r[1].rasters||[]).forEach(function(x){if(!d.rasters.some(function(q){return q.file==x.file;})){d.rasters.push(x);if(r[1].files&&r[1].files[x.file])d.files[x.file]=r[1].files[x.file];}});
+ d.mapPack={version:1,made:new Date().toISOString(),by:'Topside app'+(APPVER?' '+APPVER:''),sheets:(r[2]&&r[2].sheets)||[]};return d;});}
+function mvShare(){var c=MVS.cave;if(!c){toast('Pick a cave first');return;}toast('Packing '+esc(c)+'\'s maps…',30000);
+ mvPack(c).then(function(d){var txt=JSON.stringify(d),n=(d.rasters||[]).filter(function(x){return x.kind=='drafted';}).length+d.mapPack.sheets.filter(function(s){return!s.of;}).length;
+  save(c.replace(/[\\\/:*?"<>|]+/g,' ').trim()+' maps.ctmaps',new Blob([txt],{type:'application/json'}),'application/json');
+  toast('📦 '+esc(c)+' and '+n+(n==1?' map':' maps')+' in one .ctmaps file ('+mvKb(txt.length)+'). Anyone with Topside opens it and it\'s all there.',7000);}).catch(function(e){toast('Couldn\'t pack it: '+esc(e.message||e),7000);});}
+function mvImportPack(d){var c=d.name,pk=d.mapPack||{};delete d.mapPack;delete d.hosted;toast('Opening '+esc(c)+'…',30000);
+ dbDo('readonly',function(s){return s.get(c);}).catch(function(){return null;}).then(function(old){
+  // a cave already on this phone: its own drafted maps stay beside the ones that came in
+  if(old&&old.rasters)old.rasters.forEach(function(x){if(x.kind=='drafted'&&!d.rasters.some(function(q){return q.file==x.file;})){d.rasters.push(x);d.files=d.files||{};if(old.files&&old.files[x.file])d.files[x.file]=old.files[x.file];}});
+  return dbDo('readwrite',function(s){return s.put(d,c);});
+ }).then(function(){return dbDo('readonly',function(s){return s.get('mvsheet:'+c);}).catch(function(){return null;});}).then(function(x){x=x||{sheets:[]};var have={};x.sheets.forEach(function(s){have[s.id]=1;});
+  (pk.sheets||[]).forEach(function(s){if(!have[s.id])x.sheets.push(s);});return dbDo('readwrite',function(s){return s.put(x,'mvsheet:'+c);});
+ }).then(function(){var n=(d.rasters||[]).filter(function(x){return x.kind=='drafted';}).length+(pk.sheets||[]).filter(function(s){return!s.of;}).length;
+  $('pcOver').style.display='none';mvShow(c);toast('📦 '+esc(c)+' is on this phone with '+n+(n==1?' map':' maps')+' - they work with no signal.',6000);
+ }).catch(function(e){toast('Couldn\'t open the map pack: '+esc(e.message||e),7000);});}
+function mvOpenPack(){var inp=document.createElement('input');inp.type='file';inp.accept='.ctmaps,.ctcave,application/json';inp.onchange=function(){var f=inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){openCaveText(r.result);};r.readAsText(f);};inp.click();}
 // ---- upload from the phone: the quad, then the file
 function mvUpload(quad){var c=MVS.cave;if(!c){toast('Add a cave first (Tacheo → Add a cave)',5000);return;}var g=MVS.by[c];
  if(quad==null){mvSheet('＋ Upload a map',
@@ -3641,7 +3667,7 @@ function mvSavePlain(c,quad,fname,blob,mime,of){return blob.arrayBuffer().then(f
  var s={id:'sheet'+Date.now(),name:'Drafted map: '+fname.replace(/\.[^.]+$/,''),quad:quad,mime:mime,data:btoa(bin),added:Date.now(),kind:'sheet'};if(of)s.of=of;
  return dbDo('readonly',function(st){return st.get('mvsheet:'+c);}).catch(function(){return null;}).then(function(x){x=x||{sheets:[]};x.sheets.push(s);return dbDo('readwrite',function(st){return st.put(x,'mvsheet:'+c);});});}).catch(function(e){toast('Couldn\'t keep it on this phone: '+esc(e.message||e),8000);});}
 
-mvHook();$('mvBack').onclick=mvClose;$('mvUpB').onclick=function(){mvUpload();};$('mvUp2').onclick=function(){mvUpload();};$('mvDl').onclick=function(){var on=MVS.online[MVS.cave]||[];mvDownload(on.filter(function(m){return!m.have;}));};
+mvHook();$('mvBack').onclick=mvClose;$('mvShareB').onclick=mvShare;$('mvShare2').onclick=mvShare;$('mvOpenP').onclick=mvOpenPack;$('mvUpB').onclick=function(){mvUpload();};$('mvUp2').onclick=function(){mvUpload();};$('mvDl').onclick=function(){var on=MVS.online[MVS.cave]||[];mvDownload(on.filter(function(m){return!m.have;}));};
 // ======================================================================= the app log (opt in)
 // Sully, 20 Nov 2026, 22:45 (to a tester: "would you be cool if I updated it with an event logger to see how it performs, or would you rather
 // keep the privacy? ... CRF and the caves I work with are very privacy oriented. All apps and programs I build don't log anything, GPS or
