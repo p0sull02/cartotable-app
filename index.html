@@ -146,6 +146,8 @@ body.cave .tile .tt{font-size:16px}
 <div id="toast"></div>
 <input type="file" id="pick" style="display:none">
 <script>
+var FW_OFF=true;   // 20 Nov 2026 20:12 - Sully: "Remove the update via phone immediately. It killed my device". Update the Survey Device is pulled: no tile, no Bluetooth update. Topside over USB only.
+
 var D = null;
 (function(){
 'use strict';
@@ -1119,7 +1121,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  // blue"; 18:53: "Make this blue only when a new update is available, keep it the same grey color as all other tabs otherwise. Place this at
  // the top of the screen too."): the first tile on Home, the width of the page; solid blue only while a unit has new firmware waiting (or
  // one is updating). Not on Topside's own Phone link page - the computer updates units itself.
- if(!window.TOPSIDE_PC)h+='<div class="tiles" style="margin-bottom:4px">'+tileHtml('tFw','⬆','#1e40af','Update the Survey Device',fwTileSub(),'',true).replace('class="tile wide"','class="tile wide'+(fwHot()?' fwTile':'')+'"')+'</div>';
+ if(!window.TOPSIDE_PC&&!FW_OFF)h+='<div class="tiles" style="margin-bottom:4px">'+tileHtml('tFw','⬆','#1e40af','Update the Survey Device',fwTileSub(),'',true).replace('class="tile wide"','class="tile wide'+(fwHot()?' fwTile':'')+'"')+'</div>';
 h+='<div class="hgrp">In Cave</div><div class="tiles">';
  if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
  // 19 Nov 2026 (Sully, 08:28: "Fold Tacheo and Survey and Sketch into 1 tab. Organize how best you see fit."): the instrument and the
@@ -3177,8 +3179,8 @@ var FW_URL='https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/m
 // builds not yet released - Topside never reads it; the phone does only with Test builds switched on at the foot of this page
 var FW_TEST_URL='https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware-test.txt';
 function fwTestOn(){return store('ct-fw-test')=='1';}
-setTimeout(function(){if(!window.TOPSIDE_PC)fwLoad().then(fwTileUpd);},1500);   // the list at start (Home may be drawn before this part of the page has run), so the tile knows
-function fwOk(){return!!(window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function');}
+setTimeout(function(){if(!window.TOPSIDE_PC&&!FW_OFF)fwLoad().then(fwTileUpd);},1500);   // the list at start (Home may be drawn before this part of the page has run), so the tile knows
+function fwOk(){return!FW_OFF&&!!(window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function');}
 function fwParse(txt){var out=[],cur=null;String(txt||'').split(/\r?\n/).forEach(function(l){if(/^\s*#/.test(l))return;var m=l.match(/^(\w+):\s*(.*)$/);
   if(!m){cur=null;return;}if(m[1]=='file'){cur={file:m[2].trim()};out.push(cur);var v=cur.file.match(/_v([\d.]+)_([A-Za-z0-9]+)\.zip$/);if(v){cur.ver=v[1];cur.build=v[2];}}else if(cur)cur[m[1]]=m[2].trim();});
  return out.filter(function(x){return x.ver&&x.build&&/^https:\/\/raw\.githubusercontent\.com\/p0sull02\/tacheo-topside-releases\//.test(x.url||'');});}
@@ -3244,7 +3246,7 @@ function fwAsk(addr){var u=SVDEV.units[addr],vb=fwVB(u),p=vb&&fwFor(vb.build);if
  fetch(p.url+'?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('Couldn\'t download the firmware ('+r.status+')');return r.arrayBuffer();}).then(function(ab){
   if(p.size&&ab.byteLength!=+p.size)throw new Error('The firmware download came in the wrong size - try again');
   var u8=new Uint8Array(ab),s='';for(var i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
-  var r=TopsideAndroid.dfuStart(addr,btoa(s));if(r!='ok')throw new Error(r);
+  if(FW_OFF)throw new Error('Bluetooth updates are switched off');var r=TopsideAndroid.dfuStart(addr,btoa(s));if(r!='ok')throw new Error(r);
  }).catch(function(e){fwEvent({addr:addr,stage:'failed',pct:0,msg:e.message||String(e)});});}
 function fwEvent(d){if(!FW.busy)FW.busy={addr:d.addr,name:d.addr,ver:'',stage:'',pct:0};var f=FW.busy;f.stage=d.stage;if(d.pct!=null)f.pct=+d.pct;f.msg=d.msg||'';
  fwTileUpd();
