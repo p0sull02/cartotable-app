@@ -3627,7 +3627,7 @@ function mvImportPack(d){var c=d.name,pk=d.mapPack||{};delete d.mapPack;delete d
   if(old&&old.rasters)old.rasters.forEach(function(x){if(x.kind=='drafted'&&!d.rasters.some(function(q){return q.file==x.file;})){d.rasters.push(x);d.files=d.files||{};if(old.files&&old.files[x.file])d.files[x.file]=old.files[x.file];}});
   return dbDo('readwrite',function(s){return s.put(d,c);});
  }).then(function(){return dbDo('readonly',function(s){return s.get('mvsheet:'+c);}).catch(function(){return null;});}).then(function(x){x=x||{sheets:[]};var have={};x.sheets.forEach(function(s){have[s.id]=1;});
-  (pk.sheets||[]).forEach(function(s){if(!have[s.id])x.sheets.push(s);});return dbDo('readwrite',function(s){return s.put(x,'mvsheet:'+c);});
+  (pk.sheets||[]).forEach(function(s){delete s.orig;/* the PDF itself is for computers */if(!have[s.id])x.sheets.push(s);});return dbDo('readwrite',function(s){return s.put(x,'mvsheet:'+c);});
  }).then(function(){var n=(d.rasters||[]).filter(function(x){return x.kind=='drafted';}).length+(pk.sheets||[]).filter(function(s){return!s.of;}).length;
   $('pcOver').style.display='none';mvShow(c);toast('📦 '+esc(c)+' is on this phone with '+n+(n==1?' map':' maps')+' - they work with no signal.',6000);
  }).catch(function(e){toast('Couldn\'t open the map pack: '+esc(e.message||e),7000);});}
