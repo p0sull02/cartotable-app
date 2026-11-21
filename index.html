@@ -203,7 +203,8 @@ function load(d){
  });
 }
 // ======================================================================= the ground: heights, hillshade, contours
-function gz(c,r){var v=ground[r*D.ground.w+c];return v==65535?NaN:D.ground.lo+v/10;}
+// zs (20 Nov 2026): metres per step of ground.bin - 0.01 (centimetres) from Topside 1.6.111 when the relief fits, else 0.1 as before
+function gz(c,r){var v=ground[r*D.ground.w+c];return v==65535?NaN:D.ground.lo+v*(D.ground.zs||0.1);}
 function groundAt(x,y){if(!ground)return NaN;var g=D.ground,c=(x-g.x0)/g.cell-0.5,r=(g.y0-y)/g.cell-0.5;if(c<0||r<0||c>g.w-1||r>g.h-1)return NaN;
  var c0=Math.floor(c),r0=Math.floor(r),c1=Math.min(g.w-1,c0+1),r1=Math.min(g.h-1,r0+1),fx=c-c0,fy=r-r0;
  return (gz(c0,r0)*(1-fx)+gz(c1,r0)*fx)*(1-fy)+(gz(c0,r1)*(1-fx)+gz(c1,r1)*fx)*fy;}
@@ -215,25 +216,31 @@ function buildGround(){var g=D.ground,w=g.w,h=g.h;G={contours:{}};
  var cv=document.createElement('canvas');cv.width=w;cv.height=h;var cx=cv.getContext('2d'),im=cx.createImageData(w,h),px=im.data,lo=1e9,hi=-1e9;
  var hv=document.createElement('canvas');hv.width=w;hv.height=h;var hx=hv.getContext('2d'),hm=hx.createImageData(w,h),hp=hm.data,fv=document.createElement('canvas');fv.width=w;fv.height=h;var fx2=fv.getContext('2d'),fm=fx2.createImageData(w,h),fp=fm.data;
  for(var i=0;i<w*h;i++){var v=ground[i];if(v!=65535){if(v<lo)lo=v;if(v>hi)hi=v;}}
- var dirs=[[315,0.4],[45,0.2],[225,0.2],[135,0.2]],zen=45*Math.PI/180,ZF=1.6;
+ var dirs=[[315,0.4],[45,0.2],[225,0.2],[135,0.2]],zen=45*Math.PI/180,ZF=1.6;var CZ=Math.cos(zen),SZ=Math.sin(zen),LW=dirs.map(function(d){return d[1];}),LC=dirs.map(function(d){return Math.cos((360-d[0]+90)*Math.PI/180);}),LS=dirs.map(function(d){return Math.sin((360-d[0]+90)*Math.PI/180);});
  for(var r=0;r<h;r++)for(var c=0;c<w;c++){var o=4*(r*w+c),z=gz(c,r);if(isNaN(z)){px[o+3]=0;continue;}
   var zl=gz(Math.max(0,c-1),r),zr=gz(Math.min(w-1,c+1),r),zu=gz(c,Math.max(0,r-1)),zd=gz(c,Math.min(h-1,r+1));
   if(isNaN(zl))zl=z;if(isNaN(zr))zr=z;if(isNaN(zu))zu=z;if(isNaN(zd))zd=z;
-  var dzdx=ZF*(zr-zl)/(2*g.cell),dzdy=ZF*(zu-zd)/(2*g.cell),slope=Math.atan(Math.hypot(dzdx,dzdy)),asp=Math.atan2(dzdy,-dzdx),s=0;
-  for(var k=0;k<4;k++){var az=(360-dirs[k][0]+90)*Math.PI/180;s+=dirs[k][1]*Math.max(0,Math.cos(zen)*Math.cos(slope)+Math.sin(zen)*Math.sin(slope)*Math.cos(az-asp));}
+  // 20 Nov 2026: the same lighting as before (cos zen cos slope + sin zen sin slope cos(az - aspect)), written with the surface normal -
+  // no trig per cell, for the finer ground
+  var dzdx=ZF*(zr-zl)/(2*g.cell),dzdy=ZF*(zu-zd)/(2*g.cell),iN=1/Math.sqrt(1+dzdx*dzdx+dzdy*dzdy),s=0;
+  for(var k=0;k<4;k++)s+=LW[k]*Math.max(0,(CZ+SZ*(-dzdx*LC[k]+dzdy*LS[k]))*iN);
   // 17 Nov (Sully: "too dark ... have it like arcgis brightness"): light grey like Esri's World Hillshade - flat ground ~#d6d6d6,
   // sunlit slopes to white, shaded slopes to ~#2e; slopes exaggerated x1.6 so low relief still reads. The legs keep their dark casing.
   var t=(ground[r*w+c]-lo)/Math.max(1,hi-lo),sh=Math.max(46,Math.min(255,214*s/Math.cos(zen)));
   px[o]=Math.min(255,sh*(0.99+0.03*t));px[o+1]=Math.min(255,sh*(0.99+0.02*t));px[o+2]=Math.min(255,sh*(1.0-0.03*t));px[o+3]=255;
   var hc=heatRgb(t),lt=Math.max(0.5,Math.min(1.15,sh/200));hp[o]=Math.min(255,hc[0]*lt);hp[o+1]=Math.min(255,hc[1]*lt);hp[o+2]=Math.min(255,hc[2]*lt);hp[o+3]=255;fp[o]=hc[0];fp[o+1]=hc[1];fp[o+2]=hc[2];fp[o+3]=255;}
- cx.putImageData(im,0,0);G.hill=cv;hx.putImageData(hm,0,0);G.heat=hv;fx2.putImageData(fm,0,0);G.heatFlat=fv;G.lo=D.ground.lo+lo/10;G.hi=D.ground.lo+hi/10;}
+ cx.putImageData(im,0,0);G.hill=cv;hx.putImageData(hm,0,0);G.heat=hv;fx2.putImageData(fm,0,0);G.heatFlat=fv;G.lo=D.ground.lo+lo*(D.ground.zs||0.1);G.hi=D.ground.lo+hi*(D.ground.zs||0.1);}
 function contours(intFt){if(G.contours[intFt])return G.contours[intFt];
  var g=D.ground,w=g.w,h=g.h,step=intFt*FT,minor=new Path2D(),index=new Path2D(),lo=1e9,hi=-1e9;
- for(var i=0;i<w*h;i++){var v=ground[i];if(v!=65535){var z=g.lo+v/10;if(z<lo)lo=z;if(z>hi)hi=z;}}
+ for(var i=0;i<w*h;i++){var v=ground[i];if(v!=65535){var z=g.lo+v*(g.zs||0.1);if(z<lo)lo=z;if(z>hi)hi=z;}}
  var X0=function(c){return g.x0+(c+0.5)*g.cell;},Y0=function(r){return g.y0-(r+0.5)*g.cell;};
  var segsFor={1:[[3,2]],2:[[2,1]],3:[[3,1]],4:[[0,1]],5:[[0,3],[2,1]],6:[[0,2]],7:[[0,3]],8:[[0,3]],9:[[0,2]],10:[[0,1],[3,2]],11:[[0,1]],12:[[3,1]],13:[[2,1]],14:[[3,2]]};
- for(var lv=Math.ceil(lo/step)*step;lv<=hi;lv+=step){var isIdx=Math.round((lv+D.z0)/step)%5==0,P=isIdx?index:minor;
-  for(var r=0;r<h-1;r++)for(var c=0;c<w-1;c++){var a=gz(c,r),b=gz(c+1,r),cc=gz(c+1,r+1),d=gz(c,r+1);if(isNaN(a)||isNaN(b)||isNaN(cc)||isNaN(d))continue;
+ // 20 Nov 2026: one pass over the cells, each visiting only the levels its four corners straddle (was a full pass per level - too slow
+ // on the finer 2400-cell ground at 2 ft)
+ var L0=Math.ceil(lo/step);
+ for(var r=0;r<h-1;r++)for(var c=0;c<w-1;c++){var a=gz(c,r),b=gz(c+1,r),cc=gz(c+1,r+1),d=gz(c,r+1);if(isNaN(a)||isNaN(b)||isNaN(cc)||isNaN(d))continue;
+  var mn=Math.min(a,b,cc,d),mx=Math.max(a,b,cc,d);
+  for(var li=Math.max(L0,Math.ceil(mn/step));li*step<mx;li++){var lv=li*step,isIdx=Math.round((lv+D.z0)/step)%5==0,P=isIdx?index:minor;
    var m=(a>lv?8:0)|(b>lv?4:0)|(cc>lv?2:0)|(d>lv?1:0);if(m==0||m==15)continue;
    var E=[[X0(c)+(lv-a)/(b-a)*g.cell,Y0(r)],[X0(c+1),Y0(r)-(lv-b)/(cc-b)*g.cell],[X0(c)+(lv-d)/(cc-d)*g.cell,Y0(r+1)],[X0(c),Y0(r)-(lv-a)/(d-a)*g.cell]],segs=segsFor[m];
    for(var s=0;s<segs.length;s++){var p0=E[segs[s][0]],p1=E[segs[s][1]];P.moveTo(p0[0],p0[1]);P.lineTo(p1[0],p1[1]);}}}
