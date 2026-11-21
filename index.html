@@ -150,6 +150,7 @@ body.cave .tile .tt{font-size:16px}
 .mvNew img{display:block;width:100%;max-height:46vh;object-fit:contain;background:#fff;cursor:zoom-in}
 .mvTag{position:absolute;left:10px;top:10px;background:#ef4444;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.06em;border-radius:8px;padding:3px 8px}
 .mvTh{width:54px;height:54px;object-fit:cover;border-radius:7px;background:#fff;flex:none}
+.logChip{display:block;width:100%;text-align:left;background:#1e2a1e;border:1px solid #2f5f3a;color:#bbf7d0;border-radius:10px;padding:9px 12px;font:inherit;font-size:13.5px;font-weight:600;margin:0 0 8px;cursor:pointer}
 #mvView{padding:0;background:#fff;z-index:28;overflow:hidden;display:none}
 #mvvBar{position:absolute;left:0;right:0;top:0;height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;display:flex;align-items:center;gap:8px;background:#7f1d1d;color:#fff;z-index:2}
 #mvvBar .ib{background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.3);color:#fff}
@@ -3641,6 +3642,89 @@ function mvSavePlain(c,quad,fname,blob,mime,of){return blob.arrayBuffer().then(f
  return dbDo('readonly',function(st){return st.get('mvsheet:'+c);}).catch(function(){return null;}).then(function(x){x=x||{sheets:[]};x.sheets.push(s);return dbDo('readwrite',function(st){return st.put(x,'mvsheet:'+c);});});}).catch(function(e){toast('Couldn\'t keep it on this phone: '+esc(e.message||e),8000);});}
 
 mvHook();$('mvBack').onclick=mvClose;$('mvUpB').onclick=function(){mvUpload();};$('mvUp2').onclick=function(){mvUpload();};$('mvDl').onclick=function(){var on=MVS.online[MVS.cave]||[];mvDownload(on.filter(function(m){return!m.have;}));};
+// ======================================================================= the app log (opt in)
+// Sully, 20 Nov 2026, 22:45 (to a tester: "would you be cool if I updated it with an event logger to see how it performs, or would you rather
+// keep the privacy? ... CRF and the caves I work with are very privacy oriented. All apps and programs I build don't log anything, GPS or
+// otherwise, without notifications" / "I'll have an option to opt in/out. But testing data is the best way to develop"; 22:46 "Can you build
+// that into the app too?"). Off until the user turns it on; while it's on, the landing page says so. What it keeps: which pages are opened,
+// Bluetooth connects / drops / shots arriving (counts and times, the unit's kind and firmware), errors, how long things take, online/offline,
+// the phone and app version. Never: GPS, cave or station names, survey numbers, photos, file names or anything typed. It stays on the phone
+// (the user can read every line) until it is sent - by the user, or once a day when they ticked that - to Sully's report mailbox, with a note
+// on screen each time. Turning it off clears it.
+var LOGK='ct-applog',LOGON=store('ct-logon')==='1',LOGBUF=[],LOGT=0,LOGHOST=HOSTED&&!window.TOPSIDE_PC;
+var LOGURL='https://script.google.com/macros/s/AKfycbzJUdF0bAP735zegh1_vcVMKZsZ8DTxScg8A1T1TM2fNFPyxDyJynj3OLIgAu-8bKhGJg/exec',LOGTOK='tch-b531a20f174128c0';
+function logRead(){try{return JSON.parse(localStorage.getItem(LOGK)||'[]');}catch(x){return[];}}
+function logFlush(){clearTimeout(LOGT);LOGT=0;if(!LOGBUF.length)return;try{var L=logRead().concat(LOGBUF);LOGBUF=[];if(L.length>5000)L=L.slice(L.length-5000);localStorage.setItem(LOGK,JSON.stringify(L));}catch(x){LOGBUF=[];}}
+// a message with what's in quotes, long numbers and anything after a path taken out (an error can carry a name)
+function logScrub(t){return String(t==null?'':t).replace(/(^|[\s(\[{:=,])(["'`\u2018\u201c])[^"'`\u2019\u201d]*["'`\u2019\u201d]/g,'$1"…"').replace(/\b[A-Za-z]{1,5}\d+[A-Za-z0-9.:-]*\b/g,'#').replace(/\b\d{4,}(\.\d+)?\b/g,'#').replace(/(\/|\\)[^\s]+/g,'/…').slice(0,160);}
+function logEv(k,d){if(!LOGON||!LOGHOST)return;LOGBUF.push([Date.now(),k,d==null?'':d]);if(!LOGT)LOGT=setTimeout(logFlush,3000);}
+function logDev(){var ua=navigator.userAgent,a=(ua.match(/Android ([\d.]+)/)||[])[1],i=(ua.match(/OS (\d+[_\d]*) like Mac/)||[])[1];
+ return{app:APPVER||'web',android:a||'',ios:i?i.replace(/_/g,'.'):'',model:(ua.match(/Android [\d.]+; ([^;)]+)/)||[])[1]||'',screen:screen.width+'x'+screen.height,inapp:INAPP?1:0};}
+function logStart(){if(!LOGON||!LOGHOST)return;var d=logDev();d.online=navigator.onLine?1:0;logEv('start',d);
+ try{if(navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(function(e){logEv('storage',{usedMB:Math.round((e.usage||0)/1048576),quotaMB:Math.round((e.quota||0)/1048576)});});}catch(x){}
+ try{var nav=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];if(nav)logEv('load',{ms:Math.round(nav.loadEventEnd||nav.domComplete||0)});}catch(x){}}
+(function(){
+ window.addEventListener('error',function(e){logEv('error',{msg:logScrub(e.message),line:e.lineno||0,col:e.colno||0});});
+ window.addEventListener('unhandledrejection',function(e){var r=e.reason;logEv('error',{msg:logScrub(r&&r.message||r),promise:1});});
+ window.addEventListener('online',function(){logEv('net',{online:1});logAuto();});window.addEventListener('offline',function(){logEv('net',{online:0});});
+ document.addEventListener('visibilitychange',function(){logEv(document.hidden?'hide':'show');if(document.hidden)logFlush();});
+ try{new PerformanceObserver(function(l){l.getEntries().forEach(function(en){if(en.duration>=250)logEv('slow',{ms:Math.round(en.duration)});});}).observe({entryTypes:['longtask']});}catch(x){}
+})();
+// pages and timings: the functions are wrapped where they're defined (below), by name
+function logPage(p){logEv('page',{p:p});}
+// Bluetooth from the Android app: what happened and when, not what was measured
+function logBle(kind,data){if(!LOGON)return;try{if(typeof data=='string'&&kind!='rx'){try{data=JSON.parse(data);}catch(e){}}
+ if(kind=='rx'){LOGBLE.rx++;LOGBLE.bytes+=String(data||'').length;return;}
+ var d={k:kind};if(data&&typeof data=='object'){['state','status','error','code','rssi','fw','ver','build','kind','model','stage','pct','mtu','phy'].forEach(function(f){if(data[f]!=null&&typeof data[f]!='object')d[f]=typeof data[f]=='string'?logScrub(data[f]):data[f];});}
+ logEv('ble',d);}catch(x){}}
+var LOGBLE={rx:0,bytes:0};setInterval(function(){if(LOGBLE.rx){logEv('ble-rx',{n:LOGBLE.rx,bytes:LOGBLE.bytes});LOGBLE.rx=0;LOGBLE.bytes=0;}},60000);
+// ---- sending: to Sully's report mailbox (the Apps Script Topside's Diagnosis page uses)
+function logText(L){var d=logDev(),s=['Topside app log','app '+d.app+(d.android?' · Android '+d.android:'')+(d.ios?' · iOS '+d.ios:'')+(d.model?' · '+d.model:'')+' · '+d.screen,'events '+L.length+(L.length?' · '+new Date(L[0][0]).toISOString()+' to '+new Date(L[L.length-1][0]).toISOString():''),''];
+ L.forEach(function(e){s.push(new Date(e[0]).toISOString().replace('T',' ').slice(0,19)+'  '+e[1]+(e[2]===''?'':'  '+(typeof e[2]=='object'?JSON.stringify(e[2]):e[2])));});return s.join('\n');}
+function logPost(body){var payload=JSON.stringify({token:LOGTOK,kind:'applog',subject:'Topside app log - '+(logDev().model||'phone')+' - '+new Date().toISOString().slice(0,10),body:body,contact:store('ct-logname')||'',serial:'app'});
+ if(BRIDGE&&window.TopsideAndroid&&typeof TopsideAndroid.http=='function')return new Promise(function(ok,no){var id=++bridgeN;bridgeCb[id]=function(st,h,b64){if(st<0)return no(new Error(h||'no answer'));var t='';try{t=decodeURIComponent(escape(atob(b64||'')));}catch(x){}
+   var j=null;try{j=JSON.parse(t);}catch(x){}if(st>=200&&st<400&&(!j||j.ok!==false))ok(true);else no(new Error(j&&j.error||('HTTP '+st)));};
+  TopsideAndroid.http(id,'POST',LOGURL,JSON.stringify({'Content-Type':'text/plain;charset=utf-8'}),btoa(unescape(encodeURIComponent(payload))),20000);});
+ // a browser can't read Google's answer across sites: handed over, not confirmed
+ return fetch(LOGURL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload}).then(function(){return false;});}
+function logSend(auto){logFlush();var L=logRead();if(!L.length){if(!auto)toast('Nothing in the app log yet');return Promise.resolve();}
+ var n=L.length,last=L[L.length-1][0];
+ return logPost(logText(L)).then(function(confirmed){var R=logRead().filter(function(e){return e[0]>last;});try{localStorage.setItem(LOGK,JSON.stringify(R));}catch(x){}store('ct-logsent',String(Date.now()));
+  toast('📋 App log sent to Sully ('+n+' events)'+(confirmed?'':' - handed over, the browser can\'t confirm it arrived')+'. Turn it off any time from the landing page.',6000);if($('land').style.display=='block')landingShow();},
+  function(e){if(!auto)toast('Couldn\'t send the app log: '+esc(e.message||e)+'. It stays on the phone and goes next time.',7000);});}
+function logAuto(){if(!LOGON||!LOGHOST||store('ct-logauto')!=='1'||!navigator.onLine)return;var t=+(store('ct-logsent')||0);if(Date.now()-t<20*3600e3)return;setTimeout(function(){logSend(true);},8000);}
+// ---- the page: what it is, what's in it, on / off / send
+function logCard(){if(!LOGHOST)return'';
+ if(LOGON)return'<button class="logChip" id="lLog">● App log is on - see it, send it, or turn it off</button>';
+ if(store('ct-logasked'))return'';
+ return'<div class="card" id="lLogAsk" style="margin:4px 0 10px"><b>Help test Topside?</b><div class="mut" style="font-size:13.5px;margin-top:3px">An app log for Sully: which pages you open, Bluetooth connects and drops, errors, and how long things take. <b>Never</b> GPS, cave or station names, survey data or photos. Off unless you turn it on; you can read every line, and it says so on this page while it\'s on.</div><button class="btn" id="lLogYes">Turn it on</button><button class="btn alt" id="lLogNo">No thanks</button><button class="btn alt" id="lLogWhat">What\'s logged</button></div>';}
+function logHook(){var e;if(e=$('lLog'))e.onclick=logPage_;if(e=$('lLogYes'))e.onclick=function(){logSet(true);logPage_();};if(e=$('lLogNo'))e.onclick=function(){store('ct-logasked','1');landingShow();};if(e=$('lLogWhat'))e.onclick=logPage_;}
+function logSet(on){LOGON=on;store('ct-logon',on?'1':'0');store('ct-logasked','1');if(on){logStart();toast('App log on. It stays on this phone until you send it.',4500);}else{LOGBUF=[];try{localStorage.removeItem(LOGK);}catch(x){}toast('App log off, and cleared from this phone.',4000);}}
+function logPage_(){logFlush();var L=logRead(),auto=store('ct-logauto')==='1',sent=+(store('ct-logsent')||0);
+ var rows=L.slice(-60).reverse().map(function(e){return'<div style="font:12px/1.45 ui-monospace,monospace;border-bottom:1px solid var(--line);padding:3px 0;word-break:break-word"><span class="mut">'+new Date(e[0]).toLocaleTimeString()+'</span> <b>'+esc(e[1])+'</b> '+esc(e[2]===''?'':typeof e[2]=='object'?JSON.stringify(e[2]):e[2])+'</div>';}).join('');
+ sheet('📋 App log','<div class="card"><b>'+(LOGON?'On':'Off')+'</b> · '+L.length+(L.length==1?' event':' events')+' on this phone'+(sent?' · last sent '+new Date(sent).toLocaleString():'')+'</div>'+
+  '<div class="k">What it keeps</div><div class="mut" style="font-size:13.5px">The pages you open; Bluetooth connects, drops and how many shots arrive (the unit\'s kind and firmware); errors in the app; how long things take to load; online / offline; your phone model, Android version and the app version.</div>'+
+  '<div class="k">What it never keeps</div><div class="mut" style="font-size:13.5px">GPS or any location, cave and station names, survey numbers, sketches, photos, file names, or anything you type.</div>'+
+  '<div class="k">Where it goes</div><div class="mut" style="font-size:13.5px">Nowhere until it\'s sent - then only to Sully\'s Topside report mailbox, and a note on screen says so every time.</div>'+
+  (LOGON?'<label class="lab"><input type="checkbox" id="logAuto"'+(auto?' checked':'')+'> Send it once a day when there\'s a signal</label><input class="fld" id="logName" placeholder="Your name (optional - so Sully knows whose it is)" value="'+esc(store('ct-logname')||'')+'" style="margin:6px 0">'+
+   '<button class="btn" id="logSend">Send to Sully now</button><button class="btn alt" id="logOff">Turn off and clear</button>':'<button class="btn" id="logOn">Turn it on</button>')+
+  '<div class="k">The newest lines</div>'+(rows||'<div class="mut">Nothing yet.</div>'));
+ var e;if(e=$('logOn'))e.onclick=function(){logSet(true);logPage_();};if(e=$('logOff'))e.onclick=function(){logSet(false);logPage_();};
+ if(e=$('logSend'))e.onclick=function(){logSend(false).then(logPage_);};if(e=$('logAuto'))e.onchange=function(){store('ct-logauto',this.checked?'1':'0');logAuto();};
+ if(e=$('logName'))e.onchange=function(){store('ct-logname',this.value.trim().slice(0,60));};}
+// the hooks: what's already there, wrapped by name, so nothing else changes
+(function(){function wrapPage(f,p){return function(){logPage(p);return f.apply(this,arguments);};}
+ landingShow=wrapPage(landingShow,'landing');mvShow=wrapPage(mvShow,'mapviewer');homeShow=wrapPage(homeShow,'tacheo');svListShow=wrapPage(svListShow,'survey');cavesSheet=wrapPage(cavesSheet,'my caves');
+ draftedSheet=wrapPage(draftedSheet,'drafted maps');gpsPage=wrapPage(gpsPage,'gps');pcSheet=wrapPage(pcSheet,'my computer');fwPage=wrapPage(fwPage,'firmware update');addSheet=wrapPage(addSheet,'add a cave');
+ if(typeof photosShow=='function')photosShow=wrapPage(photosShow,'data photos');if(typeof scanShow=='function')scanShow=wrapPage(scanShow,'scan');
+ var L0=load;load=function(d){var t0=performance.now(),r=L0.apply(this,arguments);if(LOGON&&r&&r.then)r.then(function(){logEv('cave',{ms:Math.round(performance.now()-t0),stations:N,shots:M,maps:(D&&D.rasters||[]).filter(function(x){return x.kind=='drafted';}).length});});return r;};
+ var I0=mvImportPdf;mvImportPdf=function(c,q,f){logEv('upload',{type:'pdf',kb:Math.round((f&&f.size||0)/1024)});return I0.apply(this,arguments);};
+ var P0=mvKeepPlain;mvKeepPlain=function(c,q,f){logEv('upload',{type:'picture',kb:Math.round((f&&f.size||0)/1024)});return P0.apply(this,arguments);};
+ var D0=draftPull;draftPull=function(c,maps){logEv('download maps',{n:maps&&maps.length||0});return D0.apply(this,arguments);};
+ if(typeof window.svBle=='function'){var B0=window.svBle;window.svBle=function(k,d){logBle(k,d);return B0.apply(this,arguments);};}
+ var LS=landingShow;landingShow=function(){var r=LS.apply(this,arguments);var c=logCard();if(c){var w=document.createElement('div');w.innerHTML=c;var cards=$('lMv');cards.parentNode.insertBefore(w,cards);logHook();}return r;};
+})();
+logStart();logAuto();
 // ======================================================================= start
 setTabs();
 setTimeout(pcFromUrl,300);setTimeout(function(){if(PC)pcInbox();},1500);
