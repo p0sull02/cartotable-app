@@ -1115,7 +1115,12 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  // 19 Nov 2026 (Sully, 09:09: "Also organize these by In Cave and Outside Cave. Remove the option at the bottom that says In the Cave. The
  // difference is barely noticeable."): two groups. In Cave = what works underground with no signal (the open cave's map, Survey,
  // the caves on the phone); Outside Cave = the rest. The In the cave tile is gone (the top bar's mode button still switches).
- h+='<div class="hgrp">In Cave</div><div class="tiles">';
+  // 20 Nov 2026 (Sully, 17:59: "Create a new 'update the Survey Device' tab and make it a different color so it's noticable. Perhaps solid
+ // blue"; 18:53: "Make this blue only when a new update is available, keep it the same grey color as all other tabs otherwise. Place this at
+ // the top of the screen too."): the first tile on Home, the width of the page; solid blue only while a unit has new firmware waiting (or
+ // one is updating). Not on Topside's own Phone link page - the computer updates units itself.
+ if(!window.TOPSIDE_PC)h+='<div class="tiles" style="margin-bottom:4px">'+tileHtml('tFw','⬆','#1e40af','Update the Survey Device',fwTileSub(),'',true).replace('class="tile wide"','class="tile wide'+(fwHot()?' fwTile':'')+'"')+'</div>';
+h+='<div class="hgrp">In Cave</div><div class="tiles">';
  if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
  // 19 Nov 2026 (Sully, 08:28: "Fold Tacheo and Survey and Sketch into 1 tab. Organize how best you see fit."): the instrument and the
  // survey it feeds are one job, so one tile opens one page with two pills - Surveys and Tacheo. The tile's own line says what is connected.
@@ -1125,10 +1130,6 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  // list; a tap opens its cave with that map on under the line plot (offline - the lined-up picture is kept with the cave).
  h+=tileHtml('tDraft','✒','#a16207','Drafted maps',(D&&D.rasters&&hasDrafted())?'On '+esc(D.name)+' and your other caves':'Your map sheets, lined up on the survey');
  h+='</div>';
- // 20 Nov 2026 (Sully, 17:59: "Create a new 'update the Survey Device' tab and make it a different color so it's noticable. Perhaps solid
- // blue"): a tile of its own, solid blue, the width of the page, between the two groups (not on Topside's own Phone link page - the
- // computer updates units itself)
- if(!window.TOPSIDE_PC)h+='<div class="tiles" style="margin-top:12px">'+tileHtml('tFw','⬆','#1e40af','Update the Survey Device',fwTileSub(),'',true).replace('class="tile wide"','class="tile wide fwTile"')+'</div>';
  var outN=4+((HOSTED||LOCALPC)?1:0);
  h+='<div class="hgrp">Outside Cave</div><div class="tiles">';
  h+=tileHtml('tAdd','＋','#1A9850','Add a cave','From a file, or from your computer');
@@ -1140,7 +1141,7 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tDraft'))e.onclick=draftedSheet;if(e=$('tFw')){e.onclick=fwPage;if(FW&&!FW.list)fwLoad().then(function(){var s=$('tFwS');if(s)s.innerHTML=fwTileSub();});}
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tDraft'))e.onclick=draftedSheet;if(e=$('tFw')){e.onclick=fwPage;if(FW&&!FW.list)fwLoad().then(fwTileUpd);}
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
  if(PC&&$('tPc'))pcHello().then(function(hh){var s=$('tPcS');if(s)s.textContent='Connected · '+PCVIA;return pcInbox().then(function(l){setBadge('tPc',(l||[]).length);if(l&&l.length&&s)s.textContent=l.length+(l.length==1?' thing':' things')+' sent to this phone';});},function(){var s=$('tPcS');if(s)s.textContent=pcWhyShort();});}
@@ -3131,6 +3132,7 @@ window.xtShow=xtShow;
 // its bootloader; nothing to open on the unit). Needs the Android app: a web page can't reach the radio, and iPhones give web apps none.
 var FW={list:null,err:'',busy:null,lock:null};
 var FW_URL='https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware.txt';
+setTimeout(function(){if(!window.TOPSIDE_PC)fwLoad().then(fwTileUpd);},1500);   // the list at start (Home may be drawn before this part of the page has run), so the tile knows
 function fwOk(){return!!(window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function');}
 function fwParse(txt){var out=[],cur=null;String(txt||'').split(/\r?\n/).forEach(function(l){if(/^\s*#/.test(l))return;var m=l.match(/^(\w+):\s*(.*)$/);
   if(!m){cur=null;return;}if(m[1]=='file'){cur={file:m[2].trim()};out.push(cur);var v=cur.file.match(/_v([\d.]+)_([A-Za-z0-9]+)\.zip$/);if(v){cur.ver=v[1];cur.build=v[2];}}else if(cur)cur[m[1]]=m[2].trim();});
@@ -3141,8 +3143,12 @@ function fwWhen(){var w=+store('ct-fw-when');if(!w)return'earlier';var d=new Dat
 function fwVB(u){var s=u&&u.info&&u.info.ver;if(!s)return null;var m=String(s).match(/(\d+\.\d+\.\d+(?:\.\d+)?)\s+([A-Za-z0-9]+)\s*$/);return m?{ver:m[1],build:m[2]}:null;}
 function fwCmp(a,b){a=String(a).split('.').map(Number);b=String(b).split('.').map(Number);for(var i=0;i<Math.max(a.length,b.length);i++){var x=a[i]||0,y=b[i]||0;if(x!=y)return x<y?-1:1;}return 0;}
 function fwFor(build){return(FW.list||[]).filter(function(p){return p.build==build;})[0]||null;}
-function fwNews(){var n=0;svOnUnits().forEach(function(u){var vb=fwVB(u),p=vb&&fwFor(vb.build);if(p&&fwCmp(p.ver,vb.ver)>0)n++;});return n;}
-function fwTileSub(){if(!FW)return'New unit firmware, over Bluetooth - no computer needed';if(FW.busy)return'Updating '+esc(FW.busy.name)+' - '+(FW.busy.pct||0)+' %';var n=FW.list?fwNews():0;return n?'New firmware for '+n+(n==1?' unit':' units'):'New unit firmware, over Bluetooth - no computer needed';}
+// each unit's build and version as last seen (so Home can say an update is waiting with no unit connected)
+function fwKnown(){var k=load2('ct-fw-units')||{},ch=false;svOnUnits().forEach(function(u){var vb=fwVB(u);if(vb){var o=k[u.addr];if(!o||o.ver!=vb.ver||o.build!=vb.build){k[u.addr]={name:svShort(u),ver:vb.ver,build:vb.build};ch=true;}}});if(ch)try{localStorage.setItem('ct-fw-units',JSON.stringify(k));}catch(e){}return k;}
+function fwNews(){if(!FW||!FW.list)return 0;var n=0,k=fwKnown();Object.keys(k).forEach(function(a){var x=k[a],p=fwFor(x.build);if(p&&fwCmp(p.ver,x.ver)>0)n++;});return n;}
+function fwHot(){return!!(FW&&(FW.busy&&FW.busy.stage!='failed'||fwNews()>0));}
+function fwTileUpd(){var e=$('tFw');if(!e)return;e.classList.toggle('fwTile',fwHot());var s=$('tFwS');if(s)s.innerHTML=fwTileSub();}
+function fwTileSub(){if(!FW)return'New unit firmware, over Bluetooth - no computer needed';if(FW.busy)return'Updating '+esc(FW.busy.name)+' - '+(FW.busy.pct||0)+' %';var n=FW.list?fwNews():0;if(n)return'New firmware waiting for '+n+(n==1?' unit':' units')+' - tap to update';return Object.keys(load2('ct-fw-units')||{}).length?'Your units are up to date · firmware over Bluetooth':'Firmware for your units, over Bluetooth';}
 var FW_STAGE={reading:'Opening the firmware',connecting:'Connecting to the unit',jump:'Asking the unit to go into update mode',finding:'Waiting for the unit\'s update mode',
  starting:'Starting - the unit clears its old firmware',sending:'Sending the new firmware',checking:'The unit is checking it',done:'Done',failed:'Stopped'};
 function fwPage(){sheet('⬆ Update the Survey Device','<div id="fwBody"><div class="mut">Looking for new firmware…</div></div>');
@@ -3190,7 +3196,7 @@ function fwAsk(addr){var u=SVDEV.units[addr],vb=fwVB(u),p=vb&&fwFor(vb.build);if
   var r=TopsideAndroid.dfuStart(addr,btoa(s));if(r!='ok')throw new Error(r);
  }).catch(function(e){fwEvent({addr:addr,stage:'failed',pct:0,msg:e.message||String(e)});});}
 function fwEvent(d){if(!FW.busy)FW.busy={addr:d.addr,name:d.addr,ver:'',stage:'',pct:0};var f=FW.busy;f.stage=d.stage;if(d.pct!=null)f.pct=+d.pct;f.msg=d.msg||'';
- var s=$('tFwS');if(s)s.innerHTML=fwTileSub();
+ fwTileUpd();
  if(d.stage=='done'||d.stage=='failed'){try{if(FW.lock)FW.lock.release();}catch(x){}FW.lock=null;if(navigator.vibrate)navigator.vibrate(d.stage=='done'?[60,80,60]:[300]);}
  if(d.stage=='done'){toast('✅ '+esc(f.name)+' updated to '+esc(f.ver),5000);var a=f.addr;setTimeout(function(){try{var u=svUnitOf(a);if(u.state=='off')bOpen(a);}catch(x){}},9000);
   setTimeout(function(){if(FW.busy&&FW.busy.stage=='done'){FW.busy=null;if($('fwBody'))fwRender();}},25000);}
@@ -3198,7 +3204,8 @@ function fwEvent(d){if(!FW.busy)FW.busy={addr:d.addr,name:d.addr,ver:'',stage:''
 // events from the Android app: window.svBle(kind, data); app 1.7 tags each with its unit's addr
 window.svBle=function(kind,data){try{if(typeof data=='string'&&kind!='rx'){try{data=JSON.parse(data);}catch(e){}}
  if(kind=='dfu'){fwEvent(data);return;}   // 1.9: Update the Survey Device
- if(kind=='state'&&$('fwBody')&&!(FW.busy&&FW.busy.stage!='done'&&FW.busy.stage!='failed'))setTimeout(function(){if($('fwBody'))fwRender();},3000);   // a unit (re)connected: what it runs now
+ if(kind=='state'&&$('fwBody')&&!(FW.busy&&FW.busy.stage!='done'&&FW.busy.stage!='failed'))setTimeout(function(){if($('fwBody'))fwRender();},3000);
+ if(kind=='state')setTimeout(fwTileUpd,3500);   // a unit (re)connected: what it runs now
  if(kind=='found'){if(!SVDEV.found.some(function(f){return f.addr==data.addr;}))SVDEV.found.push(data);svFoundShow();}
  else if(kind=='scanDone'){svFoundShow(data&&data.err);}
  else if(kind=='state'){var u=svUnitOf(data.addr);if(data.addr)SVDEV.last=data.addr;if(data.name)u.name=data.name;var was=u.state;u.state=data.state=='connected'?'on':data.state=='connecting'?'connecting':'off';svDevChip();
