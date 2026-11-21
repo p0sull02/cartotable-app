@@ -147,6 +147,8 @@ body.cave .tile .tt{font-size:16px}
 #mv .btn,.mvth .btn{background:#dc2626}#mv .btn.alt,.mvth .btn.alt{background:#2a3542}
 .mvRow{display:flex;align-items:center;gap:10px}.mvRow.on{outline:2px solid #ef4444}
 .mvSw{width:14px;height:14px;border-radius:4px;flex:none;background:#ef4444}
+.mvDelX{flex:none;padding:4px 8px;font-size:14px;background:transparent;border:1px solid #3b1517;border-radius:8px;color:#fca5a5}
+.mvDel{color:#fca5a5}
 .mvBadge{font-size:11.5px;font-weight:700;color:#fecaca;background:#3b1517;border-radius:10px;padding:2px 8px;white-space:nowrap}.mvBadge.off{color:#cbd5e1;background:#2a3542}
 .mvNew{position:relative;border:2px solid #ef4444;border-radius:14px;overflow:hidden;background:var(--card);margin:4px 0 10px}
 .mvNew img{display:block;width:100%;max-height:46vh;object-fit:contain;background:#fff;cursor:zoom-in}
@@ -3579,8 +3581,8 @@ function mvQuad(Q){MVS.sel=Q;mvPaint();mvList();var g=MVS.by[MVS.cave],m0=Q.maps
  var h='<div class="mut" style="margin:-2px 0 8px">'+esc(g.name)+(Q.n?' · '+Q.n+(Q.n==1?' station':' stations'):'')+'</div>';
  if(Q.newer&&Q.newer.length)h+='<div class="card" style="border-color:'+MV_RED+'"><b>A newer map is on '+esc(PC.name)+'</b><div class="mut">'+Q.newer.map(function(m){return esc(dfName(m))+' · '+esc(m.when||'');}).join('<br>')+'</div><button class="btn" id="mqGet">⬇ Download it</button></div>';
  h+='<div class="mvNew" id="mqNew"><span class="mvTag">NEWEST</span><img id="mqImg" alt=""><div style="padding:10px 12px"><b style="font-size:16px">'+esc(m0.name)+'</b><div class="mut">'+(m0.added?mvWhen(m0.added)+' · ':'')+(m0.plain?'on this phone · not lined up':'on this phone')+'</div>'+
-  '<button class="btn" id="mqFull">⤢ Open the map</button>'+(m0.plain?'':'<button class="btn alt" id="mqOn">Show it on the survey</button>')+'</div></div>';
- if(Q.maps.length>1)h+='<div class="k">Earlier versions ('+(Q.maps.length-1)+')</div>'+Q.maps.slice(1).map(function(m,i){return'<div class="row mvRow" data-mv="'+(i+1)+'"><img class="mvTh" data-th="'+(i+1)+'" alt=""><span style="flex:1;min-width:0"><span class="t">'+esc(m.name)+'</span><span class="s" style="display:block">'+(m.added?mvWhen(m.added):'')+(m.plain?' · not lined up':'')+'</span></span><span class="mvBadge">open</span></div>';}).join('');
+  '<button class="btn" id="mqFull">⤢ Open the map</button>'+(m0.plain?'':'<button class="btn alt" id="mqOn">Show it on the survey</button>')+'<button class="btn alt mvDel" id="mqDel">🗑 Delete</button></div></div>';
+ if(Q.maps.length>1)h+='<div class="k">Earlier versions ('+(Q.maps.length-1)+')</div>'+Q.maps.slice(1).map(function(m,i){return'<div class="row mvRow" data-mv="'+(i+1)+'"><img class="mvTh" data-th="'+(i+1)+'" alt=""><span style="flex:1;min-width:0"><span class="t">'+esc(m.name)+'</span><span class="s" style="display:block">'+(m.added?mvWhen(m.added):'')+(m.plain?' · not lined up':'')+'</span></span><span class="mvBadge">open</span><button class="ib mvDelX" data-mvdel="'+(i+1)+'" title="Delete this version">🗑</button></div>';}).join('');
  h+='<button class="btn" id="mqUp">＋ Upload a new version of '+esc(Q.name)+'</button>';
  mvSheet('🗺 '+esc(Q.name),h);
  mvImgUrl(m0).then(function(u){var im=$('mqImg');if(im&&u)im.src=u;});
@@ -3588,8 +3590,34 @@ function mvQuad(Q){MVS.sel=Q;mvPaint();mvList();var g=MVS.by[MVS.cave],m0=Q.maps
  $('mqFull').onclick=function(){mvView(m0);};$('mqImg').onclick=function(){mvView(m0);};
  var e;if(e=$('mqOn'))e.onclick=function(){$('mv').style.display='none';openDrafted(g.name,m0.r.file);};
  if(e=$('mqGet'))e.onclick=function(){mvDownload(Q.newer);};
- [].forEach.call(document.querySelectorAll('[data-mv]'),function(r){r.onclick=function(){mvView(Q.maps[+r.dataset.mv]);};});
+ [].forEach.call(document.querySelectorAll('[data-mv]'),function(r){r.onclick=function(ev){if(ev.target.closest('[data-mvdel]'))return;mvView(Q.maps[+r.dataset.mv]);};});
+ $('mqDel').onclick=function(){mvAskDelete(Q,m0);};
+ [].forEach.call(document.querySelectorAll('[data-mvdel]'),function(b){b.onclick=function(ev){ev.stopPropagation();mvAskDelete(Q,Q.maps[+b.dataset.mvdel]);};});
  $('mqUp').onclick=function(){mvUpload(Q.name);};}
+// ---- deleting a map (Sully, 21 Nov 2026: "Make sure you can also delete sheets/files from the MapViewer too"). Only this phone's copy goes:
+// the lined-up picture (from the cave, or beside a cave from a web host), its full-size sheet, and the kept PDF / .ai. The file on the
+// computer is never touched; "Get maps from" the computer can bring it back.
+function mvAskDelete(Q,m){var c=MVS.cave;if(!c||!m)return;
+ if(!confirm('Delete '+m.name+' from this phone?\n\nOnly this phone\'s copy goes - the file on your computer isn\'t touched.'))return;
+ toast('Deleting '+esc(m.name)+'…',20000);
+ mvDelete(c,m).then(function(){if(m.url)try{URL.revokeObjectURL(m.url);}catch(x){}var qn=Q.name;$('pcOver').style.display='none';
+  return mvShow(c).then(function(){var g=MVS.by[c],q2=g&&g.quads.filter(function(x){return x.name==qn;})[0];toast('Deleted '+esc(m.name)+'.',3500);if(q2)mvQuad(q2);});
+ }).catch(function(e){toast('Couldn\'t delete it: '+esc(e&&e.message||e),6000);});}
+function mvDropPdf(k){return k?dbDo('readwrite',function(st){return st.delete(k);}).catch(function(){}):Promise.resolve();}
+function mvSheetsDrop(c,fn){return dbDo('readonly',function(st){return st.get('mvsheet:'+c);}).catch(function(){return null;}).then(function(x){if(!x||!x.sheets)return;
+ var gone=x.sheets.filter(fn);if(!gone.length)return;x.sheets=x.sheets.filter(function(s){return!fn(s);});
+ return Promise.all(gone.map(function(s){return mvDropPdf(s.pdf);})).then(function(){return dbDo('readwrite',function(st){return st.put(x,'mvsheet:'+c);});});});}
+function mvRecDrop(key,file){return dbDo('readonly',function(st){return st.get(key);}).catch(function(){return null;}).then(function(x){if(!x||!x.rasters)return;
+ var n=x.rasters.length;x.rasters=x.rasters.filter(function(r){return!(r.kind=='drafted'&&r.file==file);});if(x.rasters.length==n)return;if(x.files)delete x.files[file];
+ return dbDo('readwrite',function(st){return st.put(x,key);});});}
+function mvDelete(c,m){
+ if(m.plain)return mvSheetsDrop(c,function(s){return s.id===m.r.id;});   // a sheet of its own (a photo, or one not lined up)
+ var file=m.r.file,jobs=[mvDropPdf(m.r.pdf),mvSheetsDrop(c,function(s){return s.of===file;})];
+ if(D&&D.name==c&&D.rasters){var i=-1;D.rasters.forEach(function(r,k){if(r.kind=='drafted'&&r.file==file)i=k;});
+  if(i>=0){var ex={};D.rasters.splice(i,1);if(D.files)delete D.files[file];delete files[file];delete imgs[file];   // (as Layers' Remove)
+   for(var k in lay.extra){k=+k;if(k<i)ex[k]=lay.extra[k];else if(k>i)ex[k-1]=lay.extra[k];}if(typeof lay.base=='number'&&lay.base>i)lay.base--;lay.extra=ex;saveDrafted();}}
+ jobs.push(mvRecDrop(c,file),mvRecDrop('drafted:'+c,file));   // the saved cave, and the list kept beside a cave from a web host
+ return Promise.all(jobs);}
 // 21 Nov 2026 (Sully: "The quality of the maps took a big hit during import" - a sheet was kept only as a picture, 4096 px long on the phone,
 // 3000 px from the computer): the sheet's own PDF / .ai (an .ai saved PDF-compatible is a PDF) is kept beside it, and full screen draws its
 // vectors sharp at any zoom. Kept as a Blob under 'mvpdf:<cave>:<id>' (not base64: no growth, not read unless opened).
