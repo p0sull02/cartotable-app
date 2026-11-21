@@ -177,7 +177,7 @@ body.cave .tile .tt{font-size:16px}
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
 <div id="land" class="over" style="z-index:21"><div class="in" id="landIn"></div></div>
 <div id="mv" class="over"><div id="mvTop"><button class="ib" id="mvBack" title="Back">←</button><span style="display:inline-flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span><b style="font-size:18px">MapViewer</b><span style="flex:1"></span><button class="ib" id="mvShareB" title="Share this cave and its maps as one file">⇪ Share</button><button class="ib" id="mvUpB">＋ Upload</button></div><div id="mvBody"><div class="in"><div id="mvCaves"></div><div id="mvPlot"><canvas id="mvCv"></canvas><div id="mvKey"><span><i style="background:#ef4444"></i>Map available</span><br><span><i style="background:#5b6673"></i>No map yet</span></div><div id="mvTools"><button id="mvIn" title="Zoom in">＋</button><button id="mvOut" title="Zoom out">－</button><button id="mvFitB" title="Whole cave">⤢</button></div></div><div class="mut" id="mvHint" style="font-size:13.5px;margin:8px 2px"></div><button class="btn" id="mvUp2">＋ Upload a map</button><button class="btn alt" id="mvShare2">⇪ Share these maps</button><button class="btn alt" id="mvOpenP">📦 Open a map pack</button><button class="btn alt" id="mvDl" style="display:none"></button><div id="mvList"></div><p class="mut" id="mvStore" style="font-size:12.5px;margin-top:12px"></p></div></div></div>
-<div id="mvView" class="over"><div id="mvvBar"><button class="ib" id="mvvX" title="Back">←</button><b id="mvvT" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button class="ib" id="mvvFit" title="Fit">⤢</button></div><div id="mvvWrap"><img id="mvvImg" alt=""><canvas id="mvvHi" style="position:absolute;left:0;top:0;pointer-events:none;display:none"></canvas></div></div>
+<div id="mvView" class="over"><div id="mvvBar"><button class="ib" id="mvvX" title="Back">←</button><b id="mvvT" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button class="ib" id="mvvQ" style="display:none;font-size:12.5px;padding:5px 9px"></button><button class="ib" id="mvvFit" title="Fit">⤢</button></div><div id="mvvWrap"><img id="mvvImg" alt=""><canvas id="mvvHi" style="position:absolute;left:0;top:0;pointer-events:none;display:none"></canvas></div></div>
 <div id="modePick" class="over"><div class="in" id="modeIn"></div></div>
 <div id="pcOver" class="over" style="z-index:22"><div class="in" id="pcIn"></div></div>
 <div id="svy" class="over" style="padding:0;z-index:24;overflow:hidden"></div>
@@ -3603,6 +3603,24 @@ function mvAskDelete(Q,m){var c=MVS.cave;if(!c||!m)return;
  mvDelete(c,m).then(function(){if(m.url)try{URL.revokeObjectURL(m.url);}catch(x){}var qn=Q.name;$('pcOver').style.display='none';
   return mvShow(c).then(function(){var g=MVS.by[c],q2=g&&g.quads.filter(function(x){return x.name==qn;})[0];toast('Deleted '+esc(m.name)+'.',3500);if(q2)mvQuad(q2);});
  }).catch(function(e){toast('Couldn\'t delete it: '+esc(e&&e.message||e),6000);});}
+function mvSharpen(c,m){if(!c||!m)return;var inp=document.createElement('input');inp.type='file';
+ inp.accept=/TopsideApp/.test(navigator.userAgent)?'.pdf,.ai,application/pdf,application/postscript,application/illustrator':'.pdf,.ai,application/pdf';
+ inp.onchange=function(){var f=inp.files[0];if(!f)return;toast('Keeping '+esc(f.name)+' with '+esc(m.name)+'…',30000);
+  mvIsPdf(f).then(function(ok){if(!ok)throw new Error(/\.ai$/i.test(f.name)?'that .ai was saved without PDF compatibility (Illustrator: Save As, tick "Create PDF Compatible File")':'that isn\'t a PDF');
+   return mvPdfPut('mvpdf:'+c+':'+(m.r.file||m.r.id)+':'+Date.now(),new Blob([f],{type:'application/pdf'}));})
+  .then(function(k){if(!k)throw new Error('this phone wouldn\'t keep it (storage full?)');return mvLinkPdf(c,m,k);})
+  .then(function(){toast('Sharp now - '+esc(m.name)+' keeps its PDF on this phone.',4000);$('mvView').style.display='none';mvView(m);})
+  .catch(function(e){toast('Couldn\'t sharpen it: '+esc(e&&e.message||e),8000);});};inp.click();}
+// the kept PDF's key onto the record the map lives in: its full-size sheet, a sheet of its own, or the lined-up picture (open cave, saved
+// cave, the list beside a cave from a web host)
+function mvLinkPdf(c,m,k){var old=(m.sheet&&m.sheet.pdf)||(m.r&&m.r.pdf);
+ function sheets(id){return dbDo('readonly',function(st){return st.get('mvsheet:'+c);}).catch(function(){return null;}).then(function(x){if(!x||!x.sheets)return;var hit=false;x.sheets.forEach(function(s){if(s.id===id){s.pdf=k;hit=true;}});if(hit)return dbDo('readwrite',function(st){return st.put(x,'mvsheet:'+c);});});}
+ function rec(key,file){return dbDo('readonly',function(st){return st.get(key);}).catch(function(){return null;}).then(function(x){if(!x||!x.rasters)return;var hit=false;x.rasters.forEach(function(r){if(r.file==file){r.pdf=k;hit=true;}});if(hit)return dbDo('readwrite',function(st){return st.put(x,key);});});}
+ var jobs=[];
+ if(m.sheet){m.sheet.pdf=k;jobs.push(sheets(m.sheet.id));}
+ else if(m.plain){m.r.pdf=k;jobs.push(sheets(m.r.id));}
+ else{m.r.pdf=k;if(D&&D.name==c&&D.rasters)D.rasters.forEach(function(r){if(r.file==m.r.file)r.pdf=k;});jobs.push(rec(c,m.r.file),rec('drafted:'+c,m.r.file));}
+ return Promise.all(jobs).then(function(){if(old&&old!=k)return mvDropPdf(old);});}
 function mvDropPdf(k){return k?dbDo('readwrite',function(st){return st.delete(k);}).catch(function(){}):Promise.resolve();}
 function mvSheetsDrop(c,fn){return dbDo('readonly',function(st){return st.get('mvsheet:'+c);}).catch(function(){return null;}).then(function(x){if(!x||!x.sheets)return;
  var gone=x.sheets.filter(fn);if(!gone.length)return;x.sheets=x.sheets.filter(function(s){return!fn(s);});
@@ -3651,13 +3669,17 @@ function mvView(m){mvImgUrl(m).then(function(u){if(!u){toast('That map\'s pictur
   if(hTask){try{hTask.cancel();}catch(x){}}
   hTask=P.page.render({canvasContext:g,viewport:P.page.getViewport({scale:P.base*V.s*dpr}),transform:[1,0,0,1,V.x*dpr,V.y*dpr]});
   var t=hTask;t.promise.then(function(){if(t===hTask){hc.style.display='block';hTask=null;}},function(){});}
- var pk=(m.sheet&&m.sheet.pdf)||(m.r&&m.r.pdf);
- if(pk)mvPdfGet(pk).then(function(b){if(!b)return null;return Promise.all([b.arrayBuffer(),loadPdfJs()]);}).then(function(r){if(!r)return null;return r[1].getDocument({data:new Uint8Array(r[0])}).promise;})
+ var pk=(m.sheet&&m.sheet.pdf)||(m.r&&m.r.pdf),qb=$('mvvQ');
+ // 21 Nov 2026 (Sully: "PDF quality wasn't changed" - a sheet saved before the PDFs were kept): say which it is; a picture-only sheet gets
+ // Sharpen: pick its PDF / .ai once and it is kept with it
+ function qState(t,act){qb.style.display='';qb.textContent=t;qb.onclick=act||null;qb.style.opacity=act?'1':'.8';}
+ if(pk)qState('Loading the vectors…');else qState('⚡ Sharpen',function(){mvSharpen(MVS.cave,m);});
+ if(pk)mvPdfGet(pk).then(function(b){if(!b){qState('⚡ Sharpen',function(){mvSharpen(MVS.cave,m);});return null;}return Promise.all([b.arrayBuffer(),loadPdfJs()]);}).then(function(r){if(!r)return null;return r[1].getDocument({data:new Uint8Array(r[0])}).promise;})
   .then(function(doc){if(!doc)return null;return doc.getPage(1);}).then(function(pg){if(!pg||o.style.display=='none')return;
    var v1=pg.getViewport({scale:1}),base=Math.min(4096/Math.max(v1.width,v1.height),2.5*Math.max(o.clientWidth,o.clientHeight)*dpr/Math.max(v1.width,v1.height));
    var c=document.createElement('canvas'),vp=pg.getViewport({scale:base});c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
-   return pg.render({canvasContext:g,viewport:vp}).promise.then(function(){c.toBlob(function(bl){if(!bl||o.style.display=='none')return;P={page:pg,base:base};im.onload=function(){fitIt();hiSoon();};im.src=URL.createObjectURL(bl);},'image/png');});
-  }).catch(function(e){console.log('mvView pdf: '+(e&&e.message||e));});   // (the picture stays)
+   return pg.render({canvasContext:g,viewport:vp}).promise.then(function(){c.toBlob(function(bl){if(!bl||o.style.display=='none')return;P={page:pg,base:base};im.onload=function(){fitIt();hiSoon();};im.src=URL.createObjectURL(bl);qState('✓ Vector');},'image/png');});
+  }).catch(function(e){qState('⚡ Sharpen',function(){mvSharpen(MVS.cave,m);});toast('Couldn\'t draw the sheet\'s PDF ('+esc(e&&e.message||e)+') - showing the picture',7000);});   // (the picture stays)
  function apply(){im.style.transform='translate('+V.x+'px,'+V.y+'px) scale('+V.s+')';hiClear();hiSoon();}
  function fitIt(){var W=o.clientWidth,H=o.clientHeight-50,w=im.naturalWidth||1,h=im.naturalHeight||1;V.s=Math.min(W/w,H/h);V.x=(W-w*V.s)/2;V.y=50+(H-h*V.s)/2;apply();}
  function zoomAt(px,py,f){V.x=px-(px-V.x)*f;V.y=py-(py-V.y)*f;V.s*=f;apply();}
@@ -3669,7 +3691,7 @@ function mvView(m){mvImgUrl(m).then(function(u){if(!u){toast('That map\'s pictur
   else{V.x+=e.clientX-p.x;V.y+=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;apply();}};
  wr.onpointerup=wr.onpointercancel=function(e){delete pts[e.pointerId];if(Object.keys(pts).length<2)d0=null;};
  wr.onwheel=function(e){e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(-e.deltaY*0.0015));};
- $('mvvFit').onclick=fitIt;$('mvvX').onclick=function(){hiClear();P=null;o.style.display='none';};});}
+ $('mvvFit').onclick=fitIt;$('mvvX').onclick=function(){hiClear();P=null;qb.style.display='none';o.style.display='none';};});}
 // ---- maps from the computer, for offline
 function mvEnsure(c){if(D&&D.name==c&&D.st)return Promise.resolve(true);return dbDo('readonly',function(st){return st.get(c);}).then(function(d){if(!d||!d.st){toast(esc(c)+'\'s survey isn\'t on this phone - add the cave first (Tacheo → Add a cave)',6000);return false;}return load(d).then(function(){$('mv').style.display='block';return true;});});}
 function mvDownload(list){var c=MVS.cave;if(!c)return;if(!PC){toast('Connect this phone to Topside on your computer first (Tacheo → My computer)',6000);return;}
