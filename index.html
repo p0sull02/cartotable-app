@@ -176,7 +176,7 @@ body.cave .tile .tt{font-size:16px}
 <div id="side"><div id="grip"></div><div id="tabs"></div><div id="pane"></div></div>
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
 <div id="land" class="over" style="z-index:21"><div class="in" id="landIn"></div></div>
-<div id="mv" class="over"><div id="mvTop"><button class="ib" id="mvBack" title="Back">←</button><span style="display:inline-flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span><b style="font-size:18px">MapViewer</b><span style="flex:1"></span><button class="ib" id="mvShareB" title="Share this cave and its maps as one file">⇪ Share</button><button class="ib" id="mvUpB">＋ Upload</button></div><div id="mvBody"><div class="in"><div id="mvCaves"></div><div id="mvPlot"><canvas id="mvCv"></canvas><div id="mvKey"><span><i style="background:#ef4444"></i>Map available</span><br><span><i style="background:#5b6673"></i>No map yet</span></div><div id="mvTools"><button id="mvIn" title="Zoom in">＋</button><button id="mvOut" title="Zoom out">－</button><button id="mvFitB" title="Whole cave">⤢</button></div></div><div class="mut" id="mvHint" style="font-size:13.5px;margin:8px 2px"></div><button class="btn" id="mvUp2">＋ Upload a map</button><button class="btn alt" id="mvShare2">⇪ Share these maps</button><button class="btn alt" id="mvOpenP">📦 Open a map pack</button><button class="btn alt" id="mvDl" style="display:none"></button><div id="mvList"></div><p class="mut" id="mvStore" style="font-size:12.5px;margin-top:12px"></p></div></div></div>
+<div id="mv" class="over"><div id="mvTop"><button class="ib" id="mvBack" title="Back">←</button><span style="display:inline-flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span><b style="font-size:18px">MapViewer</b><span style="flex:1"></span><button class="ib" id="mvShareB" title="Share this cave and its maps as one file">⇪ Share</button><button class="ib" id="mvUpB">＋ Upload</button></div><div id="mvBody"><div class="in"><div id="mvCaves"></div><div id="mvPlot"><canvas id="mvCv"></canvas><div id="mvKey"><span><i style="background:#ef4444"></i>Map available</span><br><span><i style="background:#5b6673"></i>No map yet</span><span id="mvKeyC"></span></div><div id="mvTools"><button id="mvIn" title="Zoom in">＋</button><button id="mvOut" title="Zoom out">－</button><button id="mvFitB" title="Whole cave">⤢</button></div></div><div class="mut" id="mvHint" style="font-size:13.5px;margin:8px 2px"></div><button class="btn" id="mvUp2">＋ Upload a map</button><button class="btn alt" id="mvShare2">⇪ Share these maps</button><button class="btn alt" id="mvOpenP">📦 Open a map pack</button><button class="btn alt" id="mvDl" style="display:none"></button><div id="mvList"></div><p class="mut" id="mvStore" style="font-size:12.5px;margin-top:12px"></p></div></div></div>
 <div id="mvView" class="over"><div id="mvvBar"><button class="ib" id="mvvX" title="Back">←</button><b id="mvvT" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button class="ib" id="mvvQ" style="display:none;font-size:12.5px;padding:5px 9px"></button><button class="ib" id="mvvFit" title="Fit">⤢</button></div><div id="mvvWrap"><img id="mvvImg" alt=""><canvas id="mvvHi" style="position:absolute;left:0;top:0;pointer-events:none;display:none"></canvas></div></div>
 <div id="modePick" class="over"><div class="in" id="modeIn"></div></div>
 <div id="pcOver" class="over" style="z-index:22"><div class="in" id="pcIn"></div></div>
@@ -274,9 +274,11 @@ function buildGround(){var g=D.ground,w=g.w,h=g.h;G={contours:{}};
   px[o]=Math.min(255,sh*(0.99+0.03*t));px[o+1]=Math.min(255,sh*(0.99+0.02*t));px[o+2]=Math.min(255,sh*(1.0-0.03*t));px[o+3]=255;
   var hc=heatRgb(t),lt=Math.max(0.5,Math.min(1.15,sh/200));hp[o]=Math.min(255,hc[0]*lt);hp[o+1]=Math.min(255,hc[1]*lt);hp[o+2]=Math.min(255,hc[2]*lt);hp[o+3]=255;fp[o]=hc[0];fp[o+1]=hc[1];fp[o+2]=hc[2];fp[o+3]=255;}
  cx.putImageData(im,0,0);G.hill=cv;hx.putImageData(hm,0,0);G.heat=hv;fx2.putImageData(fm,0,0);G.heatFlat=fv;G.lo=D.ground.lo+lo*(D.ground.zs||0.1);G.hi=D.ground.lo+hi*(D.ground.zs||0.1);}
-function contours(intFt){if(G.contours[intFt])return G.contours[intFt];
- var g=D.ground,w=g.w,h=g.h,step=intFt*FT,minor=new Path2D(),index=new Path2D(),lo=1e9,hi=-1e9;
- for(var i=0;i<w*h;i++){var v=ground[i];if(v!=65535){var z=g.lo+v*(g.zs||0.1);if(z<lo)lo=z;if(z>hi)hi=z;}}
+function contours(intFt){if(G.contours[intFt])return G.contours[intFt];return G.contours[intFt]=contourPaths(D.ground,ground,D.z0,intFt);}
+// marching squares over a stored ground grid (header {w,h,x0,y0,cell,lo,zs}, heights as Uint16, 65535 = none); minor and index (every 5th) lines
+function contourPaths(g,arr,z0,intFt){var gz=function(c,r){var v=arr[r*g.w+c];return v==65535?NaN:g.lo+v*(g.zs||0.1);};
+ var w=g.w,h=g.h,step=intFt*FT,minor=new Path2D(),index=new Path2D(),lo=1e9,hi=-1e9;z0=z0||0;
+ for(var i=0;i<w*h;i++){var v=arr[i];if(v!=65535){var z=g.lo+v*(g.zs||0.1);if(z<lo)lo=z;if(z>hi)hi=z;}}
  var X0=function(c){return g.x0+(c+0.5)*g.cell;},Y0=function(r){return g.y0-(r+0.5)*g.cell;};
  var segsFor={1:[[3,2]],2:[[2,1]],3:[[3,1]],4:[[0,1]],5:[[0,3],[2,1]],6:[[0,2]],7:[[0,3]],8:[[0,3]],9:[[0,2]],10:[[0,1],[3,2]],11:[[0,1]],12:[[3,1]],13:[[2,1]],14:[[3,2]]};
  // 20 Nov 2026: one pass over the cells, each visiting only the levels its four corners straddle (was a full pass per level - too slow
@@ -284,11 +286,11 @@ function contours(intFt){if(G.contours[intFt])return G.contours[intFt];
  var L0=Math.ceil(lo/step);
  for(var r=0;r<h-1;r++)for(var c=0;c<w-1;c++){var a=gz(c,r),b=gz(c+1,r),cc=gz(c+1,r+1),d=gz(c,r+1);if(isNaN(a)||isNaN(b)||isNaN(cc)||isNaN(d))continue;
   var mn=Math.min(a,b,cc,d),mx=Math.max(a,b,cc,d);
-  for(var li=Math.max(L0,Math.ceil(mn/step));li*step<mx;li++){var lv=li*step,isIdx=Math.round((lv+D.z0)/step)%5==0,P=isIdx?index:minor;
+  for(var li=Math.max(L0,Math.ceil(mn/step));li*step<mx;li++){var lv=li*step,isIdx=Math.round((lv+z0)/step)%5==0,P=isIdx?index:minor;
    var m=(a>lv?8:0)|(b>lv?4:0)|(cc>lv?2:0)|(d>lv?1:0);if(m==0||m==15)continue;
    var E=[[X0(c)+(lv-a)/(b-a)*g.cell,Y0(r)],[X0(c+1),Y0(r)-(lv-b)/(cc-b)*g.cell],[X0(c)+(lv-d)/(cc-d)*g.cell,Y0(r+1)],[X0(c),Y0(r)-(lv-a)/(d-a)*g.cell]],segs=segsFor[m];
    for(var s=0;s<segs.length;s++){var p0=E[segs[s][0]],p1=E[segs[s][1]];P.moveTo(p0[0],p0[1]);P.lineTo(p1[0],p1[1]);}}}
- return G.contours[intFt]={minor:minor,index:index};}
+ return{minor:minor,index:index};}
 // ======================================================================= travel graph (the planner's speeds)
 var adj=null,pace=1;
 function edgeCost(k){var kind=ED[5*k+3];return ED[5*k+2]/(D.speeds[kind]*pace)+(kind==6?D.rig:0);}
@@ -3475,13 +3477,15 @@ function mvIcon(s){return'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" 
 // ---- every cave on the phone with its drafted maps, grouped into quads
 function mvGather(){var by={},order=[],att={};
  function cave(n){if(!by[n]){by[n]={name:n,st:null,sh:null,maps:[],seen:{},quads:[]};order.push(n);}return by[n];}
+ // the ground under the cave, for the orange contours behind the plot (21 Nov 2026, Sully: "No contours brought over")
+ function grd(g,x){if(g.gh||!x||!x.ground)return;var b=x.files&&x.files['data/ground.bin'];if(!b&&!(x===D&&ground))return;g.gh=x.ground;g.gz0=x.z0||0;g.gb64=b||null;if(x===D&&ground)g.garr=ground;}
  function add(n,r,b64,plain){if(!r)return;var g=cave(n);var key=r.file||r.id;if(g.seen[key])return;g.seen[key]=1;g.maps.push({r:r,b64:b64,plain:!!plain,name:dfName(r),added:mvAdded(r)});}
- if(D&&D.st){var g0=cave(D.name);g0.st=D.st;g0.sh=D.sh;(D.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(D.name,r,D.files&&D.files[r.file]);});}
+ if(D&&D.st){var g0=cave(D.name);g0.st=D.st;g0.sh=D.sh;grd(g0,D);(D.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(D.name,r,D.files&&D.files[r.file]);});}
  return dbDo('readonly',function(st){return st.getAllKeys();}).catch(function(){return[];}).then(function(keys){keys=(keys||[]).map(String).filter(function(k){return k.indexOf('mvpdf:')!=0;});
   return keys.reduce(function(p,k){return p.then(function(){return dbDo('readonly',function(st){return st.get(k);}).then(function(x){if(!x)return;
    if(k.indexOf('drafted:')==0){var n=k.slice(8);(x.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(n,r,x.files&&x.files[r.file]);});}
    else if(k.indexOf('mvsheet:')==0){var n2=k.slice(8);(x.sheets||[]).forEach(function(s){if(s.of){(att[n2]=att[n2]||{})[s.of]=s;}else add(n2,s,s.data,true);});}
-   else if(x.st){var g=cave(k);if(!g.st){g.st=x.st;g.sh=x.sh;}(x.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(k,r,x.files&&x.files[r.file]);});}}).catch(function(){});});},Promise.resolve());
+   else if(x.st){var g=cave(k);if(!g.st){g.st=x.st;g.sh=x.sh;}grd(g,x);(x.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(k,r,x.files&&x.files[r.file]);});}}).catch(function(){});});},Promise.resolve());
  }).then(function(){
   order.forEach(function(n){var g=by[n],q={},ql=[];g.maps.forEach(function(m){var a=att[n]&&m.r.file&&att[n][m.r.file];if(a){m.sheet=a;if(!m.added&&a.added)m.added=a.added;}});
    g.maps.forEach(function(m){var k=(m.r.quad||mvStem(m.name)).trim()||m.name;var kk=k.toLowerCase();if(!q[kk]){q[kk]={name:k,maps:[],poly:null};ql.push(q[kk]);}q[kk].maps.push(m);});
@@ -3527,6 +3531,7 @@ function mvOpenCave(c){MVS.cave=c;store('ct-mvcave',c);MVS.sel=null;var g=MVS.by
   g.cls=cls;g.quads.forEach(function(Q){Q.n=0;});for(i=0;i<g.st.length;i++)if(inQ[i]>=0)polys[inQ[i]].n++;}
  var n=g.quads.length,un=g.st?g.st.length:0;
  $('mvHint').innerHTML=!g.st?'This cave\'s survey isn\'t on the phone - only its maps. Open the quads from the list below.':n?'<b>'+n+(n==1?' quad':' quads')+'</b> with maps. Pinch to zoom, then tap the line plot inside a quad and its map comes up.':'No maps of '+esc(c)+' on this phone yet. <b>＋ Upload a map</b> below'+(PC?', or get them from '+esc(PC.name):'')+'.';
+ if(g.st&&!g.gh)$('mvHint').innerHTML+='<span style="display:block;margin-top:6px">No elevation came with this cave, so no contours. '+(PC?'Open it in CartoTable on '+esc(PC.name)+' (it fetches the ground), then add it from the computer again.':'Open it in CartoTable on your computer (it fetches the ground), then send it to the phone again.')+'</span>';
  mvSize();mvFit();mvPaint();mvList();}
 function mvSize(){var cv=$('mvCv'),dpr=window.devicePixelRatio||1,W=cv.clientWidth||300,H=cv.clientHeight||300;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);MVS.W=W;MVS.H=H;MVS.dpr=dpr;}
 function mvBounds(g){var lo=[1e9,1e9],hi=[-1e9,-1e9];function grow(x,y){lo[0]=Math.min(lo[0],x);lo[1]=Math.min(lo[1],y);hi[0]=Math.max(hi[0],x);hi[1]=Math.max(hi[1],y);}
@@ -3535,7 +3540,17 @@ function mvFit(poly){var g=MVS.by[MVS.cave];if(!g)return;var b;if(poly){var lo=[
  if(!b){MVS.view={s:1,cx:0,cy:0};return;}var pad=18,W=MVS.W,H=MVS.H,s=Math.min((W-2*pad)/Math.max(1,b[1][0]-b[0][0]),(H-2*pad)/Math.max(1,b[1][1]-b[0][1]));MVS.view={s:s,cx:(b[0][0]+b[1][0])/2,cy:(b[0][1]+b[1][1])/2};}
 function mvP(x,y){var v=MVS.view;return[MVS.W/2+(x-v.cx)*v.s,MVS.H/2-(y-v.cy)*v.s];}
 function mvW(px,py){var v=MVS.view;return[v.cx+(px-MVS.W/2)/v.s,v.cy-(py-MVS.H/2)/v.s];}
-function mvPaint(){var cv=$('mvCv'),c=cv.getContext('2d');c.setTransform(MVS.dpr,0,0,MVS.dpr,0,0);c.clearRect(0,0,MVS.W,MVS.H);var g=MVS.by&&MVS.by[MVS.cave];if(!g||!MVS.view)return;
+var MV_CC={};   // contour paths per cave and interval, kept while the page is open
+function mvContours(g,ci){var k=g.name+'|'+ci+'|'+g.gh.w+'x'+g.gh.h;if(MV_CC[k])return MV_CC[k];
+ try{if(!g.garr){g.garr=new Uint16Array(b64(g.gb64));g.gb64=null;}}catch(x){g.gh=null;return null;}
+ return MV_CC[k]=contourPaths(g.gh,g.garr,g.gz0,ci);}
+function mvPaint(){var cv=$('mvCv'),c=cv.getContext('2d');c.setTransform(MVS.dpr,0,0,MVS.dpr,0,0);c.clearRect(0,0,MVS.W,MVS.H);var g=MVS.by&&MVS.by[MVS.cave];var kc=$('mvKeyC');if(kc)kc.innerHTML='';if(!g||!MVS.view)return;
+ // the ground: Topside's orange contours on the dark, 10 ft or the next interval up that keeps them apart (index lines every 5th). The
+ // test is the spacing on a 1:1 slope; real hillsides are gentler, so 2 px leaves them well apart on screen
+ if(g.gh){var CIS=[10,20,40,100,200,500],ci=500,s=MVS.view.s;for(var q=0;q<CIS.length;q++)if(CIS[q]*FT*s>=2){ci=CIS[q];break;}
+  var cc=mvContours(g,ci);if(cc){c.save();c.setTransform(MVS.dpr*s,0,0,-MVS.dpr*s,MVS.dpr*(MVS.W/2-MVS.view.cx*s),MVS.dpr*(MVS.H/2+MVS.view.cy*s));
+   c.strokeStyle='rgba(226,122,48,.6)';c.lineWidth=0.9/s;c.stroke(cc.minor);c.strokeStyle='rgba(244,146,66,.9)';c.lineWidth=1.5/s;c.stroke(cc.index);c.restore();
+   if(kc)kc.innerHTML='<br><span><i style="background:#e27a30;height:2px"></i>Contours, every '+ci+' ft</span>';}}
  // the quads: a red tint, the one picked stronger; online-only quads (on the computer, not this phone) dashed
  g.quads.forEach(function(Q){if(!Q.poly)return;c.beginPath();Q.poly.forEach(function(p,i){var q=mvP(p[0],p[1]);if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();
   var on=Q===MVS.sel;c.globalAlpha=on?0.28:0.12;c.fillStyle=MV_RED;c.fill();c.globalAlpha=1;c.lineWidth=on?3:1.5;c.strokeStyle=on?'#fca5a5':MV_RED;c.stroke();});
