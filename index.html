@@ -175,7 +175,7 @@ body.cave .tile .tt{font-size:16px}
 <div id="home" class="over"><div class="in" id="homeIn"></div></div>
 <div id="land" class="over" style="z-index:21"><div class="in" id="landIn"></div></div>
 <div id="mv" class="over"><div id="mvTop"><button class="ib" id="mvBack" title="Back">←</button><span style="display:inline-flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></span><b style="font-size:18px">MapViewer</b><span style="flex:1"></span><button class="ib" id="mvShareB" title="Share this cave and its maps as one file">⇪ Share</button><button class="ib" id="mvUpB">＋ Upload</button></div><div id="mvBody"><div class="in"><div id="mvCaves"></div><div id="mvPlot"><canvas id="mvCv"></canvas><div id="mvKey"><span><i style="background:#ef4444"></i>Map available</span><br><span><i style="background:#5b6673"></i>No map yet</span></div><div id="mvTools"><button id="mvIn" title="Zoom in">＋</button><button id="mvOut" title="Zoom out">－</button><button id="mvFitB" title="Whole cave">⤢</button></div></div><div class="mut" id="mvHint" style="font-size:13.5px;margin:8px 2px"></div><button class="btn" id="mvUp2">＋ Upload a map</button><button class="btn alt" id="mvShare2">⇪ Share these maps</button><button class="btn alt" id="mvOpenP">📦 Open a map pack</button><button class="btn alt" id="mvDl" style="display:none"></button><div id="mvList"></div><p class="mut" id="mvStore" style="font-size:12.5px;margin-top:12px"></p></div></div></div>
-<div id="mvView" class="over"><div id="mvvBar"><button class="ib" id="mvvX" title="Back">←</button><b id="mvvT" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button class="ib" id="mvvFit" title="Fit">⤢</button></div><div id="mvvWrap"><img id="mvvImg" alt=""></div></div>
+<div id="mvView" class="over"><div id="mvvBar"><button class="ib" id="mvvX" title="Back">←</button><b id="mvvT" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button class="ib" id="mvvFit" title="Fit">⤢</button></div><div id="mvvWrap"><img id="mvvImg" alt=""><canvas id="mvvHi" style="position:absolute;left:0;top:0;pointer-events:none;display:none"></canvas></div></div>
 <div id="modePick" class="over"><div class="in" id="modeIn"></div></div>
 <div id="pcOver" class="over" style="z-index:22"><div class="in" id="pcIn"></div></div>
 <div id="svy" class="over" style="padding:0;z-index:24;overflow:hidden"></div>
@@ -208,7 +208,7 @@ var HOSTED=!!(D&&D.hosted)||(location.protocol=='https:'&&!SANDBOX)||(!!document
 var DB=null;
 function db(){return new Promise(function(ok,no){if(DB)return ok(DB);try{var r=indexedDB.open('cartotable',1);r.onupgradeneeded=function(){r.result.createObjectStore('caves');};r.onsuccess=function(){DB=r.result;ok(DB);};r.onerror=function(){no(r.error);};}catch(e){no(e);}});}
 function dbDo(mode,fn){return db().then(function(d){return new Promise(function(ok,no){var t=d.transaction('caves',mode),s=t.objectStore('caves'),r=fn(s);t.oncomplete=function(){ok(r&&r.result);};t.onerror=function(){no(t.error);};});});}
-function savedCaves(){return dbDo('readonly',function(s){return s.getAllKeys();}).then(function(k){return k.filter(function(x){return String(x).indexOf('drafted:')!=0;});}).catch(function(){return[];});}
+function savedCaves(){return dbDo('readonly',function(s){return s.getAllKeys();}).then(function(k){return k.filter(function(x){return!/^(drafted|mvsheet|mvpdf):/.test(String(x));});}).catch(function(){return[];});}   // (21 Nov 2026: MapViewer's sheets and kept PDFs aren't caves)
 // ======================================================================= the cave
 var S,N,X,Y,Z,SH,M,ED,byName,leadAt,tripsAt,depthMax,files={},imgs={},ground=null,G=null,sinks=[];
 var view={az:0,tilt:90,cx:0,cy:0,cz:0,ppm:1}, mode='plan', colour='travel', sel=-1, trip=-1, route=null, W=0,H=0;
@@ -232,7 +232,7 @@ function load(d){
  // bar into a sideways scroll on a 360 px phone. scoreChip() draws it where the panel wants it.
  buildGraph();
  var bases=D.rasters.filter(function(r){return r.base;});
- lay.base=D.ground?'hillshade':(bases.length?D.rasters.indexOf(bases[0]):null);lay.extra={};
+ lay.base=D.ground?null:(bases.length?D.rasters.indexOf(bases[0]):null);lay.extra={};   // 21 Nov 2026 (Sully: "have the default background the orange contours of the area around the cave"): with elevation, dark ground and the orange contours, as Topside's dark plot; hillshade and imagery a tick away in Layers
  D.rasters.forEach(function(r,i){if(!r.base&&r.on)lay.extra[i]=r.op||0.8;});
  lay.contours=!!D.ground;lay.sinks=false;
  // a cave from a web host can't be changed, so drafted maps added on this phone are kept beside it
@@ -458,13 +458,13 @@ function legend(){var L=$('legend'),h='';
  if(sel>=0)sym+='<span><b style="display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid #fbbf24;margin-right:5px"></b>Selected station</span>';
  if(route&&route.length>1)routeKinds().forEach(function(k){var st=GOSTY[k]||GOSTY[7],bg=st.d.length?'repeating-linear-gradient(90deg,'+st.c+' 0 '+Math.max(2,st.d[0]/2)+'px,transparent '+Math.max(2,st.d[0]/2)+'px '+Math.max(5,(st.d[0]+st.d[1])/2)+'px)':st.c;sym+='<span><i style="background:'+bg+';height:4px"></i>Way in: '+esc(D.going[k]||'')+'</span>';});
  if((route&&squeezeList(true).length)||(lay.squeezes&&D&&D.dm))sym+='<span><b style="display:inline-block;width:12px;height:10px;border-left:3px solid #ef4444;border-right:3px solid #ef4444;margin-right:5px"></b>Squeeze (size shown)</span>';
- if(lay.contours&&D&&D.ground)sym+='<span><i style="background:#c48c52;height:2px"></i>Contours, every '+lay.cint+' ft</span>';
+ if(lay.contours&&D&&D.ground)sym+='<span><i style="background:#c48c52;height:2px"></i>Contours, every '+(lay.cintNow||lay.cint)+' ft</span>';
  if(lay.sinks&&typeof sinks!='undefined'&&sinks.length)sym+='<span><b style="display:inline-block;width:10px;height:10px;border-radius:50%;border:1.5px solid #4f9be0;background:rgba(79,155,224,.18);margin-right:5px"></b>Sink</span>';
  var full=h+(sym?(h?'<div style="height:3px"></div>':'')+sym:'');
  L.innerHTML=full?(keyOpen?full+' <span class="mut" style="font-size:10.5px">▾ hide</span>':'<span style="margin:0">Key ▸</span>'):'';L.classList.toggle('folded',!keyOpen);L.style.display=full?'':'none';}
 $('legend').onclick=function(){keyOpen=!keyOpen;store('ct-key2',keyOpen?'1':'0');legend();};
 $('layBtn').onclick=function(){showTab('layers');openSheet();};   // 21 Nov 2026 (Sully: "There's no layer option... so I can disable overlays like that"): Map > Layers in one tap - drafted maps from the computer are switched there
-function keyCheck(){var k=[colour,lay.ents,lay.leads,sel>=0,route&&route.length,route&&route[route.length-1],lay.contours,lay.cint,lay.sinks,lay.squeezes,keyOpen].join('|');if(k!=keySig){keySig=k;legend();}}
+function keyCheck(){var k=[colour,lay.ents,lay.leads,sel>=0,route&&route.length,route&&route[route.length-1],lay.contours,lay.cint,lay.cintNow,lay.sinks,lay.squeezes,keyOpen].join('|');if(k!=keySig){keySig=k;legend();}}
 // ======================================================================= 2-D view
 var cv=$('cv'),g=cv.getContext('2d'),P2=new Float64Array(0);
 function proj(x,y,z){var c=Math.cos(view.az*Math.PI/180),s=Math.sin(view.az*Math.PI/180),ti=view.tilt*Math.PI/180;
@@ -510,9 +510,14 @@ function paint(){LB={};try{keyCheck();}catch(e){}
   if(lay.heatOver&&G&&lay.base!='heat'){g.save();g.globalCompositeOperation='multiply';drawRaster(G.heatFlat,D.ground.x0,D.ground.y0,D.ground.cell,0.7*dim);g.restore();}
   if(lay.hillOver&&G&&lay.base!='hillshade'){g.save();g.globalCompositeOperation='multiply';drawRaster(G.hill,D.ground.x0,D.ground.y0,D.ground.cell,0.55*dim);g.restore();}
   if(!CAVE&&D.coords)for(var ov in lay.over)drawTiles(LIVE[ov],lay.over[ov],attr);
-  if(lay.contours&&G){var cc=contours(lay.cint),t=worldTransform();g.save();g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);
-   var gap=lay.cint*FT*view.ppm;   // contours closer than a few pixels on screen are thinned out, not drawn as a solid smear
-   if(gap>=4){g.strokeStyle='rgba(176,126,74,.5)';g.lineWidth=0.9/view.ppm;g.stroke(cc.minor);}if(gap*5>=4){g.strokeStyle='rgba(196,140,82,'+(gap>=4?.85:.6)+')';g.lineWidth=(gap>=4?1.7:1.1)/view.ppm;g.stroke(cc.index);}g.restore();}
+  if(lay.contours&&G){
+   // 21 Nov 2026 (Sully, the dark contour background): the interval chosen in Layers, or the next one up (5, 10, 20, 40, 100, 200, 500 ft) when
+   // it would crowd the screen - as Topside's plot keeps them visible zoomed out (they used to vanish under 4 px apart)
+   var ci=lay.cint,CIS=[2,5,10,20,40,100,200,500];for(var q=0;q<CIS.length;q++){if(CIS[q]<lay.cint)continue;ci=CIS[q];if(CIS[q]*FT*view.ppm>=5)break;}lay.cintNow=ci;
+   var cc=contours(ci),t=worldTransform();g.save();g.setTransform(t[0],t[1],t[2],t[3],t[4],t[5]);
+   var gap=ci*FT*view.ppm;   // contours closer than a few pixels on screen are thinned out, not drawn as a solid smear
+   var dk=lay.base==null;   // (on the dark ground: Topside's bright orange; over hillshade or imagery: the softer tan as before)
+   if(gap>=4){g.strokeStyle=dk?'rgba(226,122,48,.78)':'rgba(176,126,74,.5)';g.lineWidth=(dk?1:0.9)/view.ppm;g.stroke(cc.minor);}if(gap*5>=4){g.strokeStyle=dk?'rgba(244,146,66,.95)':'rgba(196,140,82,'+(gap>=4?.85:.6)+')';g.lineWidth=(gap>=4?1.7:1.1)/view.ppm;g.stroke(cc.index);}g.restore();}
   if(lay.sinks){g.strokeStyle='#4f9be0';g.fillStyle='rgba(79,155,224,.18)';g.lineWidth=1.4;sinks.forEach(function(k){var p=proj(k[0],k[1],k[2]);var r=Math.max(2.5,k[4]/2*view.ppm);if(p[0]<-r||p[1]<-r||p[0]>W+r||p[1]>H+r)return;g.beginPath();g.arc(p[0],p[1],r,0,7);g.fill();g.stroke();});}
  }
  var lw=Math.max(2.8,Math.min(4,view.ppm*1.1)),groups={},dimT=trip>=0;g.lineCap='round';g.lineJoin='round';
@@ -1241,7 +1246,7 @@ function draftedSheet(){sheet('✒ Drafted maps','<div id="dfPills" style="displ
  var by={},order=[];function cave(n){if(!by[n]){by[n]={name:n,st:null,sh:null,maps:[],seen:{},saved:false};order.push(n);}return by[n];}
  function add(n,r,b64){if(!r||r.kind!='drafted')return;var g=cave(n);if(g.seen[r.file])return;g.seen[r.file]=1;g.maps.push({r:r,b64:b64});}
  if(D&&D.st){var g0=cave(D.name);g0.st=D.st;g0.sh=D.sh;g0.saved=!D.hosted;(D.rasters||[]).forEach(function(r){add(D.name,r,D.files&&D.files[r.file]);});}
- dbDo('readonly',function(st){return st.getAllKeys();}).catch(function(){return[];}).then(function(keys){keys=(keys||[]).map(String);
+ dbDo('readonly',function(st){return st.getAllKeys();}).catch(function(){return[];}).then(function(keys){keys=(keys||[]).map(String).filter(function(k){return k.indexOf('mvpdf:')!=0;});
   return keys.reduce(function(p,k){return p.then(function(){return dbDo('readonly',function(st){return st.get(k);}).then(function(x){if(!x)return;
    if(k.indexOf('drafted:')==0){var n=k.slice(8);(x.rasters||[]).forEach(function(r){add(n,r,x.files&&x.files[r.file]);});}
    else{if(!(x.rasters||[]).some(function(r){return r.kind=='drafted';})&&!by[k])return;var g=cave(k);g.saved=true;if(!g.st){g.st=x.st;g.sh=x.sh;}(x.rasters||[]).forEach(function(r){add(k,r,x.files&&x.files[r.file]);});}}).catch(function(){});});},Promise.resolve());
@@ -1314,7 +1319,7 @@ function draftPull(cave,maps){var i=0,got=0;
    D.rasters=D.rasters.filter(function(q){return!(q.kind=='drafted'&&dfName(q)==nm);});
    var file='data/pc'+Date.now()+'-'+i+'.png';D.files=D.files||{};D.files[file]=r.data;delete files[file];
    var nr={name:r.name,kind:'drafted',file:file,mime:r.mime||'image/png',x0:r.e0-dx,y0:r.n1-dy,mpp:r.mpp,w:r.w,h:r.h,base:false,on:true,op:0.85,attr:'',quad:r.quad||'',method:r.method||'',added:Date.now(),border:(r.border||[]).map(function(b){return[b[0]-dx,b[1]-dy];})};
-   D.rasters.push(nr);lay.extra[D.rasters.length-1]=0.85;got++;return getImage(nr);
+   D.rasters.push(nr);lay.extra[D.rasters.length-1]=0.85;got++;return Promise.resolve(getImage(nr)).then(function(){toast('Downloading '+esc(dfName(m))+' - the sharp copy ('+i+' of '+maps.length+')…',240000);return mvPullPdf(cave,m.n,nr);});
   }).catch(function(e){toast('Couldn\'t get '+esc(dfName(m))+': '+esc(e.message||e),6000);}).then(function(){setTimeout(next,50);});})();}
 function dfName(r){return String(r.name||'Drafted map').replace(/^Drafted map: /,'');}
 function openDrafted(cave,file){
@@ -3470,7 +3475,7 @@ function mvGather(){var by={},order=[],att={};
  function cave(n){if(!by[n]){by[n]={name:n,st:null,sh:null,maps:[],seen:{},quads:[]};order.push(n);}return by[n];}
  function add(n,r,b64,plain){if(!r)return;var g=cave(n);var key=r.file||r.id;if(g.seen[key])return;g.seen[key]=1;g.maps.push({r:r,b64:b64,plain:!!plain,name:dfName(r),added:mvAdded(r)});}
  if(D&&D.st){var g0=cave(D.name);g0.st=D.st;g0.sh=D.sh;(D.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(D.name,r,D.files&&D.files[r.file]);});}
- return dbDo('readonly',function(st){return st.getAllKeys();}).catch(function(){return[];}).then(function(keys){keys=(keys||[]).map(String);
+ return dbDo('readonly',function(st){return st.getAllKeys();}).catch(function(){return[];}).then(function(keys){keys=(keys||[]).map(String).filter(function(k){return k.indexOf('mvpdf:')!=0;});
   return keys.reduce(function(p,k){return p.then(function(){return dbDo('readonly',function(st){return st.get(k);}).then(function(x){if(!x)return;
    if(k.indexOf('drafted:')==0){var n=k.slice(8);(x.rasters||[]).forEach(function(r){if(r.kind=='drafted')add(n,r,x.files&&x.files[r.file]);});}
    else if(k.indexOf('mvsheet:')==0){var n2=k.slice(8);(x.sheets||[]).forEach(function(s){if(s.of){(att[n2]=att[n2]||{})[s.of]=s;}else add(n2,s,s.data,true);});}
@@ -3585,6 +3590,15 @@ function mvQuad(Q){MVS.sel=Q;mvPaint();mvList();var g=MVS.by[MVS.cave],m0=Q.maps
  if(e=$('mqGet'))e.onclick=function(){mvDownload(Q.newer);};
  [].forEach.call(document.querySelectorAll('[data-mv]'),function(r){r.onclick=function(){mvView(Q.maps[+r.dataset.mv]);};});
  $('mqUp').onclick=function(){mvUpload(Q.name);};}
+// 21 Nov 2026 (Sully: "The quality of the maps took a big hit during import" - a sheet was kept only as a picture, 4096 px long on the phone,
+// 3000 px from the computer): the sheet's own PDF / .ai (an .ai saved PDF-compatible is a PDF) is kept beside it, and full screen draws its
+// vectors sharp at any zoom. Kept as a Blob under 'mvpdf:<cave>:<id>' (not base64: no growth, not read unless opened).
+function mvPdfPut(key,blob){return dbDo('readwrite',function(st){return st.put(blob,key);}).then(function(){return key;},function(){return null;});}
+function mvPdfGet(key){return key?dbDo('readonly',function(st){return st.get(key);}).catch(function(){return null;}):Promise.resolve(null);}
+function mvIsPdf(blob){return blob.slice(0,1024).arrayBuffer().then(function(ab){return new TextDecoder('latin1').decode(new Uint8Array(ab)).indexOf('%PDF')>=0;},function(){return false;});}
+function mvB64Blob(b64,mime){try{var bin=atob(b64),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type:mime||'application/octet-stream'});}catch(x){return null;}}
+function mvPullPdf(cave,n,nr){return pcReq('GET','/api/draftpdf?name='+encodeURIComponent(cave)+'&n='+n,null,240000).then(function(r){return r.ok?r.blob():null;})   // (a Topside before 1.6.112: 404 - the picture alone)
+ .then(function(b){if(!b||b.size<64)return;return mvIsPdf(b).then(function(ok){if(ok)return mvPdfPut('mvpdf:'+cave+':'+nr.file,new Blob([b],{type:'application/pdf'})).then(function(k){if(k)nr.pdf=k;});});}).catch(function(){});}
 function mvB64Url(b64,mime){try{var bin=atob(b64),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return URL.createObjectURL(new Blob([u],{type:mime||'image/png'}));}catch(x){return null;}}
 function mvImgUrl(m){if(m.url)return Promise.resolve(m.url);
  if(m.sheet){m.url=mvB64Url(m.sheet.data,m.sheet.mime);return Promise.resolve(m.url);}
@@ -3598,7 +3612,25 @@ function mvImgUrl(m){if(m.url)return Promise.resolve(m.url);
 function mvView(m){mvImgUrl(m).then(function(u){if(!u){toast('That map\'s picture isn\'t on this phone',4000);return;}
  var o=$('mvView');o.style.display='block';$('mvvT').textContent=m.name;var im=$('mvvImg');im.style.transform='';im.onload=function(){fitIt();};im.src=u;
  var V={s:1,x:0,y:0},pts={},d0=null,last=0;
- function apply(){im.style.transform='translate('+V.x+'px,'+V.y+'px) scale('+V.s+')';}
+ // 21 Nov 2026: with the sheet's PDF kept, the picture is swapped for the page drawn from it, and once a pinch or pan settles the part on
+ // the screen is drawn again from the vectors at that zoom (hc, over the picture) - sharp however far in
+ var P=null,hc=$('mvvHi'),hTask=null,hT=0,dpr=window.devicePixelRatio||1;hc.style.display='none';
+ function hiClear(){clearTimeout(hT);if(hTask){try{hTask.cancel();}catch(x){}hTask=null;}hc.style.display='none';}
+ function hiSoon(){clearTimeout(hT);if(P)hT=setTimeout(hiDraw,220);}
+ function hiDraw(){if(!P||o.style.display=='none')return;if(V.s*dpr<=1.05){hc.style.display='none';return;}   // the base picture is sharp enough
+  var W=o.clientWidth,H=o.clientHeight;hc.width=Math.round(W*dpr);hc.height=Math.round(H*dpr);hc.style.width=W+'px';hc.style.height=H+'px';
+  var g=hc.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,hc.width,hc.height);
+  if(hTask){try{hTask.cancel();}catch(x){}}
+  hTask=P.page.render({canvasContext:g,viewport:P.page.getViewport({scale:P.base*V.s*dpr}),transform:[1,0,0,1,V.x*dpr,V.y*dpr]});
+  var t=hTask;t.promise.then(function(){if(t===hTask){hc.style.display='block';hTask=null;}},function(){});}
+ var pk=(m.sheet&&m.sheet.pdf)||(m.r&&m.r.pdf);
+ if(pk)mvPdfGet(pk).then(function(b){if(!b)return null;return Promise.all([b.arrayBuffer(),loadPdfJs()]);}).then(function(r){if(!r)return null;return r[1].getDocument({data:new Uint8Array(r[0])}).promise;})
+  .then(function(doc){if(!doc)return null;return doc.getPage(1);}).then(function(pg){if(!pg||o.style.display=='none')return;
+   var v1=pg.getViewport({scale:1}),base=Math.min(4096/Math.max(v1.width,v1.height),2.5*Math.max(o.clientWidth,o.clientHeight)*dpr/Math.max(v1.width,v1.height));
+   var c=document.createElement('canvas'),vp=pg.getViewport({scale:base});c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
+   return pg.render({canvasContext:g,viewport:vp}).promise.then(function(){c.toBlob(function(bl){if(!bl||o.style.display=='none')return;P={page:pg,base:base};im.onload=function(){fitIt();hiSoon();};im.src=URL.createObjectURL(bl);},'image/png');});
+  }).catch(function(e){console.log('mvView pdf: '+(e&&e.message||e));});   // (the picture stays)
+ function apply(){im.style.transform='translate('+V.x+'px,'+V.y+'px) scale('+V.s+')';hiClear();hiSoon();}
  function fitIt(){var W=o.clientWidth,H=o.clientHeight-50,w=im.naturalWidth||1,h=im.naturalHeight||1;V.s=Math.min(W/w,H/h);V.x=(W-w*V.s)/2;V.y=50+(H-h*V.s)/2;apply();}
  function zoomAt(px,py,f){V.x=px-(px-V.x)*f;V.y=py-(py-V.y)*f;V.s*=f;apply();}
  var wr=$('mvvWrap');
@@ -3609,7 +3641,7 @@ function mvView(m){mvImgUrl(m).then(function(u){if(!u){toast('That map\'s pictur
   else{V.x+=e.clientX-p.x;V.y+=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;apply();}};
  wr.onpointerup=wr.onpointercancel=function(e){delete pts[e.pointerId];if(Object.keys(pts).length<2)d0=null;};
  wr.onwheel=function(e){e.preventDefault();zoomAt(e.clientX,e.clientY,Math.exp(-e.deltaY*0.0015));};
- $('mvvFit').onclick=fitIt;$('mvvX').onclick=function(){o.style.display='none';};});}
+ $('mvvFit').onclick=fitIt;$('mvvX').onclick=function(){hiClear();P=null;o.style.display='none';};});}
 // ---- maps from the computer, for offline
 function mvEnsure(c){if(D&&D.name==c&&D.st)return Promise.resolve(true);return dbDo('readonly',function(st){return st.get(c);}).then(function(d){if(!d||!d.st){toast(esc(c)+'\'s survey isn\'t on this phone - add the cave first (Tacheo → Add a cave)',6000);return false;}return load(d).then(function(){$('mv').style.display='block';return true;});});}
 function mvDownload(list){var c=MVS.cave;if(!c)return;if(!PC){toast('Connect this phone to Topside on your computer first (Tacheo → My computer)',6000);return;}
@@ -3636,7 +3668,10 @@ function mvImportPack(d){var c=d.name,pk=d.mapPack||{};delete d.mapPack;delete d
   if(old&&old.rasters)old.rasters.forEach(function(x){if(x.kind=='drafted'&&!d.rasters.some(function(q){return q.file==x.file;})){d.rasters.push(x);d.files=d.files||{};if(old.files&&old.files[x.file])d.files[x.file]=old.files[x.file];}});
   return dbDo('readwrite',function(s){return s.put(d,c);});
  }).then(function(){return dbDo('readonly',function(s){return s.get('mvsheet:'+c);}).catch(function(){return null;});}).then(function(x){x=x||{sheets:[]};var have={};x.sheets.forEach(function(s){have[s.id]=1;});
-  (pk.sheets||[]).forEach(function(s){delete s.orig;/* the PDF itself is for computers */if(!have[s.id])x.sheets.push(s);});return dbDo('readwrite',function(s){return s.put(x,'mvsheet:'+c);});
+  return Promise.all((pk.sheets||[]).map(function(s){var o=s.orig;delete s.orig;if(have[s.id])return null;x.sheets.push(s);
+   if(!o||!o.data)return null;var b=mvB64Blob(o.data,'application/pdf');if(!b)return null;   // (21 Nov 2026: the PDF / .ai a computer's pack carries is kept: sharp full screen)
+   return mvIsPdf(b).then(function(ok){if(ok)return mvPdfPut('mvpdf:'+c+':'+s.id,b).then(function(k){if(k)s.pdf=k;});});}))
+   .then(function(){return dbDo('readwrite',function(s){return s.put(x,'mvsheet:'+c);});});
  }).then(function(){var n=(d.rasters||[]).filter(function(x){return x.kind=='drafted';}).length+(pk.sheets||[]).filter(function(s){return!s.of;}).length;
   $('pcOver').style.display='none';mvShow(c);toast('📦 '+esc(c)+' is on this phone with '+n+(n==1?' map':' maps')+' - they work with no signal.',6000);
  }).catch(function(e){toast('Couldn\'t open the map pack: '+esc(e.message||e),7000);});}
@@ -3654,10 +3689,10 @@ function mvUpload(quad){var c=MVS.cave;if(!c){toast('Add a cave first (Tacheo �
 inp.onchange=function(){var f=inp.files[0];if(!f)return;$('pcOver').style.display='none';
   if(/^image\//.test(f.type)||/\.(png|jpe?g|webp|heic)$/i.test(f.name))mvKeepPlain(c,quad,f);
   else mvEnsure(c).then(function(ok){if(ok)mvImportPdf(c,quad,f);});};inp.click();}
-function mvImportPdf(c,quad,file){toast('Reading '+esc(file.name)+'…',60000);var buf,pgRef;
+function mvImportPdf(c,quad,file){toast('Reading '+esc(file.name)+'…',60000);var buf,pgRef,pdfKey=null;
  file.arrayBuffer().then(function(b){buf=b;var head=new TextDecoder('latin1').decode(new Uint8Array(b,0,Math.min(1024,b.byteLength)));
   if(head.indexOf('%PDF')<0)throw new Error(/\.ai$/i.test(file.name)?'this .ai was saved without PDF compatibility. In Illustrator: File > Save As, tick "Create PDF Compatible File", then upload it again':'it isn\'t a PDF');   // (21 Nov 2026: "See if you can import .ai files too" - an .ai saved PDF-compatible, Illustrator\'s default, is a PDF inside)
-  return loadPdfJs();}).then(function(pdfjs){return pdfjs.getDocument({data:new Uint8Array(buf)}).promise;}).then(function(doc){return doc.getPage(1);}).then(function(pg){pgRef=pg;
+  return mvPdfPut('mvpdf:'+c+':'+Date.now(),new Blob([b],{type:'application/pdf'})).then(function(k){pdfKey=k;return loadPdfJs();});}).then(function(pdfjs){return pdfjs.getDocument({data:new Uint8Array(buf)}).promise;}).then(function(doc){return doc.getPage(1);}).then(function(pg){pgRef=pg;
   return Promise.all([pg.getOperatorList(),pg.getTextContent()]).then(function(res){var segs=pdfSegments(res[0],window.pdfjsLib.OPS),vp=pg.getViewport({scale:1});
    var shots=[],sts={};for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];shots.push([X[a],Y[a],X[b],Y[b]]);sts[a]=1;sts[b]=1;}
    var st=Object.keys(sts).map(function(i){return[X[i],Y[i]];});
@@ -3666,17 +3701,17 @@ function mvImportPdf(c,quad,file){toast('Reading '+esc(file.name)+'…',60000);v
    var g2=cv0.getContext('2d');g2.fillStyle='#fff';
    return pg.render({canvasContext:g2,viewport:v2}).promise.then(function(){
     if(fit&&fit.good){var wj=document.createElement('canvas');wj.width=cv0.width;wj.height=cv0.height;var gj=wj.getContext('2d');gj.fillStyle='#fff';gj.fillRect(0,0,wj.width,wj.height);gj.drawImage(cv0,0,0);
-     wj.toBlob(function(bl){placeDrafted(cv0,v2.transform,fit,file.name,{quad:quad,done:function(r){mvSavePlain(c,quad,file.name,bl,'image/jpeg',r.file).then(function(){toast('Saved to '+esc(quad)+' - lined up by its '+(fit.method=='names'?'station names':'line plot')+'.',5000);mvShow(c);});}});},'image/jpeg',0.88);return;}
+     wj.toBlob(function(bl){placeDrafted(cv0,v2.transform,fit,file.name,{quad:quad,done:function(r){mvSavePlain(c,quad,file.name,bl,'image/jpeg',r.file,pdfKey).then(function(){toast('Saved to '+esc(quad)+' - lined up by its '+(fit.method=='names'?'station names':'line plot')+'.',5000);mvShow(c);});}});},'image/jpeg',0.88);return;}
     // not lined up: kept anyway as the quad's sheet (it opens full screen; its outline is the quad's other versions')
     var w=document.createElement('canvas');w.width=cv0.width;w.height=cv0.height;var gw=w.getContext('2d');gw.fillStyle='#fff';gw.fillRect(0,0,w.width,w.height);gw.drawImage(cv0,0,0);
-    w.toBlob(function(bl){mvSavePlain(c,quad,file.name,bl,'image/jpeg').then(function(){toast('Saved to '+esc(quad)+'. It couldn\'t be lined up on the survey'+(fit&&fit.note?' ('+esc(fit.note)+')':'')+' - it opens as a sheet; Topside on the computer can line it up.',8000);mvShow(c);});},'image/jpeg',0.9);});});
+    w.toBlob(function(bl){mvSavePlain(c,quad,file.name,bl,'image/jpeg',null,pdfKey).then(function(){toast('Saved to '+esc(quad)+'. It couldn\'t be lined up on the survey'+(fit&&fit.note?' ('+esc(fit.note)+')':'')+' - it opens as a sheet; Topside on the computer can line it up.',8000);mvShow(c);});},'image/jpeg',0.9);});});
  }).catch(function(e){toast('Couldn\'t read it: '+esc(e.message),8000);});}
 function mvKeepPlain(c,quad,file){toast('Saving '+esc(file.name)+'…',30000);var im=new Image(),u=URL.createObjectURL(file);
  im.onload=function(){var f=Math.min(1,4096/Math.max(im.width,im.height)),w=document.createElement('canvas');w.width=Math.round(im.width*f);w.height=Math.round(im.height*f);w.getContext('2d').drawImage(im,0,0,w.width,w.height);URL.revokeObjectURL(u);
   w.toBlob(function(bl){mvSavePlain(c,quad,file.name,bl,'image/jpeg').then(function(){toast('Saved to '+esc(quad)+'.',3500);mvShow(c);});},'image/jpeg',0.9);};
  im.onerror=function(){toast('That picture couldn\'t be read here (HEIC? share it as a JPEG)',6000);};im.src=u;}
-function mvSavePlain(c,quad,fname,blob,mime,of){return blob.arrayBuffer().then(function(ab){var u=new Uint8Array(ab),bin='';for(var i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
- var s={id:'sheet'+Date.now(),name:'Drafted map: '+fname.replace(/\.[^.]+$/,''),quad:quad,mime:mime,data:btoa(bin),added:Date.now(),kind:'sheet'};if(of)s.of=of;
+function mvSavePlain(c,quad,fname,blob,mime,of,pdf){return blob.arrayBuffer().then(function(ab){var u=new Uint8Array(ab),bin='';for(var i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));
+ var s={id:'sheet'+Date.now(),name:'Drafted map: '+fname.replace(/\.[^.]+$/,''),quad:quad,mime:mime,data:btoa(bin),added:Date.now(),kind:'sheet'};if(of)s.of=of;if(pdf)s.pdf=pdf;
  return dbDo('readonly',function(st){return st.get('mvsheet:'+c);}).catch(function(){return null;}).then(function(x){x=x||{sheets:[]};x.sheets.push(s);return dbDo('readwrite',function(st){return st.put(x,'mvsheet:'+c);});});}).catch(function(e){toast('Couldn\'t keep it on this phone: '+esc(e.message||e),8000);});}
 
 mvHook();$('mvBack').onclick=mvClose;$('mvShareB').onclick=mvShare;$('mvShare2').onclick=mvShare;$('mvOpenP').onclick=mvOpenPack;$('mvUpB').onclick=function(){mvUpload();};$('mvUp2').onclick=function(){mvUpload();};$('mvDl').onclick=function(){var on=MVS.online[MVS.cave]||[];mvDownload(on.filter(function(m){return!m.have;}));};
