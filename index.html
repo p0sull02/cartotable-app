@@ -695,7 +695,7 @@ function bindOnline(q){var e;
  if(e=$('ownSave'))e.onclick=function(){var nm=$('ownName').value.trim()||'My map',u=liveUrl($('ownUrl').value),m=$('ownMsg');
   if(!/^https:\/\//i.test(u)){m.textContent=' It needs an https:// address.';return;}
   if(!/\{z\}/.test(u)||!/\{x\}/.test(u)||!/\{y\}/.test(u)){m.textContent=' The address needs {z}, {x} and {y} (or end in /MapServer).';return;}
-  var c=[0,0];for(var i=0;i<N;i++){c[0]+=X[i]/N;c[1]+=Y[i]/N;}var ll=toLatLon(c[0],c[1]),z=13,t=tileXY(ll[0],ll[1],z),url=u.replace('{z}',z).replace('{x}',Math.floor(t[0])).replace('{y}',Math.floor(t[1]));
+  var c=[0,0];for(var i=0;i<N;i++){c[0]+=X[i]/N;c[1]+=Y[i]/N;}var ll=toLatLon(c[0],c[1]),z=13,t=tileXY(ll[0],ll[1],z),url=tileUrl(u,z,Math.floor(t[0]),Math.floor(t[1]));
   m.textContent=' Trying it...';var im=new Image();var done=false;setTimeout(function(){if(!done){done=true;m.textContent=' No answer from that address - check it, or try again with a signal.';}},12000);
   im.onload=function(){if(done)return;done=true;var own=[];try{own=JSON.parse(store('ct-maps')||'[]');}catch(x){}own.push({name:nm,url:u,max:19,attr:nm,over:$('ownOver').checked?1:0});store('ct-maps',JSON.stringify(own));liveLoad();
    var k=LIVE.length-1;if(LIVE[k].over)lay.over[k]=0.9;else{lay.base='live';lay.live=k;}draw();showTab('layers');toast('Added '+nm);};
@@ -827,12 +827,19 @@ var LIVE_BUILTIN=[
  {name:'Topo map (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin, USGS, NGA'},
  {name:'OpenTopoMap',url:'https://tile.opentopomap.org/{z}/{x}/{y}.png',max:17,attr:'OpenTopoMap (CC-BY-SA), OpenStreetMap contributors, SRTM',noBulk:1},
  {name:'Shaded relief (USGS)',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSShadedReliefOnly/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS The National Map'},
+ {name:'Kentucky lidar hillshade (KyFromAbove - every sinkhole; Kentucky only)',url:'https://tiles.arcgis.com/tiles/ghsX9CKghMvyYjBU/arcgis/rest/services/Ky_MDHS_Phase2/MapServer/tile/{z}/{y}/{x}',max:20,attr:'KyFromAbove, Commonwealth of Kentucky'},
+ {name:'Kentucky aerial, 3 in (KyFromAbove Phase 3; Kentucky only)',url:'https://kyraster.ky.gov/arcgis/rest/services/ImageServices/Ky_KYAPED_Phase3_3IN_WGS84WM/ImageServer/exportImage?bbox={bbox}&bboxSR=3857&imageSR=3857&size=256,256&format=jpg&f=image',max:21,attr:'KyFromAbove, Commonwealth of Kentucky'},
+ {name:'Kentucky aerial, 6 in (KyFromAbove Phase 2; Kentucky only)',url:'https://kyraster.ky.gov/arcgis/rest/services/ImageServices/Ky_KYAPED_Phase2_6IN_WGS84WM/ImageServer/exportImage?bbox={bbox}&bboxSR=3857&imageSR=3857&size=256,256&format=jpg&f=image',max:20,attr:'KyFromAbove, Commonwealth of Kentucky'},
  {name:'Lidar hillshade (Esri - sharpens as you zoom; 3DEP lidar in the US)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',max:20,attr:'Esri, USGS 3DEP, NGA, NASA'},
  {name:'Streams and lakes (USGS)',url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}',max:16,attr:'USGS National Hydrography',over:1},
  {name:'Roads (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin',over:1},
  {name:'Place names and boundaries (Esri)',url:'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',max:19,attr:'Esri, HERE, Garmin',over:1}];
 var LIVE=[];function liveLoad(){var own=[];try{own=JSON.parse(store('ct-maps')||'[]');}catch(x){}LIVE=LIVE_BUILTIN.concat(own.map(function(m){m.custom=1;return m;}));}liveLoad();
-function liveUrl(u){u=String(u||'').trim();if(/\/(MapServer|ImageServer)\/?$/i.test(u))u=u.replace(/\/?$/,'/tile/{z}/{y}/{x}');return u;}
+function liveUrl(u){u=String(u||'').trim();if(/\/ImageServer\/?$/i.test(u))u=u.replace(/\/?$/,'/exportImage?bbox={bbox}&bboxSR=3857&imageSR=3857&size=256,256&format=jpg&f=image');else if(/\/MapServer\/?$/i.test(u))u=u.replace(/\/?$/,'/tile/{z}/{y}/{x}');return u;}   // 20 Nov: an ImageServer has no tile cache as a rule - ask it for each tile
+// {bbox}: an ArcGIS ImageServer's exportImage asked one 256-px web-mercator tile at a time (20 Nov 2026: Kentucky's KyFromAbove imagery and lidar
+// are image services, not tile caches - Sully: "The GIS imagery isn't detailed enough", against his ArcGIS map of Fisher Ridge)
+function tileUrl(u,z,x,y){u=String(u);if(u.indexOf('{bbox}')<0)return u.replace('{z}',z).replace('{x}',x).replace('{y}',y);var R=20037508.342789244,s=2*R/Math.pow(2,z),x0=-R+x*s,y1=R-y*s;
+ return u.replace('{bbox}',[x0,y1-s,x0+s,y1].map(function(v){return v.toFixed(2);}).join(','));}
 var tileCache={};
 function tileXY(lat,lon,z){var n=Math.pow(2,z);return[(lon+180)/360*n,(1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2*n];}
 function tileLL(x,y,z){var n=Math.pow(2,z),lon=x/n*360-180,lat=Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;return[lat,lon];}
@@ -842,11 +849,11 @@ function drawTiles(L,op,attr){if(!L||!D.coords)return;if(L.attr&&attr.indexOf(L.
  var a=toLatLon(Math.min.apply(0,xs),Math.min.apply(0,ys)),b=toLatLon(Math.max.apply(0,xs),Math.max.apply(0,ys));
  var mpp=1/view.ppm,z=Math.max(3,Math.min(L.max,Math.round(Math.log(156543.03*Math.cos(a[0]*Math.PI/180)/mpp/dpr)/Math.LN2)));
  var t1=tileXY(b[0],a[1],z),t2=tileXY(a[0],b[1],z);if((t2[0]-t1[0])*(t2[1]-t1[1])>400)return;
- for(var tx=Math.floor(t1[0]);tx<=Math.floor(t2[0]);tx++)for(var ty=Math.floor(t1[1]);ty<=Math.floor(t2[1]);ty++){var url=L.url.replace('{z}',z).replace('{x}',tx).replace('{y}',ty),im=tileCache[url];
+ for(var tx=Math.floor(t1[0]);tx<=Math.floor(t2[0]);tx++)for(var ty=Math.floor(t1[1]);ty<=Math.floor(t2[1]);ty++){var url=tileUrl(L.url,z,tx,ty),im=tileCache[url];
   if(!im){im=tileCache[url]=new Image();im.onload=draw;im.onerror=function(){this.bad=true;};im.src=url;}
   var sx=0,sy=0,sw=256,img=im;
   // 19 Nov 2026: where a zoom level has no tile (or it hasn't come yet), the coarser one above it fills in, so nothing goes blank
-  if(!im.complete||im.bad||!im.naturalWidth){img=null;for(var up=1;up<=4&&z-up>=0&&!img;up++){var k=1<<up,px2=Math.floor(tx/k),py2=Math.floor(ty/k),pu=L.url.replace('{z}',z-up).replace('{x}',px2).replace('{y}',py2),pi=tileCache[pu];
+  if(!im.complete||im.bad||!im.naturalWidth){img=null;for(var up=1;up<=4&&z-up>=0&&!img;up++){var k=1<<up,px2=Math.floor(tx/k),py2=Math.floor(ty/k),pu=tileUrl(L.url,z-up,px2,py2),pi=tileCache[pu];
     if(!pi&&up==1){pi=tileCache[pu]=new Image();pi.onload=draw;pi.onerror=function(){this.bad=true;};pi.src=pu;}
     if(pi&&pi.complete&&!pi.bad&&pi.naturalWidth){img=pi;sw=256/k;sx=(tx-px2*k)*sw;sy=(ty-py2*k)*sw;}}
    if(!img)continue;}
@@ -860,7 +867,7 @@ function saveOffline(mid,picked){var msg=$(mid||'xOffMsg');if(!('serviceWorker' 
   var a=toLatLon(lo[0]-400,lo[1]-400),b=toLatLon(hi[0]+400,hi[1]+400),urls=[];
   var use=[];if(picked){if(lay.base=='live'&&LIVE[lay.live])use.push(LIVE[lay.live]);for(var ov in lay.over)if(LIVE[ov])use.push(LIVE[ov]);}
   if(!use.length)use=[LIVE[0],LIVE[2]];var skipped=use.filter(function(L){return L.noBulk;}).map(function(L){return L.name;});use=use.filter(function(L){return!L.noBulk;});
-  function build(top){urls=[];  use.forEach(function(L){for(var z=12;z<=Math.min(top,L.max);z++){var t1=tileXY(b[0],a[1],z),t2=tileXY(a[0],b[1],z);for(var x=Math.floor(t1[0]);x<=Math.floor(t2[0]);x++)for(var y=Math.floor(t1[1]);y<=Math.floor(t2[1]);y++)urls.push(L.url.replace('{z}',z).replace('{x}',x).replace('{y}',y));}});
+  function build(top){urls=[];  use.forEach(function(L){for(var z=12;z<=Math.min(top,L.max);z++){var t1=tileXY(b[0],a[1],z),t2=tileXY(a[0],b[1],z);for(var x=Math.floor(t1[0]);x<=Math.floor(t2[0]);x++)for(var y=Math.floor(t1[1]);y<=Math.floor(t2[1]);y++)urls.push(tileUrl(L.url,z,x,y));}});
 }
   build(17);if(urls.length>6000)build(16);
   return caches.open('cartotable-tiles').then(function(c){var done=0,ok=0,i=0;return new Promise(function(res){function next(){if(i>=urls.length)return;var u=urls[i++];
