@@ -2471,7 +2471,7 @@ var SVK={tool:'move',type:'wall',view:'plan',sc:20,ox:0,oy:0,fit:true,splays:tru
 var SVLINES=[['-','Walls and levels'],['wall','Wall'],['wall_lower','Lower level'],['wall_upper','Upper level'],['wall_inferred','Indeterminate wall / unsurveyed'],['survey_wall','Passage outline (rough)'],['drip','Drip line'],
  ['-','Floor and ceiling'],['floor_step','Abrupt drop / floor step (down to the right)'],['pit','Vertical pit (draw round it)'],['ceiling_step','Change in ceiling (lower side to the right)'],['dome','Dome (draw round it)'],['domepit','Domepit (draw round it)'],
  ['ceiling_channel','Ceiling channel'],['floor_channel','Floor channel'],['slope','Slope (down to the right)'],['rock','Rock / boulder edge'],
- ['-','Water'],['water_edge','Water edge'],['stream','Small stream (draw downstream)'],['stream_rapids','Small rapids (draw downstream)'],['stream_int','Intermittent stream'],['stream_conj','Conjectural stream'],['waterfall','Waterfall (down to the right)'],
+ ['-','Water'],['water_edge','Water edge'],['stream','Small stream (draw downstream)'],['stream_rapids','Small rapids (draw downstream)'],['stream_int','Intermittent stream'],['stream_conj','Conjectural stream'],['flow_arc','Water flow, drain to resurgence (draw from the drain)'],['flow_arc_int','Intermittent water flow (draw from the drain)'],['waterfall','Waterfall (down to the right)'],
  ['-','Man-made'],['art_wall','Artificial wall'],['trail','Trail'],['trail_paved','Paved trail'],['guardrail','Guardrail'],['ladder','Ladder (draw up it)'],['stairs','Stairs (draw up them)'],['boardwalk','Boardwalk'],['bridge','Bridge']];
 var SVAREAS=[['-','Water'],['water','Water'],['sump','Sump'],
  ['-','Floor'],['sand','Sand'],['mud','Clay or silt'],['cobbles','Cobbles'],['gravel','Gravel'],['breakdown_s','Small breakdown'],['breakdown','Large breakdown'],['guano','Guano'],['ice','Ice / snow'],
@@ -2479,7 +2479,7 @@ var SVAREAS=[['-','Water'],['water','Water'],['sump','Sump'],
  ['-','Man-made'],['pavement','Pavement'],['dam','Dam']];
 var SVPOINTS=[['-','Speleothems'],['stal','Small stalactite'],['stag','Small stalagmite'],['column','Small column'],['stal_l','Large stalactite'],['stag_l','Large stalagmite'],['column_l','Large column'],['stal_over','Stalactite over stalagmite'],
  ['helictite','Helictites'],['flowstone_pt','Flowstone'],['drapery','Draperies'],['straws','Soda straws'],['shield','Shield (Dutch oven)'],['boxwork','Boxwork'],['anthodite','Anthodites'],['rimstone','Rimstone dams'],['popcorn','Popcorn'],['pearls','Cave pearls'],['fallen','Fallen speleothem'],
- ['-','Water'],['waterflow','Water flow (drag)'],['waterflow_int','Intermittent water flow (drag)'],['rapids_pt','Large rapids'],['wdepth','Water depth'],['drip_pt','Water drip'],['pool_pt','Small pool'],
+ ['-','Water'],['rapids_pt','Large rapids'],
  ['-','Floor and debris'],['break_l','Large breakdown block'],['break_s','Small breakdown'],['boulder','Boulder'],['cobbles_pt','Cobbles'],['bones','Vertebrate remains'],['vegetal','Vegetal debris'],['bats','Bats / guano'],
  ['-','Heights and slopes'],['ch','Ceiling height'],['pit_pt','Pit depth'],['slope_arrow','Measured slope (drag)'],['climb','Climb'],
  ['-','Geology'],['bedrock_pt','Bedrock floor mark'],['dip','Dip of strata (drag)'],['vbed','Vertical bedding (drag)'],['hbed','Horizontal bedding'],
@@ -2518,7 +2518,7 @@ function svDrawLine(c,t,pts){if(pts.length<2)return;var lb=svLibName(t,SVLIBLINE
  else if(t=='slope'){line(1);c.beginPath();svTicks(c,pts,9,4,1);svTicks(c,pts,18,9,1);c.stroke();}
  else if(t=='rock')line(1.1);
  else if(t=='water_edge'){c.strokeStyle=blue;line(1.6);}
- else if(t=='stream'||t=='stream_int'||t=='stream_conj'||t=='stream_rapids'){c.strokeStyle=c.fillStyle=blue;c.lineWidth=1.8;c.setLineDash(t=='stream_int'?[0.1,4]:t=='stream_conj'?[6,4]:[]);
+ else if(t=='stream'||t=='stream_int'||t=='stream_conj'||t=='stream_rapids'||t=='flow_arc'||t=='flow_arc_int'){c.strokeStyle=c.fillStyle=blue;c.lineWidth=t=='flow_arc'||t=='flow_arc_int'?1.5:1.8;c.setLineDash(t=='stream_int'?[0.1,4]:t=='stream_conj'||t=='flow_arc_int'?[6,4]:[]);
   svLineHead(c,pts,9);c.setLineDash([]);if(t=='stream_rapids'){c.lineWidth=1.3;marks(20,function(x,y,ux,uy){[-1.6,1.6].forEach(function(o){var px=x+ux*o,py=y+uy*o;c.moveTo(px+uy*5,py-ux*5);c.lineTo(px-uy*5,py+ux*5);});});}}
  else if(t=='waterfall'){c.strokeStyle=blue;line(1.8);c.lineWidth=1.2;c.beginPath();svTicks(c,pts,4,7,1);c.stroke();}
  else if(t=='art_wall'){c.lineWidth=7;svPath(c,pts);c.stroke();c.strokeStyle=paper;c.lineWidth=4.4;svPath(c,pts);c.stroke();c.strokeStyle=ink;c.lineWidth=1;
@@ -2722,6 +2722,13 @@ function svClone(it){return JSON.parse(JSON.stringify(it));}
 // grab: where on the line the finger is (0..1 along it); a sparse line gets points every ~3 px first so it can curve
 // a ladder is a rigid thing: drawn start to end as one straight run, upright in the profile (Sully 22:49 "Ladder should be vertical. Shouldn't be able to draw it and have it bend")
 var SVSTRAIGHT={ladder:1};
+// water flow where it isn't surveyed but known to go, drain to resurgence (Sully 22:51): an arc between the two ends, bowed to the side the finger bowed
+// (at least a fifth of the span), arrowhead at the resurgence; bend it more with Select
+var SVARC={flow_arc:1,flow_arc_int:1};
+function svArc(P){var a=P[0],b=P[P.length-1],vx=b[0]-a[0],vy=b[1]-a[1],L=Math.hypot(vx,vy);if(L<1e-9)return[a.slice(),b.slice()];
+ var nx=-vy/L,ny=vx/L,dev=0;P.forEach(function(p){var d=(p[0]-a[0])*nx+(p[1]-a[1])*ny;if(Math.abs(d)>Math.abs(dev))dev=d;});
+ var h=Math.abs(dev)<L*0.2?(dev<0?-1:1)*L*0.2:dev,out=[];
+ for(var i=0;i<=24;i++){var t=i/24,k=4*t*(1-t)*h;out.push([a[0]+vx*t+nx*k,a[1]+vy*t+ny*k]);}return out;}
 function svStraight(P){var a=P[0].slice(),b=P[P.length-1].slice();if(SVK.view=='prof')b[0]=a[0];return[a,b];}
 function svWarpGrab(it,Pp,x,y){var sh=svShift(it,Pp),P=it.pts;if(!P||P.length<2||(it.k=='line'&&SVSTRAIGHT[it.type]))return null;
  var S=P.map(function(p){return w2s([p[0]+sh[0],p[1]+sh[1]]);}),best=null;
@@ -2798,7 +2805,7 @@ function svDraw(){if(!SVK.cv||!$('svCv'))return;var c=SVK.ctx,W=SVK.cv.width/dpr
  var src=SVK.view=='plan'?R.P:R.X;Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st));c.fillStyle=st==SV.cur?SVA:'#c0392b';c.beginPath();c.arc(p[0],p[1],st==SV.cur?5:3,0,7);c.fill();
   if(st==SV.cur){c.strokeStyle=SVA;c.lineWidth=1.5;c.beginPath();c.arc(p[0],p[1],9,0,7);c.stroke();}
   if(SVK.names){c.font=(st==SV.cur?'700 ':'600 ')+'11px system-ui,sans-serif';c.fillStyle='#1d2a22';c.fillText(st,p[0]+6,p[1]-6);}});
- if(SVK.draw&&SVK.draw.pts.length>1){svDrawItem(c,{k:SVK.draw.k,type:SVK.draw.type,pts:SVK.draw.k=='line'&&SVSTRAIGHT[SVK.draw.type]?svStraight(SVK.draw.pts):SVK.draw.pts,col:SVK.draw.col,w:SVK.draw.w},Pp,true);}
+ if(SVK.draw&&SVK.draw.pts.length>1){svDrawItem(c,{k:SVK.draw.k,type:SVK.draw.type,pts:SVK.draw.k=='line'&&SVSTRAIGHT[SVK.draw.type]?svStraight(SVK.draw.pts):SVK.draw.k=='line'&&SVARC[SVK.draw.type]&&SVK.draw.pts.length>2?svArc(SVK.draw.pts):SVK.draw.pts,col:SVK.draw.col,w:SVK.draw.w},Pp,true);}
  if(SVK.cutDraw){var ca=w2s(SVK.cutDraw.a),cb=w2s(SVK.cutDraw.b);c.save();c.strokeStyle=SVA;c.lineWidth=2.5;c.setLineDash([7,5]);c.beginPath();c.moveTo(ca[0],ca[1]);c.lineTo(cb[0],cb[1]);c.stroke();c.setLineDash([]);c.fillStyle=SVA;c.beginPath();c.arc(cb[0],cb[1],5,0,7);c.fill();c.restore();}
  if(SVK.rub)svDrawRub(c);
  svScaleBar(c,W,H);
@@ -3197,6 +3204,7 @@ function svHook(){var cv=SVK.cv,P=SVK.ptr;
    var need=4*(SVK.view=='xs'?Math.max(svSnapR(),SVXS_SNAP/2):svSnapR());if(Ls>=need){d.pts[0]=svSnapPt(d.pts[0],d.k);d.pts[d.pts.length-1]=svSnapPt(d.pts[d.pts.length-1],d.k);}}
   var pts=svSimplify(d.pts,Math.min(d.k=='pen'?1:9,svDetail().eps)/SVK.sc);if(pts.length<2){svDraw();return;}
   if(d.k=='line'&&SVSTRAIGHT[d.type])pts=svStraight(d.pts);
+  if(d.k=='line'&&SVARC[d.type])pts=svArc(d.pts);
   var it={k:d.k=='pen'?'pen':d.k,type:d.type,pts:pts};if(d.k=='pen'){it.col=d.col||SVPENS[0];it.w=d.w||2;}
   if(it.k=='line'&&svQ('clip',false)&&!SVWALLS[it.type])svClipToWalls(it);
   if(it.k=='line'&&SVWALLS[it.type])svOrientWall(it);
