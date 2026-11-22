@@ -2479,7 +2479,7 @@ var SVAREAS=[['-','Water'],['water','Water'],['sump','Sump'],
  ['-','Man-made'],['pavement','Pavement'],['dam','Dam']];
 var SVPOINTS=[['-','Speleothems'],['stal','Small stalactite'],['stag','Small stalagmite'],['column','Small column'],['stal_l','Large stalactite'],['stag_l','Large stalagmite'],['column_l','Large column'],['stal_over','Stalactite over stalagmite'],
  ['helictite','Helictites'],['flowstone_pt','Flowstone'],['drapery','Draperies'],['straws','Soda straws'],['shield','Shield (Dutch oven)'],['boxwork','Boxwork'],['anthodite','Anthodites'],['rimstone','Rimstone dams'],['popcorn','Popcorn'],['pearls','Cave pearls'],['fallen','Fallen speleothem'],
- ['-','Water'],['rapids_pt','Large rapids'],
+ ['-','Water'],['wdepth','Water depth'],['rapids_pt','Large rapids'],
  ['-','Floor and debris'],['break_l','Large breakdown block'],['break_s','Small breakdown'],['boulder','Boulder'],['cobbles_pt','Cobbles'],['bones','Vertebrate remains'],['vegetal','Vegetal debris'],['bats','Bats / guano'],
  ['-','Heights and slopes'],['ch','Ceiling height'],['pit_pt','Pit depth'],['slope_arrow','Measured slope (drag)'],['climb','Climb'],
  ['-','Geology'],['bedrock_pt','Bedrock floor mark'],['dip','Dip of strata (drag)'],['vbed','Vertical bedding (drag)'],['hbed','Horizontal bedding'],
@@ -2488,8 +2488,29 @@ var SVPOINTS=[['-','Speleothems'],['stal','Small stalactite'],['stag','Small sta
  ['-','Other'],['airflow','Air flow (drag)'],['squeeze','Squeeze'],['lead','Lead (?)'],['hazard','Hazard'],['label','Text']];
 var SVDIR={airflow:1,waterflow:1,waterflow_int:1,slope_arrow:1,dip:1,vbed:1,gate:1};
 // what a symbol asks for when it's put down (the label shown, and whether it may be left blank)
-var SVASK={pit_pt:['Pit depth (U)'],dome_pt:['Dome height (U)'],ch:['Ceiling height (U)'],climb:['Climb height (U, optional)',1],label:['Text'],wdepth:['Water depth (U)'],
+var SVASK={dome_pt:['Dome height (U)'],climb:['Climb height (U, optional)',1],label:['Text'],
  slope_arrow:['Slope angle (°, optional)',1],dip:['Dip (°)'],elev_up:['Height above the datum (U)'],elev_dn:['Depth below the datum (U)'],station_pt:['Station name'],datum:['Datum label',1,'0.0 DATUM']};
+// water depth, ceiling height, pit depth: picked from a list (Sully 22:52 "Water depth should have a drop down ... 6inch, all the way up to 10ft+,
+// and these should auto change if someone chooses metric" / "Same for ceiling height and pit depth"). Kept in metres (it.dm, it.plus);
+// the number on the map is worked out in the survey's units each time it's drawn.
+var SVMEAS={wdepth:{name:'Water depth',ft:[0.5,1,2,3,4,5,6,8,10,'10+'],m:[0.15,0.3,0.5,1,1.5,2,2.5,3,'3+']},
+ ch:{name:'Ceiling height',ft:[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50,'50+'],m:[0.3,0.5,1,1.5,2,2.5,3,4,5,6,8,10,12,15,'15+']},
+ pit_pt:{name:'Pit depth',ft:[5,10,15,20,25,30,40,50,60,75,100,125,150,'150+'],m:[2,3,5,8,10,15,20,25,30,40,50,'50+']}};
+function svMeasNum(v,u){if(u=='ft')return v<0.99?Math.round(v*12)+'"':String(Math.round(v));return v>=10?String(Math.round(v)):String(Math.round(v*(v<1?100:10))/(v<1?100:10));}
+function svMeasLabel(it){if(it.dm==null)return it.text||'';var u=svUn(),v=u=='ft'?it.dm/0.3048:it.dm;return svMeasNum(v,u)+(it.plus?'+':'');}
+function svMeasOpt(o,u){var p=typeof o=='string',v=parseFloat(o),t=u=='ft'&&v<1?Math.round(v*12)+' in':v+' '+u;return{v:v,plus:p,t:t+(p?'+':'')};}
+// the list as a <select>, with Other… for a number typed in
+function svMeasSelect(type,it,id){var M=SVMEAS[type],u=svUn(),cur=it&&it.dm!=null?(u=='ft'?it.dm/0.3048:it.dm):null,best=-1,bd=1e9;
+ var opts=M[u].map(function(o,i){var q=svMeasOpt(o,u);if(cur!=null){var d=Math.abs(q.v-cur)+(q.plus!=!!(it&&it.plus)?0.001:0);if(d<bd){bd=d;best=i;}}return q;});
+ var exact=cur!=null&&bd<0.02;
+ return'<select id="'+id+'">'+(cur==null?'<option value="" selected disabled>Choose…</option>':'')+opts.map(function(q,i){return'<option value="'+i+'"'+(exact&&i==best?' selected':'')+'>'+esc(q.t)+'</option>';}).join('')+
+  '<option value="o"'+(cur!=null&&!exact?' selected':'')+'>Other…</option></select><input id="'+id+'o" type="number" inputmode="decimal" step="any" placeholder="'+u+'" style="display:'+(cur!=null&&!exact?'block':'none')+'" value="'+(cur!=null&&!exact?Math.round(cur*100)/100:'')+'">';}
+function svMeasWire(id){var s=$(id),o=$(id+'o');s.onchange=function(){o.style.display=s.value=='o'?'block':'none';if(s.value=='o')o.focus();};}
+function svMeasRead(type,id,it){var s=$(id),u=svUn(),k=u=='ft'?0.3048:1;if(!s||s.value==='')return false;
+ if(s.value=='o'){var v=parseFloat($(id+'o').value);if(!(v>0))return false;it.dm=v*k;it.plus=false;}
+ else{var q=svMeasOpt(SVMEAS[type][u][+s.value],u);it.dm=q.v*k;it.plus=q.plus;}it.text=svMeasLabel(it);return true;}
+function svMeasPick(type,it,cb){svDlg('<div class="big">'+esc(SVMEAS[type].name)+'</div>'+svMeasSelect(type,null,'mqV')+'<button class="btn" id="mqGo">OK</button><button class="btn alt" id="mqNo">Cancel</button>');
+ svMeasWire('mqV');$('mqGo').onclick=function(){if(svMeasRead(type,'mqV',it)){svDlgClose();cb(it);}};$('mqNo').onclick=function(){svDlgClose();};}
 function svPalItems(list){return list.filter(function(o){return o[0]!='-';});}
 // along a line: cb(x, y, ux, uy) every `every` px, starting `first` px in (the tangent unit vector given)
 function svAlong(pts,every,first,cb){var acc=0,next=first==null?every/2:first;for(var i=1;i<pts.length;i++){var a=pts[i-1],b=pts[i],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);if(!L)continue;
@@ -2819,7 +2840,7 @@ function svDrawItem(c,it,Pp,live){var sh=live?[0,0]:svShift(it,Pp),pts=(it.pts||
  if(it.k=='line')svDrawLine(c,it.type,pts);
  else if(it.k=='area')svDrawArea(c,it.type,pts,(it.holes||[]).map(function(h){return h.map(function(p){return w2s([p[0]+sh[0],p[1]+sh[1]]);});}));
  else if(it.k=='pen'){if(pts.length<2)return;c.save();c.strokeStyle=it.col||'#1d2a22';c.lineWidth=it.w||2;c.lineCap='round';c.lineJoin='round';c.setLineDash([]);svPath(c,pts);c.stroke();c.restore();}
- else if(it.k=='point'){var p=w2s([it.x+sh[0],it.y+sh[1]]),s=it.sz?Math.max(0.35,Math.min(3,it.sz*SVK.sc/16)):1;if(s!=1){c.save();c.translate(p[0],p[1]);c.scale(s,s);svDrawPoint(c,it.type,0,0,it.rot||0,it.text||'');c.restore();}else svDrawPoint(c,it.type,p[0],p[1],it.rot||0,it.text||'');}}
+ else if(it.k=='point'){var p=w2s([it.x+sh[0],it.y+sh[1]]),s=it.sz?Math.max(0.35,Math.min(3,it.sz*SVK.sc/16)):1;if(s!=1){c.save();c.translate(p[0],p[1]);c.scale(s,s);svDrawPoint(c,it.type,0,0,it.rot||0,SVMEAS[it.type]?svMeasLabel(it):it.text||'');c.restore();}else svDrawPoint(c,it.type,p[0],p[1],it.rot||0,SVMEAS[it.type]?svMeasLabel(it):it.text||'');}}
 var SVPAT={};
 function svPattern(c,t){if(SVPAT[t])return SVPAT[t];if(c.out)return {};var S={breakdown:28,breakdown_s:16,sump:10,ice:10,cobbles:14,bedrock:16,rimstone_a:16,boxwork_a:12,pavement:14,pillar:8,dam:8,flowstone:16};
  var p=document.createElement('canvas'),s=S[t]||12;p.width=p.height=s;var x=p.getContext('2d');x.strokeStyle=x.fillStyle=t=='sump'||t=='water'||t=='ice'?'#1e6fd9':'#1d2a22';x.lineWidth=1;x.lineCap='round';
@@ -3091,7 +3112,8 @@ function svItemMenu(it){var kind=it.k,list=kind=='line'?SVLINES:kind=='area'?SVA
  var h='<div class="big">'+(kind=='pen'?'Pen line':esc(((list||[]).filter(function(o){return o[0]==it.type;})[0]||[0,it.type])[1]))+'</div>';
  if(list)h+='<label>Type</label><select id="imT">'+list.map(function(o,i){if(o[0]=='-')return(i?'</optgroup>':'')+'<optgroup label="'+esc(o[1])+'">';return'<option value="'+esc(o[0])+'"'+(o[0]==it.type?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+(list[0]&&list[0][0]=='-'?'</optgroup>':'')+'</select>';
  if(kind=='pen')h+='<label>Colour</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+SVPENS.map(function(cc){return'<button class="ib" data-c="'+cc+'" style="background:'+cc+';border:2px solid '+(cc==(it.col||SVPENS[0])?'#fff':'transparent')+';width:36px;height:36px"></button>';}).join('')+'</div>';
- if(kind=='point'&&it.text!=null)h+='<label>Text</label><input id="imX" value="'+esc(it.text||'')+'">';
+ if(kind=='point'&&SVMEAS[it.type])h+='<label>'+esc(SVMEAS[it.type].name)+'</label>'+svMeasSelect(it.type,it,'imM');
+ else if(kind=='point'&&it.text!=null)h+='<label>Text</label><input id="imX" value="'+esc(it.text||'')+'">';
  h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">'+(kind=='line'||kind=='pen'?'<button class="btn alt" id="imF" style="flex:1">⇄ Flip it'+(kind=='line'&&SVWALLS[it.type]?' (the passage side)':'')+'</button>':'')+(kind=='point'&&SVDIR[it.type]?'<button class="btn alt" id="imF" style="flex:1">⇄ Turn it round</button>':'')+
   (kind=='point'?'<button class="btn alt" id="imS1" style="flex:1">Smaller</button><button class="btn alt" id="imS2" style="flex:1">Bigger</button>':'')+
   (kind=='line'&&it.pts&&it.pts.length<300?'<button class="btn alt" id="imPt" style="flex:1">＋ More points to drag</button>':'')+'</div>'+
@@ -3102,7 +3124,8 @@ function svItemMenu(it){var kind=it.k,list=kind=='line'?SVLINES:kind=='area'?SVA
  if($('imF'))$('imF').onclick=function(){if(kind=='point')it.rot=(it.rot||0)+Math.PI;else it.pts.reverse();svDraw();toast('Flipped',900);};
  if($('imPt'))$('imPt').onclick=function(){var o=[it.pts[0]];for(var i=1;i<it.pts.length;i++){var a=it.pts[i-1],b=it.pts[i];o.push([(a[0]+b[0])/2,(a[1]+b[1])/2],b);}it.pts=o;svDraw();toast('Twice the points - drag any of them with Select',1800);};
  if($('imS1'))$('imS1').onclick=function(){it.sz=(it.sz||16/SVK.sc)*0.8;svDraw();};if($('imS2'))$('imS2').onclick=function(){it.sz=(it.sz||16/SVK.sc)*1.25;svDraw();};
- $('imGo').onclick=function(){if($('imX'))it.text=$('imX').value;done();};
+ if($('imM'))svMeasWire('imM');
+ $('imGo').onclick=function(){if($('imM'))svMeasRead(it.type,'imM',it);else if($('imX'))it.text=$('imX').value;done();};
  $('imDel').onclick=function(){var l=svList(),i=l.indexOf(it);if(i>=0){svSet(it,before);l.splice(i,1);SVK.sel=null;svOp({del:it,at:i});}svDlgClose();};}
 // ======================================================================= palettes: lines, areas, symbols (NSS), and the pen's colours
 // the eraser (21 Nov 2026, Kellen Nunn Jones: "it desperately needs an eraser feature"): it was there as ⌫ "Rub out", a 12 px rub that
@@ -3198,6 +3221,7 @@ function svHook(){var cv=SVK.cv,P=SVK.ptr;
   if(SVK.rub){var r=SVK.rub;SVK.rub=null;if(SVQ.ewhole){if(tap)svErase(dn.x,dn.y);else svRubWhole(r);}else svRubOut(r);svDraw();return;}
   var d=SVK.draw;SVK.draw=null;if(!d){svDraw();return;}
   if(d.k=='point'){var it={k:'point',type:d.type,x:d.pts[0][0],y:d.pts[0][1],rot:0};if(svQ('symzoom',true))it.sz=16/SVK.sc;if(SVDIR[d.type]&&d.x1!=null&&Math.hypot(d.x1-d.x0,d.y1-d.y0)>8)it.rot=Math.atan2(d.y1-d.y0,d.x1-d.x0);
+   if(SVMEAS[d.type]){svMeasPick(d.type,it,svAddItem);return;}
    var ask=SVASK[d.type];if(ask){svAsk(ask[0].replace('(U','('+svUn()),ask[2]||'',function(v){if(v==null)return;if(!v&&!ask[1]&&d.type!='datum')return;it.text=v||ask[2]||'';svAddItem(it);});return;}
    svAddItem(it);return;}
   if(d.k!='pen'&&d.pts.length>1){var Ls=0;for(var i=1;i<d.pts.length;i++)Ls+=Math.hypot(d.pts[i][0]-d.pts[i-1][0],d.pts[i][1]-d.pts[i-1][1])*SVK.sc;
