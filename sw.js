@@ -1,5 +1,5 @@
 // CartoTable web page - keeps the page and its data on the device, and the map tiles saved for offline.
-const APP = 'cartotable-app-20261121223000', TILES = 'cartotable-tiles';
+const APP = 'cartotable-app-20261121234500', TILES = 'cartotable-tiles';
 self.addEventListener('install', e => { e.waitUntil(caches.open(APP).then(c => Promise.all(["./","index.html","survey-tutorial.html","help.html","manifest.webmanifest","icon.svg","icon.png","icon-192.png"].map(f => c.add(f).catch(() => null)))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('cartotable-app-') && k !== APP).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
