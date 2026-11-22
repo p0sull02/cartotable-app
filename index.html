@@ -2590,7 +2590,7 @@ var SVLIB={"symbols":{"BREAKDOWN":{"w":1.524,"h":1.32,"p":[["M-0.76 0.66 L0.76 0
 var SVLIBHIDE={'B:Vertical Shaft 1':1,'B:Pattern Brush 4':1,'S:Dirt 2':1,
  'Y:Fungi 2':1,'Y:Moonmilk 2':1,'Y:Popcorn 2':1,'Y:Soda Straws 2':1,'Y:Station Marker 2':1,'Y:air flow (weak) 2':1,
  'Y:Elevation Above':1,'Y:Elevation Below':1,'Y:Helictite':1,'Y:Boxwork 2':1,'Y:Column 2':1,'Y:Stalactite 2':1,'Y:Stalagmite 2':1,'Y:New Symbol 6':1,'Y:New Symbol 8':1,
- 'Y:Water Flow':1,'Y:Small Waterflow':1,'Y:Intermitent Waterflow':1,'Y:Intermittent Water':1,'Y:Water Depth small':1};
+ 'Y:Arrow - Left':1,'Y:Arrow - Right':1,'Y:Water Flow':1,'Y:Small Waterflow':1,'Y:Intermitent Waterflow':1,'Y:Intermittent Water':1,'Y:Water Depth small':1};
 (function(){function used(m){var o={};Object.keys(m).forEach(function(k){o[m[k]]=1;});return o;}
  var ub=used(SVLIBLINE),ua=used(SVLIBAREA),up=used(SVLIBPT);
  var b=Object.keys(SVLIB.brushes).filter(function(n){return!ub[n]&&!SVLIBHIDE['B:'+n];}).sort(),a=Object.keys(SVLIB.patterns).filter(function(n){return!ua[n]&&!SVLIBHIDE['S:'+n];}).sort(),y=Object.keys(SVLIB.symbols).filter(function(n){return!up[n]&&n.trim()!='m'&&!SVLIBHIDE['Y:'+n];}).sort(function(p,q){return p.toLowerCase()<q.toLowerCase()?-1:1;});
