@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>Topside</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Topside"><meta name="theme-color" content="#0e141b">
+<title>Tacheo</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Tacheo"><meta name="theme-color" content="#0e141b">
 <style>
 :root{--bg:#121820;--panel:#1a222c;--line:#2a3542;--ink:#e6ecf2;--muted:#8a99a8;--accent:#2f80ed;--amber:#fbbf24;--card:#202a36;--bar:#0e141b}
 body.cave{--bg:#07090c;--panel:#0c1015;--line:#1c242e;--ink:#d8dee6;--muted:#7d8996;--accent:#b7791f;--card:#121820;--bar:#05070a}
@@ -297,7 +297,7 @@ PdfDoc.prototype.bytes=function(){var objs=[],me=this,kids=[];function add(s){ob
  var cat=add(''),pages=add(''),f1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),f2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
  var imIds=this.im.map(function(m){return add('<< /Type /XObject /Subtype /Image /Width '+m.w+' /Height '+m.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+m.b.length+' >>\nstream\n'+m.b+'\nendstream');});
  var xo=imIds.map(function(id,i){return'/Im'+i+' '+id+' 0 R';}).join(' ');
- this.pg.forEach(function(c,i){var body=c.join('\n');var ft='BT /F1 7.5 Tf 0.45 0.5 0.56 rg 46 26 Td ('+PdfDoc.esc('Topside trip plan · page '+(i+1)+' of '+me.pg.length+' · travel times are estimates from the passage sizes - add time to work')+') Tj ET';body+='\n'+ft;
+ this.pg.forEach(function(c,i){var body=c.join('\n');var ft='BT /F1 7.5 Tf 0.45 0.5 0.56 rg 46 26 Td ('+PdfDoc.esc('Tacheo trip plan · page '+(i+1)+' of '+me.pg.length+' · travel times are estimates from the passage sizes - add time to work')+') Tj ET';body+='\n'+ft;
   var cs=add('<< /Length '+body.length+' >>\nstream\n'+body+'\nendstream');kids.push(add('<< /Type /Page /Parent '+pages+' 0 R /MediaBox [0 0 '+me.W+' '+me.H+'] /Resources << /Font << /F1 '+f1+' 0 R /F2 '+f2+' 0 R >> /XObject << '+xo+' >> >> /Contents '+cs+' 0 R >>'));});
  objs[cat-1]='<< /Type /Catalog /Pages '+pages+' 0 R >>';objs[pages-1]='<< /Type /Pages /Kids ['+kids.map(function(k){return k+' 0 R';}).join(' ')+'] /Count '+kids.length+' >>';
  var out='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n',off=[];objs.forEach(function(o,i){off.push(out.length);out+=(i+1)+' 0 obj\n'+o+'\nendobj\n';});
@@ -648,7 +648,7 @@ function aboutHtml(){return'<div class="big">'+esc(D.name)+'</div><div>'+ft(D.le
  '<div class="k">This copy</div><div class="mut">Read-only, published from CartoTable on '+esc(D.when)+'. Travel times use the trip planner\'s speeds for walking, stooping, crawling, belly crawls, breakdown, climbing and rope, from the passage sizes and notes. '+(D.coords?'':'True coordinates are left out of this copy. ')+(D.untied?D.untied+' stations not tied to the rest of the survey are left out. ':'')+'</div><div class="k">How to</div><div class="mut">Drag to move · pinch or wheel to zoom · twist two fingers (or Shift-drag) to turn the plan · tap a station · in 3-D drag to turn, two fingers to move and zoom.</div><div class="mut" style="margin-top:10px;font-size:12px">CartoTable © 2026 Phillip M. Sullivan. All rights reserved.</div>';}
 function onlineHtml(){var h='<div class="k">Online maps</div>';
  if(!D.coords)return h+'<div class="card" style="margin:4px 0 8px"><b>Not for this copy of the cave</b><div class="mut">It was sent without the cave\'s true coordinates, so online maps can\'t be lined up with it. On the computer, send it again with <b>With the true coordinates</b> ticked (Phone link), or answer <b>Yes</b> to \u201cIs this phone yours?\u201d (Send to phone).</div></div>';
- if(!HOSTED)return h+'<div class="mut">Online maps need the Topside app or the web page (this copy is a file).</div>';
+ if(!HOSTED)return h+'<div class="mut">Online maps need the Tacheo app or the web page (this copy is a file).</div>';
  h+='<div class="mut" style="font-size:12.5px;margin-bottom:4px">Pick a background under <b>Base map</b> above. These go on top:</div>';
  LIVE.forEach(function(l,i){if(!l.over)return;var on=lay.over[i]!=null;
   h+='<label class="lab"><input type="checkbox" data-ov="'+i+'"'+(on?' checked':'')+'> '+esc(l.name)+(l.custom?' <a href="#" data-ownrm="'+i+'" style="color:#7fb0ff;font-size:12px;margin-left:6px">remove</a>':'')+'</label>'+
@@ -720,29 +720,29 @@ function fitTrip(){var xs=0,ys=0,zs=0,n=0,lo=[1e9,1e9],hi=[-1e9,-1e9],first=-1;f
  if(n){view.cx=xs/n;view.cy=ys/n;view.cz=zs/n;view.ppm=Math.min(view.ppm*4,Math.min(W/Math.max(20,hi[0]-lo[0]),H/Math.max(20,hi[1]-lo[1]))*0.7);if(mode=='3d'&&gl3)gl3.lookAt(first);}draw();if(window.innerWidth<=760)minSheet(true);}
 // ======================================================================= exports
 var installEvt=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;if($('home')&&$('home').style.display=='block')homeShow();if($('modePick')&&$('modePick').style.display=='block')pickMode();});
-window.addEventListener('appinstalled',function(){installEvt=null;toast('Installed - Topside is on your home screen.',6000);if($('home')&&$('home').style.display=='block')homeShow();});
+window.addEventListener('appinstalled',function(){installEvt=null;toast('Installed - Tacheo is on your home screen.',6000);if($('home')&&$('home').style.display=='block')homeShow();});
 function isInstalled(){return /TopsideApp/.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
 // "click this to install" (Sully, 15 Nov 2026 20:14): one button - Chrome's own install box when the phone offers it, otherwise the
 // exact steps for this phone and browser
 var UA=navigator.userAgent,IOS=/iPhone|iPad|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),ANDROID=/Android/.test(UA);
 function installHtml(id){if(!HOSTED||window.TOPSIDE_PC||/TopsideApp/.test(UA))return'';
  // 16 Nov 2026 (Paul's phone: the page installed from Chrome, so no download showed - Sully: "Theres no download for paul"): on Android the
- // installed web copy still offers the real app, which can also reach Topside on the computer
- if(isInstalled()){if(!ANDROID)return'';return'<div class="card" style="margin-bottom:10px"><b>Get the Topside app for Android</b><div class="mut" style="font-size:13px;margin:2px 0 8px">You are using the web copy. The Android app does everything this does and also connects to Topside on your computer.</div><a class="btn" style="text-decoration:none" href="Topside.apk" download>⬇ Download Topside for Android</a></div>';}
+ // installed web copy still offers the real app, which can also reach Tacheo on the computer
+ if(isInstalled()){if(!ANDROID)return'';return'<div class="card" style="margin-bottom:10px"><b>Get the Tacheo app for Android</b><div class="mut" style="font-size:13px;margin:2px 0 8px">You are using the web copy. The Android app does everything this does and also connects to Tacheo on your computer.</div><a class="btn" style="text-decoration:none" href="Topside.apk" download>⬇ Download Tacheo for Android</a></div>';}
  var big='width:100%;font-size:17px;padding:14px;margin:0 0 8px 0;justify-content:center;text-decoration:none';
  // the app itself, downloaded from this site - no store, any browser (Sully, 15 Nov 2026 20:45)
- if(ANDROID)return'<a class="btn" style="'+big+'" href="Topside.apk" download>⬇ Download Topside for Android</a><div class="mut" style="font-size:12.5px;margin:-2px 0 6px">Open the download and tap <b>Install</b>. The first time, Android asks to let your browser install apps - allow it. Play Protect may say it doesn\'t know the developer: tap <b>More details → Install anyway</b>.</div><button class="btn alt" id="'+id+'" style="margin:0 0 10px 0">Or install from Chrome instead</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div>';
- if(IOS)return'<a class="btn" style="'+big+'" id="'+id+'Ios" href="Topside.mobileconfig">⬇ Download Topside for iPhone / iPad</a><div class="mut" style="font-size:12.5px;margin:-2px 0 10px">Tap <b>Allow</b>, then open <b>Settings</b> → <b>Profile Downloaded</b> → <b>Install</b>. Topside appears on your home screen and opens full screen. (Or in Safari: Share → <b>Add to Home Screen</b>.)</div>';
- return'<button class="btn" id="'+id+'" style="'+big+'">⬇ Install Topside on this device</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div><div class="mut" style="font-size:12.5px;margin:-2px 0 10px">Phones: <a href="Topside.apk" style="color:#7fb0ff">Android app</a> · <a href="Topside.mobileconfig" style="color:#7fb0ff">iPhone / iPad</a></div>';}
+ if(ANDROID)return'<a class="btn" style="'+big+'" href="Topside.apk" download>⬇ Download Tacheo for Android</a><div class="mut" style="font-size:12.5px;margin:-2px 0 6px">Open the download and tap <b>Install</b>. The first time, Android asks to let your browser install apps - allow it. Play Protect may say it doesn\'t know the developer: tap <b>More details → Install anyway</b>.</div><button class="btn alt" id="'+id+'" style="margin:0 0 10px 0">Or install from Chrome instead</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div>';
+ if(IOS)return'<a class="btn" style="'+big+'" id="'+id+'Ios" href="Topside.mobileconfig">⬇ Download Tacheo for iPhone / iPad</a><div class="mut" style="font-size:12.5px;margin:-2px 0 10px">Tap <b>Allow</b>, then open <b>Settings</b> → <b>Profile Downloaded</b> → <b>Install</b>. Tacheo appears on your home screen and opens full screen. (Or in Safari: Share → <b>Add to Home Screen</b>.)</div>';
+ return'<button class="btn" id="'+id+'" style="'+big+'">⬇ Install Tacheo on this device</button><div class="card" id="'+id+'Help" style="display:none;margin-bottom:10px"></div><div class="mut" style="font-size:12.5px;margin:-2px 0 10px">Phones: <a href="Topside.apk" style="color:#7fb0ff">Android app</a> · <a href="Topside.mobileconfig" style="color:#7fb0ff">iPhone / iPad</a></div>';}
 function hookInstall(id){var e=$(id);if(e)e.onclick=function(){doInstall(id);};
  // iPhone: hand Safari the profile as a configuration profile (the web host labels it a plain download), so iOS offers to install it
  var i=$(id+'Ios');if(i)i.onclick=function(ev){ev.preventDefault();fetch('Topside.mobileconfig').then(function(r){return r.blob();}).then(function(b){location.href=URL.createObjectURL(new Blob([b],{type:'application/x-apple-aspen-config'}));}).catch(function(){location.href='Topside.mobileconfig';});};}
 function doInstall(id){id=id||'hInstallTop';if(installEvt){var ev=installEvt;ev.prompt();ev.userChoice.then(function(){installEvt=null;if($('home').style.display=='block')homeShow();});return;}
  var ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua),inApp=/FBAN|FBAV|Instagram|Messenger|Line\/|GSA\/|; wv\)/.test(ua),samsung=/SamsungBrowser/.test(ua),steps;
- if(inApp)steps='This page is open inside another app (a message or social app), which can\'t install it. Tap that app\'s <b>⋮</b> or <b>…</b> menu, choose <b>Open in Chrome</b>'+(ios?' (or Safari)':'')+', then tap <b>Install Topside</b> again.';
+ if(inApp)steps='This page is open inside another app (a message or social app), which can\'t install it. Tap that app\'s <b>⋮</b> or <b>…</b> menu, choose <b>Open in Chrome</b>'+(ios?' (or Safari)':'')+', then tap <b>Install Tacheo</b> again.';
  else if(ios)steps='On iPhone it installs from <b>Safari</b>: tap <b>Share</b> (the square with an arrow), scroll down, tap <b>Add to Home Screen</b>, then <b>Add</b>.';
  else if(samsung)steps='Tap the <b>☰</b> menu at the bottom, then <b>Add page to</b> → <b>Home screen</b>.';
- else steps='This installs from <b>Google Chrome</b> itself. Other browsers (Adblock Browser, Brave, Opera, DuckDuckGo…) can only make a bookmark, not an app. Open <b>p0sull02.github.io/cartotable-app</b> in Chrome and tap <b>Install Topside</b> there - Chrome\'s install box opens. If it doesn\'t, use Chrome\'s <b>⋮</b> menu → <b>Install app</b>.';
+ else steps='This installs from <b>Google Chrome</b> itself. Other browsers (Adblock Browser, Brave, Opera, DuckDuckGo…) can only make a bookmark, not an app. Open <b>p0sull02.github.io/cartotable-app</b> in Chrome and tap <b>Install Tacheo</b> there - Chrome\'s install box opens. If it doesn\'t, use Chrome\'s <b>⋮</b> menu → <b>Install app</b>.';
  var b=$(id+'Help');if(b){b.innerHTML=steps+'<div class="mut" style="margin-top:6px">It then opens from the home screen like any app, and works with no signal.</div>';b.style.display='block';}}
 function save(name,data,mime){
  if(window.TopsideAndroid){var bl=data instanceof Blob?data:new Blob([data],{type:mime||'text/plain'}),fr=new FileReader();   // the Android app saves to Downloads/Topside
@@ -947,7 +947,7 @@ function importDrafted(file){toast('Reading '+esc(file.name)+'…',60000);
    var shots=[],sts={};for(var k=0;k<M;k++){var a=SH[4*k],b=SH[4*k+1];shots.push([X[a],Y[a],X[b],Y[b]]);sts[a]=1;sts[b]=1;}
    var st=Object.keys(sts).map(function(i){return[X[i],Y[i]];});
    var fit=alignMap(shots,st,segs,Math.hypot(vp.width,vp.height));
-   if(!fit||!fit.good){toast('Couldn\'t find the line plot on that map'+(fit&&fit.note?' ('+esc(fit.note)+')':'')+'. Line it up on the computer (Topside: File → Add a drafted map), then send the cave to the phone again.',9000);return;}
+   if(!fit||!fit.good){toast('Couldn\'t find the line plot on that map'+(fit&&fit.note?' ('+esc(fit.note)+')':'')+'. Line it up on the computer (Tacheo: File → Add a drafted map), then send the cave to the phone again.',9000);return;}
    var sc=Math.min(4,4096/Math.max(vp.width,vp.height)),v2=pg.getViewport({scale:sc}),cv0=document.createElement('canvas');cv0.width=Math.ceil(v2.width);cv0.height=Math.ceil(v2.height);
    return pg.render({canvasContext:cv0.getContext('2d'),viewport:v2}).promise.then(function(){placeDrafted(cv0,v2.transform,fit,file.name);});});
  }).catch(function(e){toast('Couldn\'t read it: '+esc(e.message),8000);});}
@@ -1065,7 +1065,7 @@ function pickMode(){$('modeIn').innerHTML=installHtml('mInstall')+'<div class="b
 // uploading pictures of data."). Each tile opens one thing; the details are on the page it opens.
 function tileHtml(id,ic,bg,title,sub,badge,wide){return'<button class="tile'+(wide?' wide':'')+'" id="'+id+'"><span class="ic" style="background:'+bg+'">'+ic+'</span><span style="min-width:0"><span class="tt" style="display:block">'+title+'</span><span class="ts" id="'+id+'S">'+(sub||'')+'</span></span>'+(badge?'<span class="badge" id="'+id+'B">'+badge+'</span>':'<span class="badge" id="'+id+'B" style="display:none"></span>')+'</button>';}
 function setBadge(id,n){var b=$(id+'B');if(!b)return;b.textContent=n;b.style.display=n?'':'none';}
-function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Topside</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
+function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><svg width="40" height="40" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1f2935"/><path d="M10 46 L22 30 L30 38 L42 18 L54 46" fill="none" stroke="#2f80ed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="42" cy="18" r="4" fill="#fbbf24"/></svg><div><div class="big" style="margin:0">Tacheo</div><div class="mut">Tacheo · CartoTable · cave survey viewer</div></div></div>';
  h+='<div class="tiles">';
  if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
  h+=tileHtml('tCaves','📚','#2f80ed','My caves','On this phone - they open with no signal');
@@ -1075,10 +1075,10 @@ function homeShow(){var h=updHtml()+installHtml('hInstallTop')+'<div style="disp
  h+=tileHtml('tPhotos','📷','#d97706','Data photos','Book pages read into data on your computer');
  h+=tileHtml('tScan','📄','#0e7490','Scan sketches and data','Cave book pages and sketches, one PDF for your computer');   // 17 Nov 2026 (Sully: "Have the app record cave data picture like Google Pixel does its scans" / "Label it 'scan cave sketch and data'")   // 16 Nov 2026 (Sully: "a short description under it saying it automatically transcribes data from photos")
  h+=tileHtml('tGps','📍','#4285f4','GPS points','Take one with a tap - ridge walking, sinks, entrances');   // 18 Nov 2026 (Sully: "a button to take gps coords whenever, as in during ridge walking")
- if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Topside on your computer');
+ if(HOSTED||LOCALPC)h+=tileHtml('tPc','💻','#7c5cff',PC?esc(PC.name):'My computer',PC?'checking…':'Connect to Tacheo on your computer');
  h+=tileHtml('hMode',CAVE?'☀':'🔦',CAVE?'#475569':'#b7791f',CAVE?'Topside mode':'In the cave',CAVE?'Back to the normal colours':'Dark, big buttons, saves the battery','',!!(HOSTED||LOCALPC));   // 18 Nov: the GPS tile made it odd again   // wide when it would sit alone (17 Nov: the Scan tile made the rest even)
  h+='</div>';
- if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Topside downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
+ if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Tacheo downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');
  $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tTacheo'))e.onclick=function(){window.svUnitsShow&&window.svUnitsShow();};if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;
@@ -1095,7 +1095,7 @@ function cavesSheet(){sheet('My caves','<div id="hList" class="mut">…</div><bu
   [].forEach.call(L.querySelectorAll('[data-k]'),function(r){r.onclick=function(ev){if(ev.target.dataset.del)return;dbDo('readonly',function(s){return s.get(r.dataset.k);}).then(function(d){if(d){$('pcOver').style.display='none';load(d);}});};});
   [].forEach.call(L.querySelectorAll('[data-del]'),function(b){b.onclick=function(){if(!confirm('Remove '+b.dataset.del+' from this phone? (It stays on your computer.)'))return;dbDo('readwrite',function(s){return s.delete(b.dataset.del);}).then(cavesSheet);};});});}
 function addSheet(){sheet('Add a cave','<div class="card"><b>From a file</b><div class="mut">A .ctcave file from Drive, Files, a message or a download.</div><button class="btn" id="asFile">Open a cave file (.ctcave)</button></div>'+
-  ((HOSTED||LOCALPC)?'<div class="card"><b>From your computer</b><div class="mut">'+(PC?'Copy any cave Topside has on '+esc(PC.name)+'.':'Pair this phone with Topside once (Topside\'s first screen > <b>Connect a phone</b>), then your caves come straight over.')+'</div><button class="btn'+(PC?'':' alt')+'" id="asPc">'+(PC?'Caves on '+esc(PC.name):'Connect to my computer')+'</button></div>':'')+
+  ((HOSTED||LOCALPC)?'<div class="card"><b>From your computer</b><div class="mut">'+(PC?'Copy any cave Tacheo has on '+esc(PC.name)+'.':'Pair this phone with Tacheo once (Tacheo\'s first screen > <b>Connect a phone</b>), then your caves come straight over.')+'</div><button class="btn'+(PC?'':' alt')+'" id="asPc">'+(PC?'Caves on '+esc(PC.name):'Connect to my computer')+'</button></div>':'')+
   '<p class="mut" style="font-size:13px">The app keeps every cave you open - they work with no signal.</p>');
  $('asFile').onclick=function(){$('pick').click();};var e;if(e=$('asPc'))e.onclick=function(){if(PC)pcCaves();else pcSheet();};}
 function pcSheet(){sheet(PC?esc(PC.name):'My computer',pcCard().replace('<div class="k">My computer</div>',''));pcHookCard();}
@@ -1103,8 +1103,8 @@ function pcSheet(){sheet(PC?esc(PC.name):'My computer',pcCard().replace('<div cl
 // taken here (the app's own camera, back lens, the light on if wanted) or picked from the phone. Each is named for the cave, the trip
 // and what it is ("Fisher Ridge - 2026-11-16 - book page 03.jpg"), shrunk to 3,000 px on its long side (plenty for reading the numbers,
 // a few MB at most), and kept on the phone until it reaches the computer - photos taken in the cave wait for signal. Sent ones go to
-// Topside's Documents\Topside\From phone\<day>\<cave> - <trip>\ (a folder per trip, the way CartoTable's book sorter reads them;
-// a Topside before 1.6.104 puts them in the day's folder, names unchanged). Nothing is removed from the phone until the computer has it.
+// Tacheo's Documents\Tacheo\From phone\<day>\<cave> - <trip>\ (a folder per trip, the way CartoTable's book sorter reads them;
+// a Tacheo before 1.6.104 puts them in the day's folder, names unchanged). Nothing is removed from the phone until the computer has it.
 var PDB=null;
 function pdb(){return new Promise(function(ok,no){if(PDB)return ok(PDB);try{var r=indexedDB.open('ct-photos',1);r.onupgradeneeded=function(){r.result.createObjectStore('p',{keyPath:'id',autoIncrement:true});};r.onsuccess=function(){PDB=r.result;ok(PDB);};r.onerror=function(){no(r.error);};}catch(e){no(e);}});}
 function pdo(mode,fn){return pdb().then(function(d){return new Promise(function(ok,no){var t=d.transaction('p',mode),s=t.objectStore('p'),r=fn(s);t.oncomplete=function(){ok(r&&r.result);};t.onerror=function(){no(t.error);};});});}
@@ -1127,7 +1127,7 @@ function photosShow(){var m=photoMeta();
  photoAll().then(function(all){var wait=all.filter(function(p){return!p.sent&&!p.scan;}).sort(function(a,b){return a.when-b.when;});
   savedCaves().then(function(keys){keys=keys||[];if(m.cave&&keys.indexOf(m.cave)<0)keys=[m.cave].concat(keys);
    var opts=keys.map(function(k){return'<option'+(k==m.cave?' selected':'')+'>'+esc(k)+'</option>';}).join('')+'<option value="__new">Another cave…</option>';
-   var h='<p class="mut" style="margin-top:0">Photos of book pages and sketches. They\'re named for the cave and trip, kept on this phone, and go to your computer when you send them'+(PC?' - into Topside\'s <b>From phone</b> folder on '+esc(PC.name):'')+'.</p>'+
+   var h='<p class="mut" style="margin-top:0">Photos of book pages and sketches. They\'re named for the cave and trip, kept on this phone, and go to your computer when you send them'+(PC?' - into Tacheo\'s <b>From phone</b> folder on '+esc(PC.name):'')+'.</p>'+
     '<div class="k">Cave</div><select id="phCave" class="fld">'+(keys.length?'':'<option value="" selected>Choose…</option>')+opts+'</select><input id="phCaveNew" class="fld" placeholder="Cave name" style="display:none;margin-top:6px">'+
     '<div class="k">Trip</div><input id="phTrip" class="fld" value="'+esc(m.trip)+'" placeholder="Trip, or the date">'+
     '<div class="k">What they are</div><div class="seg" id="phKind" style="display:flex">'+Object.keys(PKIND).map(function(k){return'<button data-k="'+k+'"'+(k==m.kind?' class="on"':'')+' style="flex:1">'+PKIND[k][0]+' '+PKIND[k][1]+'</button>';}).join('')+'</div>'+
@@ -1159,13 +1159,13 @@ function photosShow(){var m=photoMeta();
 // ======================================================================= Scan cave sketches and data
 // (Sully, 17 Nov 2026: "Have the app record cave data picture like Google Pixel does its scans. Creates a PDF, autodetects the edges of
 // the page, auto captures then camera stays open for the next one, and creates 1 PDF of the entire series." / "Label it 'scan cave
-// sketch and data' or something along those lines" / "make sure there's a function to send it to your PC/Topside automatically, or have
+// sketch and data' or something along those lines" / "make sure there's a function to send it to your PC/Tacheo automatically, or have
 // a pop up that asks.")
 //   The camera stays open: each frame (small copy, about 8 a second) is looked at for the brightest page-shaped area (Otsu threshold,
 //   the largest bright patch, its corners); when the page has held still for 0.7 s it is taken by itself, flattened square (the four
 //   corners pulled to a rectangle), cleaned (paper white, pencil dark - or colour, or black and white), and the scanner waits for the
 //   page to change (turned, or taken away) before it takes the next. Done makes one PDF of every page, kept on this phone, and sends it
-//   to Topside on the computer by itself or asks first (the choice is kept). Topside puts it in From phone\<day>\<cave - trip>\.
+//   to Tacheo on the computer by itself or asks first (the choice is kept). Tacheo puts it in From phone\<day>\<cave - trip>\.
 var SCANF={clean:['Clean','paper white, pencil dark'],color:['Colour','as the camera sees it'],bw:['Black & white','crispest for printing']};
 function scanPrefs(){var p=load2('ct-scan')||{};if(!SCANF[p.filter])p.filter='clean';if(p.auto==null)p.auto=true;if(p.send!='auto'&&p.send!='ask')p.send='ask';return p;}
 function scanPrefsSave(p){try{localStorage.setItem('ct-scan',JSON.stringify(p));}catch(e){}}
@@ -1246,7 +1246,7 @@ function pdfFromJpegs(pages,title){return Promise.all(pages.map(function(p){retu
  add(new Uint8Array([37,80,68,70,45,49,46,52,10,37,226,227,207,211,10]));   // %PDF-1.4 and a binary comment
  var np=pages.length,kids=[];for(var i=0;i<np;i++)kids.push((4+3*i)+' 0 R');
  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,'<< /Type /Pages /Count '+np+' /Kids ['+kids.join(' ')+'] >>');
- obj(3,'<< /Title ('+String(title||'Scan').replace(/[()\\]/g,' ').replace(/[^\x20-\x7e]/g,'')+') /Producer (Topside phone app) /CreationDate (D:'+new Date().toISOString().replace(/[-:T]/g,'').slice(0,14)+') >>');
+ obj(3,'<< /Title ('+String(title||'Scan').replace(/[()\\]/g,' ').replace(/[^\x20-\x7e]/g,'')+') /Producer (Tacheo phone app) /CreationDate (D:'+new Date().toISOString().replace(/[-:T]/g,'').slice(0,14)+') >>');
  pages.forEach(function(p,i){var dpi=Math.max(72,Math.max(p.w,p.h)/11),pn=4+3*i,im=pn+1,cn=pn+2,wp=(p.w*72/dpi).toFixed(2),hp=(p.h*72/dpi).toFixed(2),cs='q '+wp+' 0 0 '+hp+' 0 0 cm /Im0 Do Q';
   obj(pn,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+wp+' '+hp+'] /Resources << /XObject << /Im0 '+im+' 0 R >> >> /Contents '+cn+' 0 R >>');
   obj(im,function(){add('<< /Type /XObject /Subtype /Image /Width '+p.w+' /Height '+p.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+bufs[i].byteLength+' >>\nstream\n');add(bufs[i]);add('\nendstream');});
@@ -1272,7 +1272,7 @@ function scanCam(opts){var o=$('scn'),v=$('scnV'),cv=$('scnO'),ox=cv.getContext(
   var tr=s.getVideoTracks()[0];if(window.ImageCapture)try{cap=new ImageCapture(tr);}catch(e){cap=null;}
   try{var c=tr.getCapabilities&&tr.getCapabilities();if(c&&c.torch){var tb=$('scnTorch');tb.style.visibility='visible';tb.onclick=function(){torch=!torch;tr.applyConstraints({advanced:[{torch:torch}]}).catch(function(){});tb.classList.toggle('on',torch);};}else $('scnTorch').style.visibility='hidden';}catch(e){}
   requestAnimationFrame(loop);
- },function(x){msg.innerHTML='The camera didn\'t start ('+esc(x.name||x.message)+').<br>Allow the camera for Topside in the phone\'s settings.';});
+ },function(x){msg.innerHTML='The camera didn\'t start ('+esc(x.name||x.message)+').<br>Allow the camera for Tacheo in the phone\'s settings.';});
  function box(){var W=cv.clientWidth,H=cv.clientHeight,vw=v.videoWidth||1,vh=v.videoHeight||1,k=Math.min(W/vw,H/vh);return{x:(W-vw*k)/2,y:(H-vh*k)/2,w:vw*k,h:vh*k};}
  function draw(q,col,prog){var dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;if(cv.width!=Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
   ox.setTransform(dpr,0,0,dpr,0,0);ox.clearRect(0,0,W,H);if(!q)return;var b=box(),P=q.map(function(p){return[b.x+p[0]*b.w,b.y+p[1]*b.h];});
@@ -1311,12 +1311,12 @@ function scanShow(){var m=photoMeta(),pref=scanPrefs();
    '<div class="k">Cave</div><select id="scCave" class="fld">'+(keys.length?'':'<option value="" selected>Choose…</option>')+opts+'</select><input id="scCaveNew" class="fld" placeholder="Cave name" style="display:none;margin-top:6px">'+
    '<div class="k">Trip</div><input id="scTrip" class="fld" value="'+esc(m.trip)+'" placeholder="Trip, or the date">'+
    '<div class="k">What it is</div><div class="seg" id="scKind" style="display:flex">'+Object.keys(PKIND).map(function(k){return'<button data-k="'+k+'"'+(k==m.kind?' class="on"':'')+' style="flex:1">'+PKIND[k][0]+' '+PKIND[k][1]+'</button>';}).join('')+'</div>'+
-   '<div style="margin-top:12px">'+(canScan()?'<button class="btn" id="scGo" style="width:100%;padding:16px;font-size:18px">📄 Start scanning</button>':'<div class="card"><b>No camera here</b><div class="mut">Scanning needs the Topside app or a browser with the camera allowed.</div></div>')+'</div>'+
+   '<div style="margin-top:12px">'+(canScan()?'<button class="btn" id="scGo" style="width:100%;padding:16px;font-size:18px">📄 Start scanning</button>':'<div class="card"><b>No camera here</b><div class="mut">Scanning needs the Tacheo app or a browser with the camera allowed.</div></div>')+'</div>'+
    '<div class="k">Look</div><div class="seg" id="scFlt" style="display:flex">'+Object.keys(SCANF).map(function(k){return'<button data-f="'+k+'"'+(k==pref.filter?' class="on"':'')+' style="flex:1">'+SCANF[k][0]+'</button>';}).join('')+'</div>'+
    '<div class="mut" style="font-size:12.5px;margin-top:3px">'+esc(SCANF[pref.filter][1])+'</div>'+
    '<label class="lab" style="margin-top:8px"><input type="checkbox" id="scAuto"'+(pref.auto?' checked':'')+'> Take each page by itself when it\'s held still</label>'+
    '<div class="k">When a scan is done</div><div class="seg" id="scSend" style="display:flex"><button data-s="auto"'+(pref.send=='auto'?' class="on"':'')+' style="flex:1">Send it to my computer</button><button data-s="ask"'+(pref.send=='ask'?' class="on"':'')+' style="flex:1">Ask me</button></div>'+
-   '<div class="mut" style="font-size:12.5px;margin-top:3px">'+(PC?'Into Topside\'s From phone folder on '+esc(PC.name)+', in a folder for the cave and trip.':'Connect to Topside on your computer to send scans. They wait on this phone until then.')+'</div>'+
+   '<div class="mut" style="font-size:12.5px;margin-top:3px">'+(PC?'Into Tacheo\'s From phone folder on '+esc(PC.name)+', in a folder for the cave and trip.':'Connect to Tacheo on your computer to send scans. They wait on this phone until then.')+'</div>'+
    (!PC&&(HOSTED||LOCALPC)?'<button class="btn alt" id="scConn" style="margin-top:6px">Connect to my computer</button>':'')+
    '<div class="k">On this phone ('+all.length+')</div>'+(all.length?all.map(function(s){return'<div class="card" style="display:flex;align-items:center;gap:10px;margin:6px 0"><img data-th="'+s.id+'" alt="" style="width:46px;height:60px;object-fit:cover;border-radius:6px;background:#fff;flex:none"><div style="flex:1;min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+'</b><span class="mut" style="font-size:12.5px">'+s.pages+(s.pages==1?' page':' pages')+' · '+kb(s.blob.size)+' · '+(s.sent?'✓ on '+esc(s.sentTo||'the computer'):'waiting to send')+'</span></div>'+
     '<div style="display:flex;flex-direction:column;gap:4px">'+(PC?'<button class="btn alt" style="padding:4px 10px" data-sn="'+s.id+'">'+(s.sent?'Send again':'Send')+'</button>':'')+'<button class="btn alt" style="padding:4px 10px" data-sv="'+s.id+'">Save</button><button class="btn alt" style="padding:4px 10px" data-dl="'+s.id+'">✕</button></div></div>';}).join(''):'<div class="mut">None yet.</div>')+
@@ -1348,7 +1348,7 @@ function scanMake(pages,m){var base=clean(m.cave)||'Cave',trip=clean(m.trip)||to
  .then(function(rec){if(m.after){m.after(rec);return;}scanShow();var pref=scanPrefs();
   if(PC&&pref.send=='auto')scanSend(rec,false);
   else if(PC)askBox('<b>Send it to '+esc(PC.name)+'?</b><div class="mut" style="margin-top:4px">'+esc(rec.name)+' · '+kb(rec.blob.size)+'</div>',[['Send now',function(){scanSend(rec,false);}],['Always send by itself',function(){pref.send='auto';scanPrefsSave(pref);scanSend(rec,false);}],['Not now',null]]);
-  else askBox('<b>Kept on this phone</b><div class="mut" style="margin-top:4px">'+esc(rec.name)+'. Connect to Topside on your computer to send it - it waits here until then.</div>',(HOSTED||LOCALPC)?[['Connect to my computer',pcSheet],['OK',null]]:[['OK',null]]);
+  else askBox('<b>Kept on this phone</b><div class="mut" style="margin-top:4px">'+esc(rec.name)+'. Connect to Tacheo on your computer to send it - it waits here until then.</div>',(HOSTED||LOCALPC)?[['Connect to my computer',pcSheet],['OK',null]]:[['OK',null]]);
  },function(x){toast('Couldn\'t make the PDF: '+esc(x.message),5000);if(m.after)svTripShow();else scanShow();});}
 function scanSend(rec,show){if(!PC){toast('Connect to your computer first');return;}var mm=$('scMsg');if(mm)mm.textContent='Sending '+rec.name+'…';toast('Sending to '+esc(PC.name)+'…',1500);
  pcJson('POST','/api/upload?name='+encodeURIComponent(rec.name)+'&folder='+encodeURIComponent(rec.folder),rec.blob,300000).then(function(){rec.sent=true;rec.sentTo=PC.name;
@@ -1368,7 +1368,7 @@ function camShow(onShot,onDone){var o=$('cam'),v=$('camV'),msg=$('camMsg'),strea
   var tr=s.getVideoTracks()[0];msg.textContent='Fill the frame with the page, hold still, tap the button.';
   if(window.ImageCapture)try{cap=new ImageCapture(tr);}catch(e){cap=null;}
   try{var c=tr.getCapabilities&&tr.getCapabilities();if(c&&c.torch){var tb=$('camTorch');tb.style.visibility='visible';tb.onclick=function(){torch=!torch;tr.applyConstraints({advanced:[{torch:torch}]}).catch(function(){});tb.classList.toggle('on',torch);};}}catch(e){}
- },function(x){msg.innerHTML='The camera didn\'t start ('+esc(x.name||x.message)+').<br>Allow the camera for Topside in the phone\'s settings, or use <b>Choose from the phone</b>.';});
+ },function(x){msg.innerHTML='The camera didn\'t start ('+esc(x.name||x.message)+').<br>Allow the camera for Tacheo in the phone\'s settings, or use <b>Choose from the phone</b>.';});
  function grab(){if(cap&&cap.takePhoto)return cap.takePhoto().catch(function(){cap=null;return frame();});return frame();}
  function frame(){var c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);return new Promise(function(ok,no){c.toBlob(function(b){b?ok(b):no(new Error('no picture'));},'image/jpeg',0.92);});}
  $('camShot').onclick=function(){if(busy||!stream||v.readyState<2)return;busy=true;var f=$('camFlash');f.style.opacity='.8';setTimeout(function(){f.style.opacity='0';},120);if(navigator.vibrate)navigator.vibrate(20);
@@ -1390,16 +1390,16 @@ if(HOSTED&&'serviceWorker' in navigator&&location.protocol=='https:'){
  var hadSW=!!navigator.serviceWorker.controller;
  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
   document.addEventListener('visibilitychange',function(){if(document.visibilityState=='visible')reg.update().catch(function(){});});}).catch(function(){});
- navigator.serviceWorker.addEventListener('controllerchange',function(){if(!hadSW){hadSW=true;return;}if(Date.now()-T0<12000&&!D)location.reload();else toast('Topside was updated - <a href="#" id="tUpd" style="color:var(--accent)">reload</a> to use the new version',15000),setTimeout(function(){var t=$('tUpd');if(t)t.onclick=function(e){e.preventDefault();location.reload();};},50);});}
+ navigator.serviceWorker.addEventListener('controllerchange',function(){if(!hadSW){hadSW=true;return;}if(Date.now()-T0<12000&&!D)location.reload();else toast('Tacheo was updated - <a href="#" id="tUpd" style="color:var(--accent)">reload</a> to use the new version',15000),setTimeout(function(){var t=$('tUpd');if(t)t.onclick=function(e){e.preventDefault();location.reload();};},50);});}
 function checkAppUpdate(){if(!HOSTED||location.protocol!='https:')return;fetch('version.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(v){var a=v&&v.android;
   if(!a||!APPVER||!verNewer(a.versionName,APPVER))return;UPD=a;if($('home').style.display=='block')homeShow();
-  if(store('ct-upd-told')!=a.versionName){store('ct-upd-told',a.versionName);toast('Topside app '+esc(a.versionName)+' is out - ☰ to update',9000);}}).catch(function(){});}
-function updHtml(){if(!UPD)return'';return'<div class="card" style="border-color:#2BB673"><b>Update the Topside app: '+esc(UPD.versionName)+' is out</b><div class="mut">You have '+esc(APPVER)+'. '+esc(UPD.notes||'')+'</div><a class="btn" style="text-decoration:none" href="'+esc(UPD.url)+'">⬇ Download the update</a><div class="mut" style="font-size:12.5px">It opens in your browser. Open the download and tap <b>Update</b> - your caves stay. If Play Protect asks: More details → Install anyway.</div></div>';}
+  if(store('ct-upd-told')!=a.versionName){store('ct-upd-told',a.versionName);toast('Tacheo app '+esc(a.versionName)+' is out - ☰ to update',9000);}}).catch(function(){});}
+function updHtml(){if(!UPD)return'';return'<div class="card" style="border-color:#2BB673"><b>Update the Tacheo app: '+esc(UPD.versionName)+' is out</b><div class="mut">You have '+esc(APPVER)+'. '+esc(UPD.notes||'')+'</div><a class="btn" style="text-decoration:none" href="'+esc(UPD.url)+'">⬇ Download the update</a><div class="mut" style="font-size:12.5px">It opens in your browser. Open the download and tap <b>Update</b> - your caves stay. If Play Protect asks: More details → Install anyway.</div></div>';}
 setTimeout(checkAppUpdate,2500);document.addEventListener('visibilitychange',function(){if(document.visibilityState=='visible')checkAppUpdate();});
 // ======================================================================= my computer: Phone link (Sully, 15 Nov 2026, 21:01)
-// Topside on the home computer, over the Wi-Fi or Tailscale: its caves copied here fresh, Check and Reckon run there, files and notes sent
-// there, and its screen here to use with taps and typing. Pairs once with the 6-digit code Topside shows (File > Phone link); the computer's
-// home and Tailscale addresses are kept, and tried in turn. From the https site only the Android app (or Topside's own copy of this page,
+// Tacheo on the home computer, over the Wi-Fi or Tailscale: its caves copied here fresh, Check and Reckon run there, files and notes sent
+// there, and its screen here to use with taps and typing. Pairs once with the 6-digit code Tacheo shows (File > Phone link); the computer's
+// home and Tailscale addresses are kept, and tried in turn. From the https site only the Android app (or Tacheo's own copy of this page,
 // served by the computer) can reach a computer on the home network - other browsers are sent to that copy.
 var PC=(function(){try{return JSON.parse(store('ct-pc')||'null');}catch(e){return null;}})(),PCBASE=null,PCVIA='';
 var LOCALPC=!!window.TOPSIDE_PC,INAPP=/TopsideApp/.test(navigator.userAgent),BRIDGE=window.TopsideAndroid&&typeof TopsideAndroid.http=='function';
@@ -1437,7 +1437,7 @@ function pcHello(){return pcJson('GET','/api/hello').then(function(h){if(PC&&!LO
 function pcOver(html){sheet(PC?esc(PC.name):'My computer',html);}
 // ---- the card on Home
 function pcCard(){if(!HOSTED&&!LOCALPC)return'';
- if(!PC)return'<div class="k">My computer</div><div class="card"><b>Use Topside on your computer from here</b><div class="mut">Copy its caves onto this phone, run Check and Reckon there, send it files and notes, and see and use its screen - at home on the Wi-Fi, or anywhere with Tailscale.</div>'+(canScan()?'<button class="btn" id="pcScanH">📷 Scan the code on the computer</button><button class="btn alt" id="pcGo">Type the code instead</button>':'<button class="btn" id="pcGo">Connect to my computer</button>')+'<button class="btn alt" id="pcTs">Away from home (Tailscale)</button></div>';
+ if(!PC)return'<div class="k">My computer</div><div class="card"><b>Use Tacheo on your computer from here</b><div class="mut">Copy its caves onto this phone, run Check and Reckon there, send it files and notes, and see and use its screen - at home on the Wi-Fi, or anywhere with Tailscale.</div>'+(canScan()?'<button class="btn" id="pcScanH">📷 Scan the code on the computer</button><button class="btn alt" id="pcGo">Type the code instead</button>':'<button class="btn" id="pcGo">Connect to my computer</button>')+'<button class="btn alt" id="pcTs">Away from home (Tailscale)</button></div>';
  return'<div class="k">My computer</div><div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>💻 '+esc(PC.name)+'</b><span class="chip" id="pcState" style="background:#3a4756;color:#e6ecf2">checking…</span></div>'+
   '<div id="pcInbox"></div><button class="btn" id="pcCaves">Caves on the computer</button><button class="btn alt" id="pcScreen">Use its screen</button><button class="btn alt" id="pcSend">Send files or a note</button><button class="btn alt" id="pcMore">⋯</button><div id="pcWhy"></div></div>';}
 function pcHookCard(){var e;if(e=$('pcGo'))e.onclick=pcConnect;if(e=$('pcScanH'))e.onclick=pcScan;if(e=$('pcTs'))e.onclick=pcTailscale;if(e=$('pcCaves'))e.onclick=pcCaves;if(e=$('pcScreen'))e.onclick=pcScreen;if(e=$('pcSend'))e.onclick=pcSend;if(e=$('pcMore'))e.onclick=pcSettings;
@@ -1457,7 +1457,7 @@ function hookInbox(){[].forEach.call(document.querySelectorAll('[data-take]'),fu
 function pcAutoTake(){pcInbox().then(function(l){var it=(l||[]).filter(function(x){return x.auto;})[0];if(!it)return;toast('Bringing '+esc(it.title)+' over from '+esc(PC.name)+'…',30000);inboxTake(it).catch(function(x){toast(esc(x.message),6000);});});}
 setInterval(function(){if(PC&&document.visibilityState=='visible')pcInbox();},30000);
 document.addEventListener('visibilitychange',function(){if(PC&&document.visibilityState=='visible')pcInbox();});
-// ---- the camera: point it at the QR code Topside shows and it connects by itself
+// ---- the camera: point it at the QR code Tacheo shows and it connects by itself
 // (Sully, 16 Nov 2026, 04:58: "Can't there be in the app a take a photo on my phone button that will connect automatically")
 // the phone's own barcode reader where the browser has one, else jsQR (Apache-2.0, loaded from the site only when scanning)
 function canScan(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.isSecureContext);}
@@ -1467,11 +1467,11 @@ function pcScan(){var o=$('scan'),v=$('scanV'),msg=$('scanMsg'),stream=null,on=t
  function stop(){on=false;if(stream)stream.getTracks().forEach(function(t){t.stop();});o.style.display='none';}
  $('scanX').onclick=stop;
  function found(text){var m=null;try{var u=new URL(text);m={l:u.searchParams.get('link'),p:u.searchParams.get('p'),n:u.searchParams.get('n')||'your computer'};}catch(e){}
-  if(!m||!m.l||!m.p){msg.textContent='That\'s not a Topside code - point it at the one in Topside\'s Connect a phone window.';return false;}
+  if(!m||!m.l||!m.p){msg.textContent='That\'s not a Tacheo code - point it at the one in Tacheo\'s Connect a phone window.';return false;}
   stop();if(navigator.vibrate)navigator.vibrate(30);
   if(!pcCanReach()){location.href='http://'+hostOf(m.l)+'/?p='+encodeURIComponent(m.p);return true;}
   pcOver('<p>Connecting to <b>'+esc(m.n)+'</b>…</p>');store('ct-pc-last',hostOf(m.l));
-  pcPair(hostOf(m.l),m.p).then(function(){$('pcOver').style.display='none';toast('Connected to '+esc(PC.name));homeShow();},function(x){pcOver('<p><b>Couldn\'t connect to '+esc(m.n)+'.</b></p><p class="mut">'+esc(x.message)+'</p><p class="mut">Is this phone on the same Wi-Fi as the computer (or Tailscale on)? Is Topside\'s Connect a phone window still open?</p><button class="btn" id="scAgain">Scan again</button>');$('scAgain').onclick=function(){$('pcOver').style.display='none';pcScan();};});return true;}
+  pcPair(hostOf(m.l),m.p).then(function(){$('pcOver').style.display='none';toast('Connected to '+esc(PC.name));homeShow();},function(x){pcOver('<p><b>Couldn\'t connect to '+esc(m.n)+'.</b></p><p class="mut">'+esc(x.message)+'</p><p class="mut">Is this phone on the same Wi-Fi as the computer (or Tailscale on)? Is Tacheo\'s Connect a phone window still open?</p><button class="btn" id="scAgain">Scan again</button>');$('scAgain').onclick=function(){$('pcOver').style.display='none';pcScan();};});return true;}
  function tick(){if(!on)return;if(v.readyState<2){requestAnimationFrame(tick);return;}
   if(det){det.detect(v).then(function(c){if(c&&c.length&&found(c[0].rawValue))return;setTimeout(tick,120);},function(){det=null;setTimeout(tick,50);});return;}
   if(!window.jsQR){setTimeout(tick,150);return;}
@@ -1480,39 +1480,39 @@ function pcScan(){var o=$('scan'),v=$('scanV'),msg=$('scanMsg'),stream=null,on=t
   if(r&&r.data&&found(r.data))return;setTimeout(tick,100);}
  var useDet=('BarcodeDetector' in window)?BarcodeDetector.getSupportedFormats().then(function(f){if(f.indexOf('qr_code')>=0)det=new BarcodeDetector({formats:['qr_code']});}).catch(function(){}):Promise.resolve();
  useDet.then(function(){return det?null:loadJsQR();}).then(function(){return navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});})
-  .then(function(s){if(!on){s.getTracks().forEach(function(t){t.stop();});return;}stream=s;v.srcObject=s;v.setAttribute('playsinline','');v.play();msg.textContent='Point it at the QR code in Topside\'s Connect a phone window';tick();})
-  .catch(function(x){msg.innerHTML=(x&&x.name=='NotAllowedError'?'The camera wasn\'t allowed. '+(INAPP?'Allow it when Android asks (or in Settings → Apps → Topside → Permissions).':'Allow it in the browser\'s site settings.'):esc(x&&x.message||'No camera'))+' You can type the code instead.';});}
+  .then(function(s){if(!on){s.getTracks().forEach(function(t){t.stop();});return;}stream=s;v.srcObject=s;v.setAttribute('playsinline','');v.play();msg.textContent='Point it at the QR code in Tacheo\'s Connect a phone window';tick();})
+  .catch(function(x){msg.innerHTML=(x&&x.name=='NotAllowedError'?'The camera wasn\'t allowed. '+(INAPP?'Allow it when Android asks (or in Settings → Apps → Tacheo → Permissions).':'Allow it in the browser\'s site settings.'):esc(x&&x.message||'No camera'))+' You can type the code instead.';});}
 // ---- connecting
-function pcConnect(){var h='<p>On the computer: open <b>Topside</b> → <b>CartoTable</b> → <b>File</b> → <b>Phone link</b> and tick <b>Phone link is on</b>. It shows a QR code and a 6-digit code.</p>';
+function pcConnect(){var h='<p>On the computer: open <b>Tacheo</b> → <b>CartoTable</b> → <b>File</b> → <b>Phone link</b> and tick <b>Phone link is on</b>. It shows a QR code and a 6-digit code.</p>';
  if(LOCALPC)h+='<div class="k">Code from the computer</div><input type="text" id="pcCode" inputmode="numeric" placeholder="123 456" style="width:100%;font-size:20px;padding:12px;letter-spacing:.1em"><button class="btn" id="pcOk">Connect</button>';
- else{h+=canScan()?'<button class="btn" id="pcScanB" style="font-size:17px;padding:14px">📷 Scan the code on the computer</button><p class="mut" style="font-size:13px">Point the camera at the QR code in Topside\'s <b>Connect a phone</b> window - it connects by itself. Or type it:</p>':'<p class="mut">Easiest: scan the QR code with this phone\'s camera. Or:</p>';
+ else{h+=canScan()?'<button class="btn" id="pcScanB" style="font-size:17px;padding:14px">📷 Scan the code on the computer</button><p class="mut" style="font-size:13px">Point the camera at the QR code in Tacheo\'s <b>Connect a phone</b> window - it connects by itself. Or type it:</p>':'<p class="mut">Easiest: scan the QR code with this phone\'s camera. Or:</p>';
   if(BRIDGE)h+='<button class="btn alt" id="pcFind">🔎 Find it on this Wi-Fi</button><div id="pcFound"></div>';
-  h+='<div class="k">The computer\'s address</div><input type="text" id="pcAddr" placeholder="192.168.1.20 or desktop-name" autocapitalize="none" style="width:100%;font-size:16px;padding:11px" value="'+esc(store('ct-pc-last')||'')+'"><div class="mut" style="font-size:12.5px">Topside shows it under Addresses in Phone link.</div>'+
+  h+='<div class="k">The computer\'s address</div><input type="text" id="pcAddr" placeholder="192.168.1.20 or desktop-name" autocapitalize="none" style="width:100%;font-size:16px;padding:11px" value="'+esc(store('ct-pc-last')||'')+'"><div class="mut" style="font-size:12.5px">Tacheo shows it under Addresses in Phone link.</div>'+
    '<div class="k">Code from the computer</div><input type="text" id="pcCode" inputmode="numeric" placeholder="123 456" style="width:100%;font-size:20px;padding:11px;letter-spacing:.1em"><button class="btn" id="pcOk">Connect</button>';
-  if(!pcCanReach())h+='<div class="card mut" style="font-size:13px">This browser can\'t talk to a computer on your home network from this website, so Connect opens Topside\'s own copy of this app, served by the computer. '+(ANDROID?'The <b>Topside app</b> (Download Topside for Android, on Home) connects straight from here.':IOS?'On iPhone it opens in Safari - tap Share → <b>Add to Home Screen</b> there to keep a button for it.':'')+'</div>';}
+  if(!pcCanReach())h+='<div class="card mut" style="font-size:13px">This browser can\'t talk to a computer on your home network from this website, so Connect opens Tacheo\'s own copy of this app, served by the computer. '+(ANDROID?'The <b>Tacheo app</b> (Download Tacheo for Android, on Home) connects straight from here.':IOS?'On iPhone it opens in Safari - tap Share → <b>Add to Home Screen</b> there to keep a button for it.':'')+'</div>';}
  h+='<div class="k">Away from home</div><p class="mut">With Tailscale on the computer and this phone, the same connection works anywhere with signal. <a href="#" id="pcTs2">How to set it up</a></p><div id="pcMsg" class="mut"></div>';
  pcOver(h);var e;if(e=$('pcScanB'))e.onclick=pcScan;if(e=$('pcTs2'))e.onclick=function(ev){ev.preventDefault();pcTailscale();};
- if(e=$('pcFind'))e.onclick=function(){$('pcFound').innerHTML='<p class="mut">Looking…</p>';window.CTfound=function(list){var f=$('pcFound');if(!f)return;f.innerHTML=list.length?list.map(function(c){return'<div class="row" data-a="'+esc(c.addr+':'+c.port)+'"><div class="t">💻 '+esc(c.name)+'</div><div class="s">'+esc(c.addr)+'</div></div>';}).join(''):'<p class="mut">No Topside answered on this Wi-Fi. Is Phone link on, and is the phone on the same Wi-Fi? Type the address instead.</p>';
+ if(e=$('pcFind'))e.onclick=function(){$('pcFound').innerHTML='<p class="mut">Looking…</p>';window.CTfound=function(list){var f=$('pcFound');if(!f)return;f.innerHTML=list.length?list.map(function(c){return'<div class="row" data-a="'+esc(c.addr+':'+c.port)+'"><div class="t">💻 '+esc(c.name)+'</div><div class="s">'+esc(c.addr)+'</div></div>';}).join(''):'<p class="mut">No Tacheo answered on this Wi-Fi. Is Phone link on, and is the phone on the same Wi-Fi? Type the address instead.</p>';
    [].forEach.call(f.querySelectorAll('[data-a]'),function(r){r.onclick=function(){$('pcAddr').value=r.dataset.a;$('pcCode').focus();};});};TopsideAndroid.discover();};
  $('pcOk').onclick=function(){var code=($('pcCode').value||'').replace(/\D/g,''),addr=LOCALPC?'':hostOf($('pcAddr')&&$('pcAddr').value);if(code.length!=6){$('pcMsg').textContent='The code is 6 digits.';return;}if(!LOCALPC&&!addr){$('pcMsg').textContent='Type the computer\'s address.';return;}
   if(!LOCALPC)store('ct-pc-last',addr);
   if(!pcCanReach()){location.href='http://'+addr+'/?p='+code;return;}
   $('pcMsg').textContent='Connecting…';pcPair(addr,code).then(function(){$('pcOver').style.display='none';toast('Connected to '+esc(PC.name));homeShow();},function(x){$('pcMsg').textContent=(x.name=='AbortError'||/fetch|network|Failed/i.test(x.message))?'No answer from '+addr+'. Is the computer on with Phone link on, and this phone on the same Wi-Fi (or Tailscale on)?':x.message;});};}
-// a QR code from Topside opens this page with ?link=address&p=code&n=name
+// a QR code from Tacheo opens this page with ?link=address&p=code&n=name
 function pcFromUrl(){var q=new URLSearchParams(location.search),p=q.get('p'),l=q.get('link'),n=q.get('n')||'your computer';if(!p)return;history.replaceState(null,'',location.pathname);
  if(LOCALPC){pcPair('',p).then(function(){toast('Connected to '+esc(PC.name));homeShow();},function(x){toast(esc(x.message),6000);});return;}
  if(!l)return;
  if(pcCanReach()){toast('Connecting to '+esc(n)+'…',20000);pcPair(hostOf(l),p).then(function(){toast('Connected to '+esc(PC.name));homeShow();},function(x){toast('Couldn\'t connect: '+esc(x.message),8000);});return;}
  var direct='http://'+hostOf(l)+'/?p='+encodeURIComponent(p);
- var h='<p>Topside on <b>'+esc(n)+'</b> asked this phone to connect.</p>';
- if(ANDROID)h+='<div class="k">1 · Get the Topside app</div><a class="btn" style="text-decoration:none" href="Topside.apk" download>⬇ Download Topside for Android</a><p class="mut" style="font-size:13px">Open the download and tap <b>Install</b>. The first time, Android asks to let this browser install apps - allow it. If Play Protect says it doesn\'t know the app: <b>More details → Install anyway</b>. Already have it? Skip to 2.</p>'+
-  '<div class="k">2 · Connect</div><a class="btn" style="text-decoration:none" href="intent://link?h='+encodeURIComponent(hostOf(l))+'&p='+encodeURIComponent(p)+'&n='+encodeURIComponent(n)+'#Intent;scheme=topside;package=org.tacheo.topside;end">Open in the Topside app</a><p class="mut" style="font-size:13px">Or scan the code on the computer again - it opens the app straight away now.</p>'+
+ var h='<p>Tacheo on <b>'+esc(n)+'</b> asked this phone to connect.</p>';
+ if(ANDROID)h+='<div class="k">1 · Get the Tacheo app</div><a class="btn" style="text-decoration:none" href="Topside.apk" download>⬇ Download Tacheo for Android</a><p class="mut" style="font-size:13px">Open the download and tap <b>Install</b>. The first time, Android asks to let this browser install apps - allow it. If Play Protect says it doesn\'t know the app: <b>More details → Install anyway</b>. Already have it? Skip to 2.</p>'+
+  '<div class="k">2 · Connect</div><a class="btn" style="text-decoration:none" href="intent://link?h='+encodeURIComponent(hostOf(l))+'&p='+encodeURIComponent(p)+'&n='+encodeURIComponent(n)+'#Intent;scheme=topside;package=org.tacheo.topside;end">Open in the Tacheo app</a><p class="mut" style="font-size:13px">Or scan the code on the computer again - it opens the app straight away now.</p>'+
   '<a class="btn alt" style="text-decoration:none" href="'+esc(direct)+'">Use it in this browser instead</a>';
- else h+='<a class="btn" style="text-decoration:none" href="'+esc(direct)+'">Continue</a><p class="mut" style="font-size:13px">That opens Topside from your computer (this phone has to be on the same Wi-Fi, or on Tailscale).'+(IOS?' Then tap <b>Share</b> → <b>Add to Home Screen</b> there - that button is your Topside app for this computer.':'')+'</p>';
+ else h+='<a class="btn" style="text-decoration:none" href="'+esc(direct)+'">Continue</a><p class="mut" style="font-size:13px">That opens Tacheo from your computer (this phone has to be on the same Wi-Fi, or on Tailscale).'+(IOS?' Then tap <b>Share</b> → <b>Add to Home Screen</b> there - that button is your Tacheo app for this computer.':'')+'</p>';
  pcOver(h);}
 // ---- caves on the computer
 function pcCaves(){pcOver('<p class="mut">Asking the computer…</p>');pcHello().then(function(h){savedCaves().then(function(here){
-  var c=h.caves||[];if(!c.length){pcOver('<p class="mut">Topside on the computer hasn\'t opened any caves yet.</p>');return;}
+  var c=h.caves||[];if(!c.length){pcOver('<p class="mut">Tacheo on the computer hasn\'t opened any caves yet.</p>');return;}
   pcOver('<p class="mut" style="margin-top:0">Connected over '+esc(PCVIA)+'. '+(h.cloud?'Kept-up-to-date caves go to '+esc(h.cloud)+'.':'')+'</p>'+c.map(function(v,i){var on=here.indexOf(v.name)>=0;
    return'<div class="card"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(v.name)+'</b>'+(v.open?'<span class="chip" style="background:#2f80ed;color:#fff">open on the computer</span>':'')+'</div><div class="mut" style="font-size:12.5px">'+esc(v.file)+' · changed '+esc(v.when)+(v.headline?' · '+esc(v.headline):'')+(on?' · <b style="color:var(--ink)">on this phone</b>':'')+'</div>'+
     '<button class="btn" data-copy="'+i+'">'+(on?'Copy again (newer)':'Copy to this phone')+'</button><button class="btn alt" data-check="'+i+'">Check</button><button class="btn alt" data-reckon="'+i+'">Reckon</button>'+
@@ -1535,7 +1535,7 @@ function checkHtml(r){var h='<div class="card"><b>'+esc(r.headline)+'</b><div cl
 function reckonHtml(r){if(r.skipped)return'<div class="card">'+esc(r.skipped)+'</div>';var h='<div class="card"><b>'+esc(r.summary||'')+'</b>'+(r.quality?'<div class="mut">'+esc(r.quality)+'</div>':'')+'</div><div class="k">'+r.serious+' to fix or check · '+r.count+' in all</div>';
  return h+r.items.map(function(i){var c=i.sev=='error'?'#d64545':i.sev=='check'?'#d69e2e':'#6b7785';return'<details class="row"><summary class="t"><span class="dot" style="background:'+c+'"></span>'+esc(i.title)+'</summary><div class="s" style="white-space:pre-wrap">'+esc((i.file?i.file+(i.line?':'+i.line:'')+'\n':'')+(i.detail||''))+'</div></details>';}).join('');}
 // ---- send files and notes
-function pcSend(){pcOver('<p class="mut" style="margin-top:0">They go to the computer\'s <b>Documents\\Topside\\From phone</b> folder, a folder for each day.</p><div class="k">Files</div><p class="mut" style="font-size:13px">Survey files, photos of book pages, sketches, exports - anything.</p><button class="btn" id="psPick">Choose files…</button><input type="file" id="psFiles" multiple style="display:none"><div id="psList"></div>'+
+function pcSend(){pcOver('<p class="mut" style="margin-top:0">They go to the computer\'s <b>Documents\\Tacheo\\From phone</b> folder, a folder for each day.</p><div class="k">Files</div><p class="mut" style="font-size:13px">Survey files, photos of book pages, sketches, exports - anything.</p><button class="btn" id="psPick">Choose files…</button><input type="file" id="psFiles" multiple style="display:none"><div id="psList"></div>'+
   '<div class="k">A note</div><textarea id="psNote" rows="5" style="width:100%;background:var(--bar);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px;font:inherit;font-size:16px" placeholder="'+(D&&D.name?'About '+esc(D.name)+': ':'')+'leads pushed, what to fix, what to bring next time…"></textarea><button class="btn" id="psSendNote">Send the note</button><div id="psMsg" class="mut"></div>');
  $('psPick').onclick=function(){$('psFiles').click();};
  $('psFiles').onchange=function(){var fs=[].slice.call($('psFiles').files),L=$('psList');L.innerHTML=fs.map(function(f,i){return'<div class="row"><div class="t">'+esc(f.name)+'</div><div class="s" id="psS'+i+'">'+(f.size/1048576).toFixed(1)+' MB · waiting</div></div>';}).join('');
@@ -1543,7 +1543,7 @@ function pcSend(){pcOver('<p class="mut" style="margin-top:0">They go to the com
  $('psSendNote').onclick=function(){var t=$('psNote').value.trim();if(!t)return;$('psMsg').textContent='Sending…';pcJson('POST','/api/note'+(D&&D.name?'?cave='+encodeURIComponent(D.name):''),t).then(function(){$('psNote').value='';$('psMsg').textContent='✓ Saved on the computer';},function(x){$('psMsg').textContent=x.message;});};}
 function pcSettings(){pcOver('<p class="mut" style="margin-top:0">Addresses this phone tries, in turn:</p>'+(PC.addrs||[]).map(function(a){return'<div class="row"><div class="t">'+esc(a)+'</div><div class="s">'+((PC.ts||[]).indexOf(a)>=0?'Tailscale - away from home':'home network')+'</div></div>';}).join('')+
   '<div class="k">Add an address</div><input type="text" id="psAddr" placeholder="desktop-name or 100.x.y.z" autocapitalize="none" style="width:100%;font-size:16px;padding:10px"><button class="btn alt" id="psAdd">Add</button>'+
-  '<div class="k">Away from home</div><button class="btn alt" id="psTs">Set up Tailscale</button><div class="k">This phone</div><button class="btn alt" id="psForget">Forget this computer</button><p class="mut" style="font-size:13px">To stop it from the computer: Topside → File → Phone link → Forget beside this phone.</p>');
+  '<div class="k">Away from home</div><button class="btn alt" id="psTs">Set up Tailscale</button><div class="k">This phone</div><button class="btn alt" id="psForget">Forget this computer</button><p class="mut" style="font-size:13px">To stop it from the computer: Tacheo → File → Phone link → Forget beside this phone.</p>');
  $('psAdd').onclick=function(){var a=hostOf($('psAddr').value);if(!a)return;PC.addrs=(PC.addrs||[]).concat([a]);pcSave();pcSettings();};$('psTs').onclick=pcTailscale;
  $('psForget').onclick=function(){if(!confirm('Forget '+PC.name+' on this phone?'))return;PC=null;PCBASE=null;pcSave();$('pcOver').style.display='none';homeShow();};}
 // ---- the computer's screen, here: taps are clicks, a long press is a right click, two fingers zoom the picture
@@ -1612,7 +1612,7 @@ function gpsTell(){if(GPS.fix&&$('toast').style.display!='none'&&/^Finding where
  var p=$('gpsHere');if(p)p.innerHTML=gpsHereHtml();var q=$('gpLive');if(q)q.innerHTML=gpsLiveHtml();}
 function gpsListen(f){GPS.ls.push(f);gpsStart();if(GPS.fix||GPS.err)setTimeout(function(){f(GPS.fix,GPS.err);},0);return function(){var i=GPS.ls.indexOf(f);if(i>=0)GPS.ls.splice(i,1);gpsStop();};}
 function gpsWhy(e){if(!gpsHas())return'This browser can\'t give a location.';if(!e)return'';
- if(e.code==1)return gpsAppOld()?'This version of the Topside app can\'t pass the phone\'s location to the page - app 1.8 can. Until then, open p0sull02.github.io/cartotable-app in Chrome or Safari to use GPS.':'Location is blocked for this app. Allow it in the phone\'s settings (Location for this app or browser), then try again.';
+ if(e.code==1)return gpsAppOld()?'This version of the Tacheo app can\'t pass the phone\'s location to the page - app 1.8 can. Until then, open p0sull02.github.io/cartotable-app in Chrome or Safari to use GPS.':'Location is blocked for this app. Allow it in the phone\'s settings (Location for this app or browser), then try again.';
  if(e.code==3)return'No fix yet. Get where the phone can see the sky - out from under the trees and away from the bluff helps.';
  return'The phone can\'t get a location right now'+(e.message?' ('+esc(e.message)+')':'')+'. Is Location switched on?';}
 // ---- numbers
@@ -1734,7 +1734,7 @@ function gpsEdit(id){var p=gpsPts().filter(function(x){return x.id==id;})[0];if(
 // ---- files
 function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function gpsElev(p){return p.ground!=null?p.ground:p.alt;}
-function gpsGpx(pts){var L=['<?xml version="1.0" encoding="UTF-8"?>','<gpx version="1.1" creator="Topside phone app" xmlns="http://www.topografix.com/GPX/1/1">'];
+function gpsGpx(pts){var L=['<?xml version="1.0" encoding="UTF-8"?>','<gpx version="1.1" creator="Tacheo phone app" xmlns="http://www.topografix.com/GPX/1/1">'];
  pts.forEach(function(p){var z=gpsElev(p);L.push(' <wpt lat="'+p.lat.toFixed(7)+'" lon="'+p.lon.toFixed(7)+'">'+(z!=null?'<ele>'+z.toFixed(1)+'</ele>':'')+'<time>'+new Date(p.t).toISOString()+'</time><name>'+xmlEsc(p.name)+'</name>'+
   '<desc>'+xmlEsc([p.note,p.cave,p.st?'station '+p.st:'','±'+p.acc.toFixed(1)+' m, '+p.n+' readings',p.ground!=null?'elevation from the cave\'s elevation model':p.alt!=null?'elevation is the phone\'s GPS height (rough)':''].filter(Boolean).join('; '))+'</desc><sym>Waypoint</sym></wpt>');});
  L.push('</gpx>');return L.join('\n')+'\n';}
@@ -1749,7 +1749,7 @@ function gpsSendPc(pts,folder,ok){if(!PC){pcSheet();return;}var base=clean(folde
   pcJson('POST','/api/upload?name='+encodeURIComponent(f[0])+'&folder='+encodeURIComponent(clean(folder)),new Blob([f[1]],{type:f[2]}),60000).then(next,function(e){toast('Not sent: '+esc(e&&e.message||e)+'. They\'re kept on this phone.',6000);});})();}
 /*SURVEY:BEGIN*/
 // ======================================================================= Survey and sketch
-// Copyright (C) 2026 Phillip M. Sullivan. All rights reserved. Written from scratch for Topside (no SexyTopo / TopoDroid code: both are GPL).
+// Copyright (C) 2026 Phillip M. Sullivan. All rights reserved. Written from scratch for Tacheo (no SexyTopo / TopoDroid code: both are GPL).
 // Sully, 16 Nov 2026: "Can you build in a digital sketching/survey suite too? Like sexytopo or Topodroid?" / "For the mobile app." /
 // "Use NSS standard symbols, model its functionality from Topodroid." / "Incorporate all the Tacheo features with the app and the digital
 // sketching." / "As many cross communication as possible with it." / "Make the sketch accent color theme green."
@@ -1860,7 +1860,7 @@ function svClose(){$('svy').style.display='none';SV=null;homeShow();}
 function svUnitsShow(){svOpenUi();SV=null;SVVIEW='units';
  $('svBar').innerHTML='<button class="ib" id="svBk">←</button><h1>Tacheo</h1><span class="chip" id="svDevC" style="cursor:pointer"></span><span style="flex:1"></span><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬 Messages</button>';
  $('svBk').onclick=function(){SVVIEW='';xtStop();svClose();};$('svDevC').onclick=function(){svUnitsShow();};$('svMsgB').onclick=function(){svChatShow();};
- $('svBody').innerHTML='<div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots taken here aren\'t kept - open a survey in <b>Survey and sketch</b> to keep them.':'Bluetooth to the Tacheo is in the <b>Topside app for Android</b>.')+'</p><div id="svUnitsPg"></div>'+
+ $('svBody').innerHTML='<div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots taken here aren\'t kept - open a survey in <b>Survey and sketch</b> to keep them.':'Bluetooth to the Tacheo is in the <b>Tacheo app for Android</b>.')+'</p><div id="svUnitsPg"></div>'+
   '<div class="card uPgSec">'+svDet('xt','⇄ CrossTalk - both units\' shots as they land','')+'<div id="xtPg"></div></div></details></div></div>';
  svDetWire($('svBody'));XT.on=true;if(XT.timer)clearInterval(XT.timer);XT.timer=setInterval(function(){if(SVVIEW!='units'){xtStop();return;}xtPoll();},3000);xtPoll();
  svDevChip();svAutoConnect();svDevSheet();xtDraw();}
@@ -1876,7 +1876,7 @@ function svListShow(){svOpenUi();SV=null;SVVIEW='list';
  $('svBk').onclick=svClose;$('svNewB').onclick=svNewDlg;
  $('svBody').innerHTML='<div id="svList"><p class="mut">Loading…</p></div>';
  svAll().then(function(l){var h='';
-  h+='<div class="card"><b>Survey with a Tacheo, take shots and sketch as you go.</b><div class="mut" style="font-size:13px;margin-top:3px">Shots come in over Bluetooth'+(window.TopsideAndroid&&TopsideAndroid.bleScan?'':' in the Android app')+' or are typed; legs and splays are sorted as they arrive, and the plan and profile draw themselves. Sketch over them in NSS symbols, then send the trip to Topside.</div></div>';
+  h+='<div class="card"><b>Survey with a Tacheo, take shots and sketch as you go.</b><div class="mut" style="font-size:13px;margin-top:3px">Shots come in over Bluetooth'+(window.TopsideAndroid&&TopsideAndroid.bleScan?'':' in the Android app')+' or are typed; legs and splays are sorted as they arrive, and the plan and profile draw themselves. Sketch over them in NSS symbols, then send the trip to Tacheo.</div></div>';
   if(!l.length)h+='<p class="mut">No surveys on this phone yet.</p>';
   l.forEach(function(s){var legs=s.shots.filter(function(x){return x.kind=='leg';}).length,sp=s.shots.filter(function(x){return x.kind=='splay'||x.kind=='lrud';}).length;
    h+='<div class="row" data-id="'+esc(s.id)+'"><div class="t">'+esc(s.name)+(s.cave?' <span class="mut">· '+esc(s.cave)+'</span>':'')+'</div><div class="s">'+esc(s.date)+' · '+s.shots.length+' shots · at '+esc(s.cur)+((s.plan||[]).length+(s.prof||[]).length?' · sketched':'')+(s.fix?' · 📍':'')+(s.closed?' · ✅ closed out':'')+'</div></div>';});
@@ -1964,7 +1964,7 @@ function svCloseHtml(sc){var legs=svLegs().filter(function(l){return l.kind=='le
  h+=svStep(pg?'ok':'none',3,'Scan the book pages',pg?pg+(pg==1?' page':' pages')+' scanned':'The data pages, every one',SV.closed?'':'<button class="btn alt" id="coPages" style="margin:6px 0 0">📄 Scan book pages</button>');
  h+=svStep(sk?'ok':'none',4,'Scan the sketches',sk?sk+(sk==1?' page':' pages')+' scanned':'Plan, profile and cross sections',SV.closed?'':'<button class="btn alt" id="coSketch" style="margin:6px 0 0">✏ Scan sketches</button>');
  var sentOk=SV.sentAt&&SV.sentSig==svSentSig(sc);
- h+=svStep(sentOk?'ok':'none',5,'Send it to '+(PC?esc(PC.name):'your computer'),sentOk?'Sent '+esc(SV.sentAt)+' - into From phone\\'+esc(String(SV.sentAt).slice(0,10))+'\\'+esc(svFolder()):'The survey files, the GPS point and the scans, into one folder in Topside\'s From phone');
+ h+=svStep(sentOk?'ok':'none',5,'Send it to '+(PC?esc(PC.name):'your computer'),sentOk?'Sent '+esc(SV.sentAt)+' - into From phone\\'+esc(String(SV.sentAt).slice(0,10))+'\\'+esc(svFolder()):'The survey files, the GPS point and the scans, into one folder in Tacheo\'s From phone');
  if(!SV.closed){if(PC)h+='<button class="btn" id="coDone" style="width:100%;padding:15px;font-size:17px;margin-top:8px">💻 Send it all and close out</button>';
   else h+=((HOSTED||LOCALPC)?'<button class="btn" id="coConn" style="width:100%;padding:14px;margin-top:8px">💻 Connect to my computer</button>':'')+'<button class="btn alt" id="coClose">Close out now, send later</button>';}
  else if(PC)h+='<button class="btn alt" id="coSend">💻 Send it again</button>';
@@ -1981,13 +1981,13 @@ function svCloseBind(){var e;
 function svCloseNow(){var d=new Date();SV.closed=today()+' '+hhmm(d);svPut(SV).then(function(){toast('✅ '+esc(SV.name)+' is closed out',3500);svTripShow();});}
 // the computer's connect page is on the main screen: come back to the survey when it closes
 function svBackAfterPc(){var id=SV&&SV.id,t=setInterval(function(){if($('pcOver').style.display!='none')return;clearInterval(t);if(!id)return;svDo('readonly',function(s){return s.get(id);}).then(function(s){if(s){svOpen(s);svView('trip');}});},400);}
-function svScanPages(kind){if(!canScan()){toast('Scanning needs the camera - the Topside app, or a browser with the camera allowed');return;}var id=SV.id;
+function svScanPages(kind){if(!canScan()){toast('Scanning needs the camera - the Tacheo app, or a browser with the camera allowed');return;}var id=SV.id;
  var m={cave:SV.cave||'Cave',trip:SV.name,kind:kind,sv:id,after:function(rec){toast('📄 '+esc(rec.name)+' kept with the survey',3000);svTripShow();}};
  scanCam({done:function(pages){if(!pages.length){svTripShow();return;}scanMake(pages,m);}});}
 // what was sent: changes after it mean it needs sending again (opening or closing it doesn't)
 function svSentSig(sc){return[SV.shots.length,SV.shots.filter(function(x){return x.cmt;}).length,(SV.plan||[]).length,(SV.prof||[]).length,(SV.xs||[]).length,SV.fix?SV.fix.t:0,(sc||[]).length,SV.name,SV.cave].join('|');}
 function svFolder(){return clean((SV.cave||'Survey')+' - '+SV.name);}
-function svInfoTxt(sc){var L=[],fx=svFixUtm();L.push('Topside survey: '+SV.name);L.push('Cave: '+(SV.cave||'-')+(SV.newCave?' (new cave)':''));
+function svInfoTxt(sc){var L=[],fx=svFixUtm();L.push('Tacheo survey: '+SV.name);L.push('Cave: '+(SV.cave||'-')+(SV.newCave?' (new cave)':''));
  if(SV.entrance)L.push('Entrance: '+SV.entrance);if(SV.county||SV.state)L.push('Where: '+[SV.county?SV.county+' County':'',SV.state].filter(Boolean).join(', '));if(SV.owner)L.push('Landowner / access: '+SV.owner);
  L.push('Date: '+SV.date);L.push('Team: '+(SV.team||'-'));L.push('Instrument: '+(SV.inst||'-'));L.push('Station prefix: '+(SV.prefix||'-')+'   Units shown: '+(SV.units=='m'?'metres':'feet')+'   Declination: '+(SV.decl||0)+'°');
  L.push(SV.startAt=='tie'?'Starts: tied in at '+SV.first:'Starts: at '+SV.first+(SV.entrance?' ('+SV.entrance+')':''));
@@ -2105,8 +2105,8 @@ function svTripShow(){var legs=svLegs().filter(function(l){return l.kind=='leg';
 // ---- exports
 function svOut(){var legs=svLegs(),out=[];SV.shots.forEach(function(s){if(s.grp&&(s.kind=='leg'||s.kind=='back'))return;out.push(s);});return{legs:legs,splays:out};}
 function svLrudOf(st){var r={};SV.shots.forEach(function(s){if(s.kind=='lrud'&&s.from==st&&!s.cmt){var v=s.lrud=='U'||s.lrud=='D'?Math.abs(s.d*Math.sin(s.cl*Math.PI/180)):s.d*Math.cos(s.cl*Math.PI/180);r[s.lrud]=v;}});return r;}
-function svWalls(){var o=svOut(),m=SV.units=='m',k=m?1:1/FT,L=[];L.push(';Topside survey: '+SV.name+(SV.cave?' ('+SV.cave+')':''));L.push(';Team: '+(SV.team||'-')+'   Instrument: '+(SV.inst||'-'));if(SV.comment)SV.comment.split(/\n/).forEach(function(x){L.push(';'+x);});
- var fx=svFixUtm();if(fx){var f=fx.f;L.push(';GPS at '+fx.st+': '+f.lat.toFixed(7)+', '+f.lon.toFixed(7)+' WGS84, +/-'+f.acc.toFixed(1)+' m ('+f.n+' readings, Topside phone app)');
+function svWalls(){var o=svOut(),m=SV.units=='m',k=m?1:1/FT,L=[];L.push(';Tacheo survey: '+SV.name+(SV.cave?' ('+SV.cave+')':''));L.push(';Team: '+(SV.team||'-')+'   Instrument: '+(SV.inst||'-'));if(SV.comment)SV.comment.split(/\n/).forEach(function(x){L.push(';'+x);});
+ var fx=svFixUtm();if(fx){var f=fx.f;L.push(';GPS at '+fx.st+': '+f.lat.toFixed(7)+', '+f.lon.toFixed(7)+' WGS84, +/-'+f.acc.toFixed(1)+' m ('+f.n+' readings, Tacheo phone app)');
   L.push(';UTM zone '+fx.zone+(fx.south?' south':' north')+', WGS84. Elevation from '+(fx.z!=null?fx.zsrc:'nowhere - set it before compiling'));
   L.push('#Units Meters Order=ENU');L.push((fx.z==null?';':'')+'#Fix '+fx.st+'\t'+fx.e.toFixed(2)+'\t'+fx.n.toFixed(2)+'\t'+(fx.z==null?'?':fx.z.toFixed(1)));}
  L.push('#Date '+SV.date);L.push('#Units '+(m?'Meters':'Feet')+' Order=DAV Decl='+(SV.decl||0)+' TypeAB=N,5 TypeVB=N,5');   // backsights as read (not turned 180)
@@ -2128,15 +2128,15 @@ function svPairs(legs){var backs=legs.filter(function(l){return l.kind=='back';}
  backs.forEach(function(b){if(!used[b.grp])out.push({l:b,from:b.to,to:b.from,d:b.d,az:null,cl:null,baz:b.az,bcl:b.cl,n:0,bn:b.n,cmt:b.cmt,surf:b.surf});});   // a backsight alone: booked from the leg's own end
  return out;}
 function f1(v){return v==null?'-':v.toFixed(1);}
-function svSurvex(){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('*begin '+nm);L.push('; Topside survey: '+SV.name+(SV.cave?' ('+SV.cave+')':''));L.push('*date '+SV.date.replace(/-/g,'.'));if(SV.team)L.push('*team "'+SV.team.replace(/"/g,"'")+'"');
+function svSurvex(){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('*begin '+nm);L.push('; Tacheo survey: '+SV.name+(SV.cave?' ('+SV.cave+')':''));L.push('*date '+SV.date.replace(/-/g,'.'));if(SV.team)L.push('*team "'+SV.team.replace(/"/g,"'")+'"');
  if(SV.decl)L.push('*calibrate declination '+SV.decl);L.push('*units length metres');
- var fx=svFixUtm();if(fx&&fx.z!=null){L.push('; GPS at '+fx.st+' (Topside phone app): WGS84 UTM '+fx.zone+(fx.south?'S':'N')+', +/-'+fx.f.acc.toFixed(1)+' m, elevation from '+fx.zsrc);L.push('; with *cs out in your top-level file, add: *cs '+(fx.south?'EPSG:'+(32700+fx.zone):'UTM'+fx.zone+'N'));L.push('*fix '+fx.st+' reference '+fx.e.toFixed(2)+' '+fx.n.toFixed(2)+' '+fx.z.toFixed(1));}var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'*data normal from to tape compass backcompass clino backclino':'*data normal from to tape compass clino');
+ var fx=svFixUtm();if(fx&&fx.z!=null){L.push('; GPS at '+fx.st+' (Tacheo phone app): WGS84 UTM '+fx.zone+(fx.south?'S':'N')+', +/-'+fx.f.acc.toFixed(1)+' m, elevation from '+fx.zsrc);L.push('; with *cs out in your top-level file, add: *cs '+(fx.south?'EPSG:'+(32700+fx.zone):'UTM'+fx.zone+'N'));L.push('*fix '+fx.st+' reference '+fx.e.toFixed(2)+' '+fx.n.toFixed(2)+' '+fx.z.toFixed(1));}var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'*data normal from to tape compass backcompass clino backclino':'*data normal from to tape compass clino');
  pr.forEach(function(x){L.push((x.cmt?';':'')+x.from+' '+x.to+' '+x.d.toFixed(3)+' '+f1(x.az)+(anyB?' '+f1(x.baz):'')+' '+f1(x.cl)+(anyB?' '+f1(x.bcl):''));});
  if(o.splays.length){if(anyB)L.push('*data normal from to tape compass clino');L.push('*flags splay');o.splays.forEach(function(s){L.push((s.cmt?';':'')+s.from+' . '+s.d.toFixed(3)+' '+s.az.toFixed(1)+' '+s.cl.toFixed(1));});L.push('*flags not splay');}
  L.push('*end '+nm);return L.join('\n')+'\n';}
 function svTherion(th2){var o=svOut(),L=[],nm=(SV.name||'survey').replace(/[^A-Za-z0-9_]/g,'_');L.push('encoding utf-8');L.push('survey '+nm+' -title "'+(SV.name||'').replace(/"/g,"'")+'"');L.push('  centreline');L.push('    date '+SV.date.replace(/-/g,'.'));
  (SV.team||'').split(/[,;]+/).map(function(x){return x.trim();}).filter(Boolean).forEach(function(t){L.push('    team "'+t.replace(/"/g,"'")+'"');});if(SV.decl)L.push('    declination '+SV.decl+' degrees');
- var fx=svFixUtm();if(fx&&fx.z!=null){L.push('    # GPS at '+fx.st+' (Topside phone app), +/-'+fx.f.acc.toFixed(1)+' m, elevation from '+fx.zsrc);L.push('    cs EPSG:'+((fx.south?32700:32600)+fx.zone));L.push('    fix '+fx.st+' '+fx.e.toFixed(2)+' '+fx.n.toFixed(2)+' '+fx.z.toFixed(1));}
+ var fx=svFixUtm();if(fx&&fx.z!=null){L.push('    # GPS at '+fx.st+' (Tacheo phone app), +/-'+fx.f.acc.toFixed(1)+' m, elevation from '+fx.zsrc);L.push('    cs EPSG:'+((fx.south?32700:32600)+fx.zone));L.push('    fix '+fx.st+' '+fx.e.toFixed(2)+' '+fx.n.toFixed(2)+' '+fx.z.toFixed(1));}
  L.push('    units length meters');var pr=svPairs(o.legs),anyB=pr.some(function(x){return x.baz!=null;});L.push(anyB?'    data normal from to length compass backcompass clino backclino':'    data normal from to length compass clino');
  pr.forEach(function(x){L.push('    '+(x.cmt?'# ':'')+x.from+' '+x.to+' '+x.d.toFixed(3)+' '+f1(x.az)+(anyB?' '+f1(x.baz):'')+' '+f1(x.cl)+(anyB?' '+f1(x.bcl):''));});
  if(o.splays.length){if(anyB)L.push('    data normal from to length compass clino');L.push('    flags splay');o.splays.forEach(function(s){L.push('    '+(s.cmt?'# ':'')+s.from+' - '+s.d.toFixed(3)+' '+s.az.toFixed(1)+' '+s.cl.toFixed(1));});L.push('    flags not splay');}
@@ -2228,7 +2228,7 @@ function svSimplify(pts,eps){if(pts.length<3)return pts;var keep=new Array(pts.l
  return pts.filter(function(p,i){return keep[i];}).map(function(p){return[Math.round(p[0]*1000)/1000,Math.round(p[1]*1000)/1000];});}
 function svLive(s){var e=$('svLive');if(!e||!s)return;e.innerHTML=(s.kind=='leg'?'<b style="color:'+SVA2+'">Leg '+esc(s.from)+' → '+esc(s.to)+'</b>':s.kind=='back'?'<b>Backsight '+esc(s.from)+' → '+esc(s.to)+'</b>':s.kind=='lrud'?'<b>LRUD '+esc(s.lrud)+' at '+esc(s.from)+'</b>':'Splay at <b>'+esc(s.from)+'</b>')+
  ' &nbsp; '+svL(s.d)+' '+svUn()+' &nbsp; '+n1(s.az)+'° &nbsp; '+n1(s.cl)+'°'+(s.lbl=='3'?' &nbsp; <b style="color:'+SVA2+'">FSx3</b>':'');e.style.display='block';clearTimeout(svLive.t);svLive.t=setTimeout(function(){e.style.display='none';},4000);var a=$('svAt');if(a)a.textContent='📍 '+SV.cur;}
-// SVG of a view: legs, splays, stations, the sketch, cross sections - for Topside / CartoTable and Illustrator
+// SVG of a view: legs, splays, stations, the sketch, cross sections - for Tacheo / CartoTable and Illustrator
 function svSvg(view){var keep=SVK.view,ks=[SVK.sc,SVK.ox,SVK.oy];SVK.view=view;var R=svReduce(),src=view=='plan'?R.P:R.X,pts=[];Object.keys(src).forEach(function(k){pts.push([src[k][0],src[k][1]]);});(SV[view]||[]).forEach(function(it){(it.pts||[[it.x,it.y]]).forEach(function(p){pts.push(p);});});
  if(view=='plan')svXsBox(R,pts);if(!pts.length)pts=[[0,0]];var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(function(p){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);});var pad=5;x0-=pad;y0-=pad;x1+=pad;y1+=pad;
  var S=20,W=Math.ceil((x1-x0)*S),H=Math.ceil((y1-y0)*S);SVK.sc=S;SVK.ox=-x0*S;SVK.oy=y1*S;
@@ -2238,7 +2238,7 @@ function svSvg(view){var keep=SVK.view,ks=[SVK.sc,SVK.ox,SVK.oy];SVK.view=view;v
  R.edges.forEach(function(e){var a=Pp.pos(e.a),b=Pp.pos(e.b);if(!a||!b)return;a=w2s(a);b=w2s(b);rec.strokeStyle='#c0392b';rec.lineWidth=2;rec.beginPath();rec.moveTo(a[0],a[1]);rec.lineTo(b[0],b[1]);rec.stroke();});
  Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st));rec.fillStyle='#c0392b';rec.beginPath();rec.arc(p[0],p[1],3,0,7);rec.fill();rec.font='11px sans-serif';rec.fillStyle='#1d2a22';rec.fillText(st,p[0]+6,p[1]-6);});
  SVK.view=keep;SVK.sc=ks[0];SVK.ox=ks[1];SVK.oy=ks[2];
- return'<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">\n<!-- Topside survey '+esc(SV.name)+' - '+(view=='plan'?'plan':'extended profile')+', 1 m = '+S+' px'+(view=='plan'?', north up':'')+' -->\n<rect width="100%" height="100%" fill="#ffffff"/>\n'+rec.out.join('\n')+'\n</svg>\n';}
+ return'<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">\n<!-- Tacheo survey '+esc(SV.name)+' - '+(view=='plan'?'plan':'extended profile')+', 1 m = '+S+' px'+(view=='plan'?', north up':'')+' -->\n<rect width="100%" height="100%" fill="#ffffff"/>\n'+rec.out.join('\n')+'\n</svg>\n';}
 function svSvgCtx(W,H){var o={out:[],strokeStyle:'#000',fillStyle:'#000',lineWidth:1,font:'11px sans-serif',textAlign:'left',textBaseline:'alphabetic',lineCap:'round',lineJoin:'round',globalAlpha:1,_d:'',_dash:[],_m:[[1,0,0,1,0,0]],_st:[]};
  function T(x,y){var m=o._m[o._m.length-1];return[(m[0]*x+m[2]*y+m[4]).toFixed(2),(m[1]*x+m[3]*y+m[5]).toFixed(2)];}
  o.save=function(){o._st.push({s:o.strokeStyle,f:o.fillStyle,w:o.lineWidth,d:o._dash.slice(),fo:o.font,ta:o.textAlign,tb:o.textBaseline});o._m.push(o._m[o._m.length-1].slice());};
@@ -2773,8 +2773,8 @@ function svDevChip(){var c=$('svDevC');if(!c)return;svAgg();var on=svOnUnits(),n
  else c.textContent=SVDEV.state=='connecting'?'📡 connecting…':svBleOk()?'📡 Connect':'⌨ Typed';
  c.style.background=SVDEV.state=='on'?SVA:SVDEV.state=='connecting'?'#b7791f':'#3a4756';c.style.color='#fff';}
 // 17 Nov 2026 (Sully: "the user will open the app or program, and will be promoted there is an update"): the Tacheo firmware list
-// Topside 1.6.108+ reads (firmware.txt in the releases repository) - a unit on older firmware says so on its card. The phone
-// can't install firmware: Topside on a computer does, and offers it when the unit is plugged in or connected.
+// Tacheo 1.6.108+ reads (firmware.txt in the releases repository) - a unit on older firmware says so on its card. The phone
+// can't install firmware: Tacheo on a computer does, and offers it when the unit is plugged in or connected.
 var TFW=null,TFWasked=0;
 function svFwLoad(){if(TFW||Date.now()-TFWasked<600000)return;TFWasked=Date.now();
  fetch('https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware.txt?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
@@ -2783,8 +2783,8 @@ function svFwLoad(){if(TFW||Date.now()-TFWasked<600000)return;TFWasked=Date.now(
 function svVerNewer(a,b){a=String(a).split('.').map(Number);b=String(b).split('.').map(Number);for(var k=0;k<Math.max(a.length,b.length);k++){var d=(a[k]||0)-(b[k]||0);if(d)return d>0;}return false;}
 function svFwNote(i){if(!TFW||!i||!i.ver)return'';var p=String(i.ver).trim().split(/\s+/),v=p[1],b=(p[2]||'').toLowerCase(),n=TFW[b];
  if(!v||!n||!svVerNewer(n,v))return'';
- return'<div style="margin:-4px 0 12px;padding:10px 12px;border-radius:12px;background:rgba(242,169,59,.14);border:1px solid rgba(242,169,59,.5);font-size:14px;line-height:1.4">⬆ <b>Firmware v'+esc(n)+' is out</b> for this unit (it has v'+esc(v)+'). Update it with Topside on a computer: it offers it when the unit is plugged in or connected.</div>';}
-function svDevSheet(keepScan){svFwLoad();if(!svBleOk()){svDlg('<div class="big">Instruments</div><p>Shots from a Tacheo or SAP6 come in over Bluetooth in the <b>Topside app for Android</b>. '+(IOS?'iPhones don\'t let apps like this one use Bluetooth, so on an iPhone shots are typed (<b>Add a shot</b>).':'Here, type them with <b>Add a shot</b>.')+'</p>'+(ANDROID?'<a class="btn" href="Topside.apk" style="text-decoration:none">Get the Android app</a>':'')+'<button class="btn alt" id="dvNo">Close</button>');$('dvNo').onclick=svDlgClose;return;}
+ return'<div style="margin:-4px 0 12px;padding:10px 12px;border-radius:12px;background:rgba(242,169,59,.14);border:1px solid rgba(242,169,59,.5);font-size:14px;line-height:1.4">⬆ <b>Firmware v'+esc(n)+' is out</b> for this unit (it has v'+esc(v)+'). Update it with Tacheo on a computer: it offers it when the unit is plugged in or connected.</div>';}
+function svDevSheet(keepScan){svFwLoad();if(!svBleOk()){svDlg('<div class="big">Instruments</div><p>Shots from a Tacheo or SAP6 come in over Bluetooth in the <b>Tacheo app for Android</b>. '+(IOS?'iPhones don\'t let apps like this one use Bluetooth, so on an iPhone shots are typed (<b>Add a shot</b>).':'Here, type them with <b>Add a shot</b>.')+'</p>'+(ANDROID?'<a class="btn" href="Topside.apk" style="text-decoration:none">Get the Android app</a>':'')+'<button class="btn alt" id="dvNo">Close</button>');$('dvNo').onclick=svDlgClose;return;}
  var page=SVVIEW=='units'&&!SV&&$('svUnitsPg'),us=svUnits().filter(function(u){return u.state!='off';}),h=page?'':'<div class="big">Instruments</div>';
  if(!us.length)h+='<p class="mut">Switch the Tacheo on with <b>Bluetooth → Phone On</b>. A SAP6 works too, and two or more units can be connected at once (the FS and the BS).</p>';
  us.forEach(function(u){var i=u.info||{};
@@ -2960,7 +2960,7 @@ function svChatRefresh(focus){var c=$('svChat');if(!c||c.style.display=='none')r
  if(!us.length)h+='<span class="mut" style="font-size:13px">No unit connected - '+(svBleOk()?'tap 📡 to connect one.':'messages go over Bluetooth in the Android app.')+'</span>';
  us.forEach(function(u){h+='<button class="chip'+(u.addr==SVCHAT.to?' on':'')+'" data-a="'+esc(u.addr)+'">'+(u.state=='on'?'🟢 ':'⚪ ')+esc(svShort(u))+(u.role?' · '+u.role:'')+'<span class="chSig">'+svSigHtml(u)+'</span></button>';});
  h+='</div><div class="chList" id="chList">';var list=svMsgs().filter(function(m){return m.to==SVCHAT.to;}),day='';
- if(cur&&cur.state=='on'&&cur.msg===false)h+='<div class="chNote">'+esc(svShort(cur))+'\'s firmware has no messages yet - update it to 1.17.8 (a SAP6: 1.16.30.5) with Topside.</div>';
+ if(cur&&cur.state=='on'&&cur.msg===false)h+='<div class="chNote">'+esc(svShort(cur))+'\'s firmware has no messages yet - update it to 1.17.8 (a SAP6: 1.16.30.5) with Tacheo.</div>';
  if(!list.length)h+='<div class="chNote">Messages pop up on '+(cur?esc(svShort(cur)):'the unit')+'\'s screen over whatever page it\'s on. Any button puts one away.</div>';
  list.forEach(function(m){var d=new Date(m.t),ds=d.toLocaleDateString();if(ds!=day){day=ds;h+='<div class="chDay">'+esc(ds)+'</div>';}
   var st=m.st=='READ'?'Read':m.st=='SHOWN'?'✓✓ on screen':m.st=='sent'?'✓ sent':m.st=='TIMEOUT'?'Not read (10 min)':m.st=='fail'?'⚠ not sent - '+esc(m.why||'the unit didn\'t answer'):'sending…';
@@ -3003,31 +3003,31 @@ function pcWhy(){var n=netInfo(),pcTs=!!(PC&&(PC.ts||[]).length),away=n.wifi===f
 function pcWhyShort(){return{noTsAway:'Away from home - needs Tailscale',noTsHome:'Not reachable - tap for help',phoneNoTs:'Get Tailscale on this phone',phoneTsOff:'Turn Tailscale on',pcDown:'Computer not answering',unknown:'Not reachable - tap for help'}[pcWhy()];}
 function pcWhyShow(id,retry){var el=$(id);if(!el||!PC)return;var w=pcWhy(),nm='<b>'+esc(PC.name)+'</b>',h='',store=tsStore(),
   get='<a class="btn" style="text-decoration:none" href="'+store+'" target="_blank" rel="noopener">Get Tailscale on this phone</a>',
-  checks='<ul style="padding-left:20px;margin:6px 0"><li>The computer is on and awake (not asleep).</li><li>Topside is open on it, with Phone link on (CartoTable → File → Phone link).</li>',
+  checks='<ul style="padding-left:20px;margin:6px 0"><li>The computer is on and awake (not asleep).</li><li>Tacheo is open on it, with Phone link on (CartoTable → File → Phone link).</li>',
   phoneSteps=function(first){return'<ol style="padding-left:20px;margin:6px 0">'+(first?'<li>Tap <b>Get Tailscale on this phone</b> and install it'+(IOS?' from the App Store':ANDROID?' from the Play Store':'')+'. It\'s free.</li>':'')+
    '<li>Open Tailscale and sign in with <b>the same account the computer uses</b> (Google, Microsoft, GitHub or Apple).</li><li>'+(ANDROID?'Tap <b>Connect</b> and allow the VPN when Android asks':'Turn it on and allow the VPN when asked')+' - it should say <b>Connected</b> and list your computer.</li><li>Come back here and tap <b>Try again</b>.</li></ol>';};
- if(w=='noTsAway')h='<p><b>You\'re away from home</b>, and '+nm+' isn\'t set up for that yet.</p><p class="mut">Without Tailscale, this phone reaches Topside only on the same Wi-Fi as the computer. Tailscale is a free app that links the computer and this phone privately from anywhere. Set it up once on both:</p><button class="btn" id="'+id+'Ts">Set up Tailscale - step by step</button>';
- else if(w=='noTsHome')h='<p>Can\'t reach '+nm+' from here.</p><p class="mut">Check:</p>'+checks+'<li>This phone is on the <b>same Wi-Fi</b> as the computer.</li><li>Windows asked whether to allow Topside on networks: allow it on private networks.</li></ul><p class="mut">To use it away from home, set up Tailscale on the computer and this phone.</p><button class="btn alt" id="'+id+'Ts">Away from home: set up Tailscale</button>';
- else if(w=='phoneNoTs')h='<p><b>Tailscale isn\'t on this phone.</b></p><p class="mut">'+nm+' has Tailscale, so this phone can reach it from anywhere once it has it too:</p>'+phoneSteps(true)+get+(netInfo().wifi?'<p class="mut" style="margin-top:10px">On your home Wi-Fi right now? Then Tailscale isn\'t needed - check:</p>'+checks+'<li>Windows asked whether to allow Topside on networks: allow it on private networks.</li></ul>':'');
+ if(w=='noTsAway')h='<p><b>You\'re away from home</b>, and '+nm+' isn\'t set up for that yet.</p><p class="mut">Without Tailscale, this phone reaches Tacheo only on the same Wi-Fi as the computer. Tailscale is a free app that links the computer and this phone privately from anywhere. Set it up once on both:</p><button class="btn" id="'+id+'Ts">Set up Tailscale - step by step</button>';
+ else if(w=='noTsHome')h='<p>Can\'t reach '+nm+' from here.</p><p class="mut">Check:</p>'+checks+'<li>This phone is on the <b>same Wi-Fi</b> as the computer.</li><li>Windows asked whether to allow Tacheo on networks: allow it on private networks.</li></ul><p class="mut">To use it away from home, set up Tailscale on the computer and this phone.</p><button class="btn alt" id="'+id+'Ts">Away from home: set up Tailscale</button>';
+ else if(w=='phoneNoTs')h='<p><b>Tailscale isn\'t on this phone.</b></p><p class="mut">'+nm+' has Tailscale, so this phone can reach it from anywhere once it has it too:</p>'+phoneSteps(true)+get+(netInfo().wifi?'<p class="mut" style="margin-top:10px">On your home Wi-Fi right now? Then Tailscale isn\'t needed - check:</p>'+checks+'<li>Windows asked whether to allow Tacheo on networks: allow it on private networks.</li></ul>':'');
  else if(w=='phoneTsOff')h='<p><b>Tailscale is on this phone but switched off.</b></p><p class="mut">Away from home, that\'s how this phone reaches '+nm+':</p>'+phoneSteps(false).replace('<li>Open Tailscale and sign in','<li>Open <b>Tailscale</b> (it\'s on your phone) and check it\'s signed in')+'<a class="btn" style="text-decoration:none" href="'+store+'" target="_blank" rel="noopener">Open Tailscale</a>';
  else if(w=='pcDown')h='<p>Tailscale is connected, but '+nm+' isn\'t answering.</p><p class="mut">Check:</p>'+checks+'<li>Tailscale on the computer is <b>Connected</b>, signed in with the same account as this phone (its icon by the clock).</li></ul><button class="btn alt" id="'+id+'Ts">Tailscale help</button>';
  else h='<p>Can\'t reach '+nm+'.</p><p class="mut">At home: is this phone on the same Wi-Fi as the computer? Away from home: this phone needs <b>Tailscale</b>, signed in with the same account as the computer and switched on. Don\'t have it?</p>'+phoneSteps(true)+get+'<p class="mut" style="margin-top:10px">Also check:</p>'+checks+'</ul>';
  h+='<button class="btn alt" id="'+id+'Retry">Try again</button>';
  el.innerHTML='<div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:#2a2116;border:1px solid #b7791f">'+h+'</div>';
  var e;if(e=$(id+'Ts'))e.onclick=pcTailscale;if(e=$(id+'Retry'))e.onclick=retry||pcSheet;}
-// ---- Tailscale, step by step (the same steps are in Topside: File > Phone link)
+// ---- Tailscale, step by step (the same steps are in Tacheo: File > Phone link)
 function pcTailscale(){var S=function(t,l){return'<div class="k">'+t+'</div><ol style="padding-left:20px;margin:4px 0">'+l.map(function(x){return'<li style="margin:5px 0">'+x+'</li>';}).join('')+'</ol>';};
- pcOver('<div class="big">Away from home: Tailscale</div><p>Tailscale is a free app that joins your computer and this phone into a small private network of their own, encrypted end to end. With it running on both, this app reaches Topside on your computer from anywhere with signal, the same as on your home Wi-Fi. Nothing on the computer is opened to the internet, and there\'s nothing to set up on your router. The free Personal plan covers personal use (up to 6 people, any number of devices).</p>'+
+ pcOver('<div class="big">Away from home: Tailscale</div><p>Tailscale is a free app that joins your computer and this phone into a small private network of their own, encrypted end to end. With it running on both, this app reaches Tacheo on your computer from anywhere with signal, the same as on your home Wi-Fi. Nothing on the computer is opened to the internet, and there\'s nothing to set up on your router. The free Personal plan covers personal use (up to 6 people, any number of devices).</p>'+
   S('On the computer (Windows 10 or 11)',['Go to <b>tailscale.com/download</b> and download Tailscale for Windows. Run the installer and say <b>Yes</b> when Windows asks for permission.',
    'Tailscale\'s icon appears in the system tray by the clock (maybe under the <b>^</b> arrow). Click it and choose <b>Log in</b>. Your browser opens: sign in with a Google, Microsoft, GitHub or Apple account. Remember which one - the phone has to use the same account.',
    'The tray menu now shows the computer as connected, with its name (for example <i>desktop-abc123</i>) and an address starting with <b>100.</b>',
    'Right-click the tray icon → <b>Preferences</b> → tick <b>Run unattended</b> (say Yes). Tailscale then stays connected after a restart and while you\'re signed out. <b>Allow incoming connections</b> should be ticked too (it is unless someone turned it off).',
    'Worth doing: at <b>login.tailscale.com</b> → <b>Machines</b>, open the computer\'s <b>⋯</b> menu → <b>Disable key expiry</b>. Otherwise the computer has to sign in to Tailscale again every 180 days - and you\'d find out from here, away from home.',
-   'In Topside: <b>CartoTable</b> → <b>File</b> → <b>Phone link</b>. Tick <b>Phone link is on</b>, <b>Keep this computer from sleeping</b> and <b>Start Topside when I sign in to Windows</b>. Under Addresses it now shows the Tailscale name and address.',
-   'The first time Phone link turns on, Windows asks whether Tacheo Topside may use the network: tick <b>Private networks</b> and <b>Public networks</b>, then <b>Allow</b>.'])+
+   'In Tacheo: <b>CartoTable</b> → <b>File</b> → <b>Phone link</b>. Tick <b>Phone link is on</b>, <b>Keep this computer from sleeping</b> and <b>Start Tacheo when I sign in to Windows</b>. Under Addresses it now shows the Tailscale name and address.',
+   'The first time Phone link turns on, Windows asks whether Tacheo may use the network: tick <b>Private networks</b> and <b>Public networks</b>, then <b>Allow</b>.'])+
   S('On this phone',['Install <b>Tailscale</b> from the '+(IOS?'<b>App Store</b>':ANDROID?'<b>Play Store</b>':'Play Store (Android) or App Store (iPhone)')+'.','Open it and sign in with the <b>same account</b> as the computer.','When it asks to add a VPN configuration, allow it - that\'s how it reaches your computer. It only carries the traffic between your own devices; everything else goes out as normal.','Turn it on (the switch at the top). Your computer shows in its list.'])+
-  S('Connect Topside',['Pair this phone once, at home on the Wi-Fi: Topside\'s <b>Connect a phone</b> window shows a QR code. Here: <b>☰</b> → <b>📷 Scan the code on the computer</b> and point it at the code - it connects by itself.','That\'s all. When it pairs, this app learns the computer\'s Tailscale name and address too. Away from home it tries the home address, gets no answer, and uses Tailscale by itself.','Test it: turn this phone\'s Wi-Fi off (mobile data only), leave Tailscale on, and open <b>☰</b> → My computer. It should say <b>Connected · Tailscale</b>.'])+
-  '<div class="k">If it doesn\'t connect</div><ul style="padding-left:20px;margin:4px 0"><li>Is the computer on and awake, with Topside open and Phone link on?</li><li>Does Tailscale show Connected on both, with the same account?</li><li>Works at home but not away: Windows\' firewall. On the computer: Windows Security → Firewall &amp; network protection → Allow an app through firewall → Change settings → <b>Tacheo Topside</b>: tick Private and Public → OK.</li><li>The name doesn\'t work but the 100.x address does: MagicDNS is off. Turn it on at login.tailscale.com → DNS, or add the 100.x address here (☰ → My computer → ⋯).</li><li>The screen view is slow on a weak signal: it sends pictures. Caves, Check, Reckon and Send send very little and work on one bar.</li></ul>'+
+  S('Connect Tacheo',['Pair this phone once, at home on the Wi-Fi: Tacheo\'s <b>Connect a phone</b> window shows a QR code. Here: <b>☰</b> → <b>📷 Scan the code on the computer</b> and point it at the code - it connects by itself.','That\'s all. When it pairs, this app learns the computer\'s Tailscale name and address too. Away from home it tries the home address, gets no answer, and uses Tailscale by itself.','Test it: turn this phone\'s Wi-Fi off (mobile data only), leave Tailscale on, and open <b>☰</b> → My computer. It should say <b>Connected · Tailscale</b>.'])+
+  '<div class="k">If it doesn\'t connect</div><ul style="padding-left:20px;margin:4px 0"><li>Is the computer on and awake, with Tacheo open and Phone link on?</li><li>Does Tailscale show Connected on both, with the same account?</li><li>Works at home but not away: Windows\' firewall. On the computer: Windows Security → Firewall &amp; network protection → Allow an app through firewall → Change settings → <b>Tacheo</b>: tick Private and Public → OK.</li><li>The name doesn\'t work but the 100.x address does: MagicDNS is off. Turn it on at login.tailscale.com → DNS, or add the 100.x address here (☰ → My computer → ⋯).</li><li>The screen view is slow on a weak signal: it sends pictures. Caves, Check, Reckon and Send send very little and work on one bar.</li></ul>'+
   '<a class="btn" style="text-decoration:none" href="https://tailscale.com/download" target="_blank" rel="noopener">Get Tailscale</a>');}
 // ======================================================================= start
 setTabs();

@@ -197,11 +197,11 @@
 			<key>IsRemovable</key>
 			<true/>
 			<key>Label</key>
-			<string>Topside</string>
+			<string>Tacheo</string>
 			<key>PayloadDescription</key>
-			<string>Puts Topside on the home screen.</string>
+			<string>Puts Tacheo on the home screen.</string>
 			<key>PayloadDisplayName</key>
-			<string>Topside</string>
+			<string>Tacheo</string>
 			<key>PayloadIdentifier</key>
 			<string>org.tacheo.topside.webclip</string>
 			<key>PayloadType</key>
@@ -217,9 +217,9 @@
 		</dict>
 	</array>
 	<key>PayloadDescription</key>
-	<string>Topside - Tacheo and CartoTable cave survey app. Adds the Topside icon to your home screen; it opens full screen and works with no signal once opened. It changes nothing else on the device and can be removed in Settings.</string>
+	<string>Tacheo - cave survey and CartoTable cave survey app. Adds the Tacheo icon to your home screen; it opens full screen and works with no signal once opened. It changes nothing else on the device and can be removed in Settings.</string>
 	<key>PayloadDisplayName</key>
-	<string>Topside</string>
+	<string>Tacheo</string>
 	<key>PayloadIdentifier</key>
 	<string>org.tacheo.topside</string>
 	<key>PayloadOrganization</key>
