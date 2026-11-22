@@ -2835,13 +2835,13 @@ function svDrawXsView(c,W,H){var x=svXsById(SVK.xs);if(!x){svView('plan');return
  c.save();c.fillStyle='rgba(255,255,255,.85)';c.fillRect(W-150,56,142,130);c.restore();var b=svXsBounds(sh),kk=Math.min(90/Math.max(0.2,b[1]-b[0]),80/Math.max(0.2,b[3]-b[2]));if(sh.lines.length)svXsArt(c,x,sh,W-86,124,kk);
  svScaleBar(c,W,H);}
 // ======================================================================= quick settings (SexyTopo's quick panel), with the phone's compass
-function svQuick(){var Q=[['splays','Splays',SVK.splays,1],['names','Station names',SVK.names,1],['grid','Grid',SVK.grid,1],['clip','Clip lines that overshoot a wall',svQ('clip',true)],
+function svQuick(){var Q=[['splays','Splays',SVK.splays,1],['names','Station names',SVK.names,1],['grid','Grid',SVK.grid,1],['clip','Clip lines that overshoot a wall',svQ('clip',false)],
   ['recentre','Bring a new station back to the middle',svQ('recentre',true)],['fade','Fade the sketch away from the active station',svQ('fade',false)],['symzoom','Symbols sized by the zoom they\'re placed at',svQ('symzoom',true)]];
  svDlg('<div class="big">Quick settings</div>'+Q.map(function(o){return'<label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px;margin:7px 0"><input type="checkbox" id="q_'+o[0]+'"'+(o[2]?' checked':'')+'> '+o[1]+'</label>';}).join('')+
   '<div class="k">Compass</div><div style="display:flex;align-items:center;gap:12px"><svg id="qCmp" width="64" height="64" viewBox="-32 -32 64 64"><circle r="30" fill="#0d1319" stroke="#3a4756"/><g id="qNeedle"><path d="M0 -26 L5 0 L0 4 L-5 0Z" fill="#c0392b"/><path d="M0 26 L5 0 L0 -4 L-5 0Z" fill="#e6ecf2"/></g></svg><div><b id="qHd" style="font-size:22px">-</b><div class="mut" style="font-size:12px">the way the top of the phone points (magnetic). Keep it flat, away from the Tacheo.</div></div></div>'+
   '<div class="k">Drawing</div><label>Snap a line\'s ends to other lines</label><select id="qSnap">'+[[0,'Off'],[7,'Close - small jumps only'],[13,'Wide']].map(function(o){return'<option value="'+o[0]+'"'+(svSnapR()==o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
-  '<label>Line detail</label><select id="qDet">'+[['fine','Fine - follows every wiggle'],['normal','Normal'],['smooth','Smooth']].map(function(o){return'<option value="'+o[0]+'"'+((SVQ.detail||'fine')==o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
-  '<div class="mut" style="font-size:12px;margin-top:4px">Short strokes are never snapped, so detail stays where you draw it.</div>'+
+  '<label>Line detail</label><select id="qDet">'+[['exact','Exact - just as you draw it'],['fine','Fine'],['normal','Normal'],['smooth','Smooth']].map(function(o){return'<option value="'+o[0]+'"'+((SVQ.detail||'exact')==o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
+  '<div class="mut" style="font-size:12px;margin-top:4px">Off and Exact keep every line exactly where your finger went. With snapping on, short strokes are still never snapped.</div>'+
   (SVK.view!='xs'?'<div class="k">Cross sections</div><button class="btn alt" id="qXsAll">✚ A section at every station with splays</button>':'')+
   '<div class="k">Readings</div><button class="btn alt" id="qUndoShot">↶ Undo the last reading</button><button class="btn" id="qGo">Done</button>');
  var stop=svCompass(function(h){var n=$('qNeedle'),t=$('qHd');if(!n)return;n.setAttribute('transform','rotate('+(-h)+')');t.textContent=Math.round(h)+'°';});
@@ -2955,7 +2955,10 @@ function svHitXs(sx,sy){var hit=null;SV.xs.forEach(function(x){if((x.view||'plan
 // start and finish, on every stroke. Now: the distance is a setting (off / 7 px / 13 px, 7 by default); a stroke shorter than four times
 // that is never snapped (detail work); lines snap to line ends only (area corners only for areas); and the finger's own path is kept
 // finer (Line detail). In a cross section's editor the ends also snap to the splay ends - the splays are the guide there.
-function svSnapR(){var v=SVQ.snapPx;if(v==null)v=SVQ.snap===false?0:7;return+v||0;}
+// 21:39, Kellen: "getting rid of snapping and just making lines true to how the sketcher draws would help close the detail gap with
+// paper" - so by default nothing moves a line: snapping off, clipping at walls off, Line detail "Exact" (every touch sample the phone
+// gives, coalesced ones included, kept to within 0.2 px). Snapping and clipping are still there in Quick settings for those who want them.
+function svSnapR(){var v=SVQ.snapPx;return v==null?0:(+v||0);}
 var SVXS_SNAP=14;
 function svSnapPt(w,kind,rad){rad=rad==null?svSnapR():rad;var xs=SVK.view=='xs'?svXsById(SVK.xs):null;if(!rad&&!xs)return w;var Pp=svPts(),s=w2s(w),best=null,bd=1e9;
  function tr(q,r){var p=w2s(q),d=Math.hypot(p[0]-s[0],p[1]-s[1]);if(d<r&&d<bd){bd=d;best=q;}}
@@ -2963,7 +2966,7 @@ function svSnapPt(w,kind,rad){rad=rad==null?svSnapR():rad;var xs=SVK.view=='xs'?
  if(xs)svXsSplays(xs).forEach(function(p){tr([p[0],p[1]],SVXS_SNAP);});
  return best?[best[0],best[1]]:w;}
 // how closely a stroke follows the finger: points kept every gap px, and the line simplified within eps px
-function svDetail(){var m={fine:{gap:1.2,eps:0.6},normal:{gap:2.5,eps:1.6},smooth:{gap:4,eps:3}};return m[SVQ.detail]||m.fine;}
+function svDetail(){var m={exact:{gap:0.6,eps:0.2},fine:{gap:1.2,eps:0.6},normal:{gap:2.5,eps:1.6},smooth:{gap:4,eps:3}};return m[SVQ.detail]||m.exact;}
 // ======================================================================= touch
 function svHook(){var cv=SVK.cv,P=SVK.ptr;
  cv.onpointerdown=function(e){cv.setPointerCapture(e.pointerId);P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);SVK.fit=false;clearTimeout(SVK.hold);
@@ -2992,8 +2995,10 @@ function svHook(){var cv=SVK.cv,P=SVK.ptr;
     var L=it.pts.length-1,bp=D.before.pts;if(L>1&&bp[0][0]==bp[L][0]&&bp[0][1]==bp[L][1]){if(D.node==0)it.pts[L]=np.slice();else if(D.node==L)it.pts[0]=np.slice();}}
    else{var it=D.it;if(it.k=='point'){it.x=D.before.x+dx;it.y=D.before.y+dy;}else{it.pts=D.before.pts.map(function(p){return[p[0]+dx,p[1]+dy];});if(it.holes)it.holes=D.before.holes.map(function(h){return h.map(function(p){return[p[0]+dx,p[1]+dy];});});}}
    svDraw();return;}
-  if(SVK.rub){SVK.rub.pts.push(w);SVK.rub.sx.push([e.offsetX,e.offsetY]);svDraw();return;}
-  if(SVK.draw&&SVK.draw.k!='point'){var l=SVK.draw.pts[SVK.draw.pts.length-1];if(Math.hypot((w[0]-l[0])*SVK.sc,(w[1]-l[1])*SVK.sc)>svDetail().gap){clearTimeout(SVK.hold);SVK.draw.pts.push(w);svDraw();}}
+  // the browser hands over one move a frame; the samples in between (getCoalescedEvents) are the rest of the finger's path
+  var evs=(e.getCoalescedEvents&&e.getCoalescedEvents())||[];if(!evs.length)evs=[e];
+  if(SVK.rub){evs.forEach(function(ev){SVK.rub.pts.push(s2w(ev.offsetX,ev.offsetY));SVK.rub.sx.push([ev.offsetX,ev.offsetY]);});svDraw();return;}
+  if(SVK.draw&&SVK.draw.k!='point'){var gap=svDetail().gap,added=false;evs.forEach(function(ev){var q=s2w(ev.offsetX,ev.offsetY),l=SVK.draw.pts[SVK.draw.pts.length-1];if(Math.hypot((q[0]-l[0])*SVK.sc,(q[1]-l[1])*SVK.sc)>gap){SVK.draw.pts.push(q);added=true;}});if(added){clearTimeout(SVK.hold);svDraw();}}
   else if(SVK.draw&&SVK.draw.k=='point'){SVK.draw.x1=e.offsetX;SVK.draw.y1=e.offsetY;}};
  cv.onpointerup=cv.onpointercancel=function(e){delete P[e.pointerId];if(Object.keys(P).length<2)SVK.pinch=null;if(Object.keys(P).length)return;clearTimeout(SVK.hold);var dn=SVK.down;SVK.down=null;
   var tap=dn&&!dn.moved&&e.type=='pointerup';
@@ -3014,7 +3019,7 @@ function svHook(){var cv=SVK.cv,P=SVK.ptr;
    var need=4*(SVK.view=='xs'?Math.max(svSnapR(),SVXS_SNAP/2):svSnapR());if(Ls>=need){d.pts[0]=svSnapPt(d.pts[0],d.k);d.pts[d.pts.length-1]=svSnapPt(d.pts[d.pts.length-1],d.k);}}
   var pts=svSimplify(d.pts,Math.min(d.k=='pen'?1:9,svDetail().eps)/SVK.sc);if(pts.length<2){svDraw();return;}
   var it={k:d.k=='pen'?'pen':d.k,type:d.type,pts:pts};if(d.k=='pen'){it.col=d.col||SVPENS[0];it.w=d.w||2;}
-  if(it.k=='line'&&svQ('clip',true)&&!SVWALLS[it.type])svClipToWalls(it);
+  if(it.k=='line'&&svQ('clip',false)&&!SVWALLS[it.type])svClipToWalls(it);
   if(it.k=='line'&&SVWALLS[it.type])svOrientWall(it);
   if(it.k=='area')svAreaAdd(it);else svAddItem(it);};
  cv.onwheel=function(e){e.preventDefault();var k=Math.exp(-e.deltaY*0.0015),ns=Math.max(1,Math.min(800,SVK.sc*k)),wx=(e.offsetX-SVK.ox)/SVK.sc,wy=(SVK.oy-e.offsetY)/SVK.sc;SVK.sc=ns;SVK.ox=e.offsetX-wx*ns;SVK.oy=e.offsetY+wy*ns;SVK.fit=false;svDraw();};}
