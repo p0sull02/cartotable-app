@@ -2597,13 +2597,13 @@ function svUndo(dir){var k=svUKey(),from=dir>0?(SVUNDO[k]=SVUNDO[k]||[]):(SVREDO
  else if(op.xsadd){if(dir>0){var xi=SV.xs.indexOf(op.xsadd);if(xi>=0)SV.xs.splice(xi,1);}else SV.xs.push(op.xsadd);}
  else if(op.xsdel){if(dir>0)SV.xs.splice(Math.min(op.at,SV.xs.length),0,op.xsdel);else{var xj=SV.xs.indexOf(op.xsdel);if(xj>=0)SV.xs.splice(xj,1);}}
  else if(op.repl){if(dir>0){op.repl.news.forEach(rm);op.repl.olds.forEach(function(o){list.push(o);});}else{op.repl.olds.forEach(rm);op.repl.news.forEach(function(o){list.push(o);});}}
- to.push(op);SVK.sel=null;svSaveSoon();svDraw();}
+ to.push(op);SVK.sel=null;svSaveSoon();svDraw();if(SVK.view=='xs')svXsBarShow();}
 function svPts(){var R=svReduce();return{R:R,pos:function(st){if(SVK.view=='xs')return null;if(SVK.view=='plan'){var p=R.P[st];return p?[p[0],p[1]]:null;}var x=R.X[st];return x?[x[0],x[1]]:null;}};}
 function svAnchor(pts){if(SVK.view=='xs')return null;var R=svPts(),best=null,bd=1e18,src=SVK.view=='plan'?R.R.P:R.R.X;Object.keys(src).forEach(function(st){var p=R.pos(st),d=Math.hypot(p[0]-pts[0][0],p[1]-pts[0][1]);if(d<bd){bd=d;best=st;}});return best?{st:best,at:R.pos(best)}:null;}
 function svWorldPts(it,Pp){var sh=svShift(it,Pp);return(it.pts||[[it.x,it.y]]).map(function(p){return[p[0]+sh[0],p[1]+sh[1]];});}
 // ---- the sketch screen: tools along the bottom
 function svSketchShow(v){if(SVK.view!=v||!SVK.cv)SVK.fit=true;SVK.view=v;SVK.sel=null;var b=$('svBody');
- var T=[['move','✋','Move, zoom; tap a station or a cross section for its menu'],['line','〰','Lines'],['area','▦','Areas'],['point','✳','Symbols'],['pen','✎','Pen (colours)'],['select','⬚','Select, move, edit'],['erase','⌫','Rub out: tap an item, or rub across areas and lines']];
+ var T=[['move','✋','Move, zoom; tap a station or a cross section for its menu'],['line','〰','Lines'],['area','▦','Areas'],['point','✳','Symbols'],['pen','✎','Pen (colours)'],['select','⬚','Select, move, edit'],['erase','<svg width="22" height="22" viewBox="0 0 24 24" style="vertical-align:middle"><path d="M4 15.5 L13.5 6 L20 12.5 L13 19.5 H8 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 10.5 L15.5 17" stroke="currentColor" stroke-width="2"/><path d="M13 19.5 H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>','Eraser: rub over anything to erase that part; tap it again for its size']];
  if(v!='xs')T.push(['xs','✚','Cross section: tap a station']);
  b.innerHTML='<canvas id="svCv"></canvas><div id="svLive"></div>'+(v=='xs'?'<div id="svXsBar"></div>':'')+'<div id="svPal"></div><div id="svTools">'+
   T.map(function(t){return'<button class="ib" data-t="'+t[0]+'" title="'+t[2]+'">'+t[1]+'</button>';}).join('')+
@@ -2611,6 +2611,8 @@ function svSketchShow(v){if(SVK.view!=v||!SVK.cv)SVK.fit=true;SVK.view=v;SVK.sel
   (svOnUnits().length?'<button class="ib" id="svShot2" title="Take a shot">'+svShotLbl()+'</button>'+(svOnUnits().length>1?'<button class="ib" id="svSelB" title="Fire the other unit">⇄</button>':''):'')+(v!='xs'?'<button class="ib" id="svAt" title="The station you\'re at">📍 '+esc(SV.cur)+'</button>':'')+'</div>';
  SVK.cv=$('svCv');SVK.ctx=SVK.cv.getContext('2d');svSizeCv();if(SVK.fit)svFitView();
  Array.prototype.forEach.call(document.querySelectorAll('#svTools [data-t]'),function(btn){btn.onclick=function(){var t=btn.getAttribute('data-t'),pal=t=='line'||t=='area'||t=='point'||t=='pen';SVK.sel=null;
+  if(t=='erase'&&SVK.tool=='erase'){if($('svPal').style.display=='block')$('svPal').style.display='none';else svPal('erase');return;}
+  if(t=='erase')toast('Eraser: rub over anything to erase that part. Tap the eraser again for its size, or to take whole lines.',3200);
   if(SVK.tool==t&&pal)svPal(t);else{SVK.tool=t;$('svPal').style.display='none';if(pal)svPal(t);if(t=='xs')toast('Tap a station for its cross section',2000);if(t=='select')toast('Tap a line, area or symbol; drag it or its points. Hold for its menu.',2600);}svToolsOn();svDraw();};});
  $('svUn').onclick=function(){svUndo(1);};$('svRe').onclick=function(){svUndo(-1);};$('svFit').onclick=function(){SVK.fit=true;svFitView();svDraw();};$('svLay').onclick=svQuick;
  var e;if(e=$('svAt'))e.onclick=svCurDlg;if(e=$('svShot2'))e.onclick=function(){svCmd(0x38);};if(e=$('svSelB'))e.onclick=svSelNext;if(e=$('svCen'))e.onclick=function(){svCentre(SV.cur);};
@@ -2672,7 +2674,10 @@ function svDrawSel(c,it,Pp){var w=svWorldPts(it,Pp).map(w2s);c.save();c.strokeSt
  if(it.k=='line'&&w.length>1){var a=w[0],b=w[1],L=Math.hypot(b[0]-a[0],b[1]-a[1])||1,nx=(b[1]-a[1])/L,ny=-(b[0]-a[0])/L;   // screen y is down: the left of the line on paper
   c.strokeStyle='#e0b000';c.lineWidth=3;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(a[0]+nx*16,a[1]+ny*16);c.stroke();}
  c.restore();}
-function svDrawRub(c){var r=SVK.rub;if(!r||r.pts.length<1)return;c.save();c.strokeStyle='rgba(192,57,43,.35)';c.lineWidth=r.rad*2;c.lineCap='round';c.lineJoin='round';svPath(c,r.pts);c.stroke();c.restore();}
+// the rub on screen: its trail, and a ring the eraser's size under the finger (the trail was drawn in metres on the screen's pixels,
+// so it never showed - fixed 21 Nov 2026)
+function svDrawRub(c){var r=SVK.rub;if(!r||r.pts.length<1)return;var q=r.pts.map(w2s),R=r.rad*SVK.sc,e=q[q.length-1];c.save();c.strokeStyle='rgba(192,57,43,.3)';c.lineWidth=R*2;c.lineCap='round';c.lineJoin='round';
+ if(q.length>1){svPath(c,q);c.stroke();}c.fillStyle='rgba(192,57,43,.18)';c.strokeStyle='rgba(192,57,43,.9)';c.lineWidth=1.5;c.beginPath();c.arc(e[0],e[1],R,0,7);c.fill();c.stroke();c.restore();}
 // ======================================================================= cross sections in Sully's style
 // The cut is square to the bisector of the legs in and out of the station. On the plan: the cut line through the station, a gap across the
 // passage a little wider than the section's left-to-right (wider by max(0.3 m, 15 %)); one side ends in a corner mark (a leg out, then a tick
@@ -2794,16 +2799,31 @@ function svXsNew(st){var view=SVK.view=='prof'?'prof':'plan',R=svReduce();if(SV.
 function svXsAll(){var R=svReduce(),n=0,src=SVK.view=='prof'?R.X:R.P;Object.keys(src).forEach(function(st){if(SV.xs.some(function(x){return x.at==st&&(x.view||'plan')==(SVK.view=='prof'?'prof':'plan');}))return;var x={id:'a'+Date.now().toString(36)+(n+SV.xs.length),src:'auto',at:st,view:SVK.view=='prof'?'prof':'plan',sk:[],t:Date.now()};x.hz=x.view=='prof'&&svStnSteep(st,R);if(!svXsShape(x).lines.length)return;SV.xs.push(x);svXsPlace(x);n++;});
  svSaveSoon();SVK.fit=true;svFitView();svDraw();toast(n?n+' cross sections added':'Every station with splays has one already',2200);}
 function svXsMenu(x){if(!x)return;var u=x.src=='unit';svDlg('<div class="big">Cross section at '+esc(x.at)+'</div><p class="mut">'+(u?'From the Tacheo'+(x.sn?' '+esc(x.sn):''):svXsShape(x).hand?'Drawn in its editor':svXsShape(x).lrud?'From the LRUDs':'From the splays at '+esc(x.at)+' (the ones marked to wall, when three or more are)')+'. Looking '+(x.flip?'back down':'up')+' the survey.</p>'+
- '<button class="btn" id="xmEd">✎ Open it to draw its walls</button><button class="btn alt" id="xmFl">⇄ Look the other way</button><button class="btn alt" id="xmSd">↔ Leader to the other side</button><button class="btn alt" id="xmRp">Put it back beside its station</button><button class="btn alt" id="xmDel">Delete this section</button><button class="btn alt" id="xmNo">Close</button>');
+ '<button class="btn" id="xmEd">✎ Edit it by hand - the splays guide you</button><button class="btn alt" id="xmFl">⇄ Look the other way</button><button class="btn alt" id="xmSd">↔ Leader to the other side</button><button class="btn alt" id="xmRp">Put it back beside its station</button><button class="btn alt" id="xmDel">Delete this section</button><button class="btn alt" id="xmNo">Close</button>');
  function ch(f){var before=svClone(x);f();svXsOp(x,before);svDlgClose();svDraw();}
- $('xmEd').onclick=function(){svDlgClose();svXsOpen(x.id);};$('xmFl').onclick=function(){ch(function(){x.flip=!x.flip;});};$('xmSd').onclick=function(){ch(function(){x.side=-(x.side||1);x.off=null;svXsPlace(x);});};
+ $('xmEd').onclick=function(){svDlgClose();svXsOpen(x.id,true);};$('xmFl').onclick=function(){ch(function(){x.flip=!x.flip;});};$('xmSd').onclick=function(){ch(function(){x.side=-(x.side||1);x.off=null;svXsPlace(x);});};
  $('xmRp').onclick=function(){ch(function(){x.off=null;svXsPlace(x);});};$('xmNo').onclick=svDlgClose;
  $('xmDel').onclick=function(){if(!confirm('Delete the cross section at '+x.at+'?'))return;var i=SV.xs.indexOf(x);SV.xs.splice(i,1);svOp({xsdel:x,at:i});svDlgClose();};}
 function svXsOp(x,before){var k=SVK.view;(SVUNDO[k]=SVUNDO[k]||[]).push({xsedit:x,before:before,after:svClone(x)});SVREDO[k]=[];svSaveSoon();}
 // ---- a section's own editor: the splays in its plane (solid) and out of it (dashed), its walls drawn by hand
-function svXsOpen(id){SVK.xs=id;SVK.tool='line';SVK.type='wall';SVVIEW='xs';Array.prototype.forEach.call(document.querySelectorAll('#svViews button'),function(b){b.classList.remove('on');});svSketchShow('xs');}
-function svXsBarShow(){var x=svXsById(SVK.xs),e=$('svXsBar');if(!e||!x)return;e.innerHTML='<button class="ib" id="xbBk">← Plan</button><b style="flex:1;margin-left:6px">Section at '+esc(x.at)+'</b><span class="mut" style="font-size:12px">looking '+(x.flip?'back':'up')+' the survey</span>';
- $('xbBk').onclick=function(){svView(x.view=='prof'?'prof':'plan');};}
+// 21 Nov 2026 (Kellen Nunn Jones: "The automatic x sections are cool, but it would be nice if you could edit them by hand with splay
+// assistance"): the editor used to start empty, the automatic outline only a dashed guide, and the first wall drawn replaced it. Now
+// "Edit outline" turns the automatic outline into wall lines with a point at every splay end, ready to drag; dragged points and the ends
+// of new walls snap to the splay ends (14 px), a point dropped on its neighbour is taken out, "More points" adds some between, the
+// eraser cuts, and "Splays" goes back to the automatic outline.
+function svXsOpen(id,edit){SVK.xs=id;SVK.tool='line';SVK.type='wall';SVVIEW='xs';Array.prototype.forEach.call(document.querySelectorAll('#svViews button'),function(b){b.classList.remove('on');});svSketchShow('xs');
+ if(edit){var x=svXsById(id);if(x&&!svXsShape(x).hand)svXsToHand(x);}}
+function svXsHand(x){return(x.sk||[]).filter(function(it){return it.k=='line'&&SVWALLS[it.type]&&it.pts&&it.pts.length>1;});}
+function svXsToHand(x){var sh=svXsShape(x);if(sh.hand)return;var items=sh.lines.filter(function(l){return l.length>1;}).map(function(l){var pts=l.map(function(p){return[p[0],p[1]];});if(sh.closed)pts.push(pts[0].slice());return{k:'line',type:'wall',pts:pts};});
+ if(!items.length){toast('No splays or LRUDs here yet - draw its walls with the wall line',2600);return;}
+ var list=svList();items.forEach(function(it){list.push(it);});svOp({repl:{olds:[],news:items}});SVK.tool='select';SVK.sel=items[0];svToolsOn();svXsBarShow();svDraw();
+ toast('Drag any point - it snaps to a splay end. Drop a point on its neighbour to take it out.',3400);}
+function svXsBarShow(){var x=svXsById(SVK.xs),e=$('svXsBar');if(!e||!x)return;var hand=svXsHand(x).length>0;
+ e.innerHTML='<button class="ib" id="xbBk">← Plan</button><b style="flex:1;margin-left:6px">Section at '+esc(x.at)+'</b>'+(hand?'<button class="ib" id="xbAuto" title="Back to the outline from the splays">↺ Splays</button>':'<button class="ib" id="xbEd" title="Turn the outline into points to drag">✎ Edit outline</button>')+'<span class="mut" style="font-size:12px;margin-left:6px">looking '+(x.flip?'back':'up')+'</span>';
+ $('xbBk').onclick=function(){svView(x.view=='prof'?'prof':'plan');};
+ if($('xbEd'))$('xbEd').onclick=function(){svXsToHand(x);};
+ if($('xbAuto'))$('xbAuto').onclick=function(){if(!confirm('Go back to the outline from the splays? The walls drawn in this section are taken out (Undo brings them back).'))return;
+  var list=svList(),olds=svXsHand(x);olds.forEach(function(o){list.splice(list.indexOf(o),1);});svOp({repl:{olds:olds,news:[]}});SVK.sel=null;svXsBarShow();svDraw();};}
 function svDrawXsView(c,W,H){var x=svXsById(SVK.xs);if(!x){svView('plan');return;}svGrid(c,W,H);var O=w2s([0,0]);
  svXsSplays(x).forEach(function(p){var q=w2s([p[0],p[1]]);c.strokeStyle=p[2]?'rgba(26,110,60,.85)':'rgba(70,90,110,.5)';c.lineWidth=p[2]?1.4:1;c.setLineDash(p[2]?[]:[4,4]);c.beginPath();c.moveTo(O[0],O[1]);c.lineTo(q[0],q[1]);c.stroke();c.setLineDash([]);c.fillStyle=c.strokeStyle;c.fillRect(q[0]-2,q[1]-2,4,4);});
  var sh=svXsShape(x);if(!sh.hand){c.strokeStyle='rgba(29,42,34,.35)';c.lineWidth=1.2;c.setLineDash([6,4]);sh.lines.forEach(function(l){svPath(c,l.map(function(p){return w2s(p);}),sh.closed);c.stroke();});c.setLineDash([]);}
@@ -2815,14 +2835,17 @@ function svDrawXsView(c,W,H){var x=svXsById(SVK.xs);if(!x){svView('plan');return
  c.save();c.fillStyle='rgba(255,255,255,.85)';c.fillRect(W-150,56,142,130);c.restore();var b=svXsBounds(sh),kk=Math.min(90/Math.max(0.2,b[1]-b[0]),80/Math.max(0.2,b[3]-b[2]));if(sh.lines.length)svXsArt(c,x,sh,W-86,124,kk);
  svScaleBar(c,W,H);}
 // ======================================================================= quick settings (SexyTopo's quick panel), with the phone's compass
-function svQuick(){var Q=[['splays','Splays',SVK.splays,1],['names','Station names',SVK.names,1],['grid','Grid',SVK.grid,1],['snap','Snap lines to the ends of lines',svQ('snap',true)],['clip','Clip lines that overshoot a wall',svQ('clip',true)],
+function svQuick(){var Q=[['splays','Splays',SVK.splays,1],['names','Station names',SVK.names,1],['grid','Grid',SVK.grid,1],['clip','Clip lines that overshoot a wall',svQ('clip',true)],
   ['recentre','Bring a new station back to the middle',svQ('recentre',true)],['fade','Fade the sketch away from the active station',svQ('fade',false)],['symzoom','Symbols sized by the zoom they\'re placed at',svQ('symzoom',true)]];
  svDlg('<div class="big">Quick settings</div>'+Q.map(function(o){return'<label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px;margin:7px 0"><input type="checkbox" id="q_'+o[0]+'"'+(o[2]?' checked':'')+'> '+o[1]+'</label>';}).join('')+
   '<div class="k">Compass</div><div style="display:flex;align-items:center;gap:12px"><svg id="qCmp" width="64" height="64" viewBox="-32 -32 64 64"><circle r="30" fill="#0d1319" stroke="#3a4756"/><g id="qNeedle"><path d="M0 -26 L5 0 L0 4 L-5 0Z" fill="#c0392b"/><path d="M0 26 L5 0 L0 -4 L-5 0Z" fill="#e6ecf2"/></g></svg><div><b id="qHd" style="font-size:22px">-</b><div class="mut" style="font-size:12px">the way the top of the phone points (magnetic). Keep it flat, away from the Tacheo.</div></div></div>'+
+  '<div class="k">Drawing</div><label>Snap a line\'s ends to other lines</label><select id="qSnap">'+[[0,'Off'],[7,'Close - small jumps only'],[13,'Wide']].map(function(o){return'<option value="'+o[0]+'"'+(svSnapR()==o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
+  '<label>Line detail</label><select id="qDet">'+[['fine','Fine - follows every wiggle'],['normal','Normal'],['smooth','Smooth']].map(function(o){return'<option value="'+o[0]+'"'+((SVQ.detail||'fine')==o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
+  '<div class="mut" style="font-size:12px;margin-top:4px">Short strokes are never snapped, so detail stays where you draw it.</div>'+
   (SVK.view!='xs'?'<div class="k">Cross sections</div><button class="btn alt" id="qXsAll">✚ A section at every station with splays</button>':'')+
   '<div class="k">Readings</div><button class="btn alt" id="qUndoShot">↶ Undo the last reading</button><button class="btn" id="qGo">Done</button>');
  var stop=svCompass(function(h){var n=$('qNeedle'),t=$('qHd');if(!n)return;n.setAttribute('transform','rotate('+(-h)+')');t.textContent=Math.round(h)+'°';});
- $('qGo').onclick=function(){stop();Q.forEach(function(o){var v=$('q_'+o[0]).checked;if(o[3])SVK[o[0]]=v;else SVQ[o[0]]=v;});svQSave();svDlgClose();svDraw();};
+ $('qGo').onclick=function(){stop();Q.forEach(function(o){var v=$('q_'+o[0]).checked;if(o[3])SVK[o[0]]=v;else SVQ[o[0]]=v;});SVQ.snapPx=+$('qSnap').value;delete SVQ.snap;SVQ.detail=$('qDet').value;svQSave();svDlgClose();svDraw();};
  if($('qXsAll'))$('qXsAll').onclick=function(){stop();svDlgClose();svXsAll();};
  $('qUndoShot').onclick=function(){var s=SV.shots[SV.shots.length-1];if(!s){toast('No readings yet');return;}if(!confirm('Undo the last reading ('+(s.kind=='leg'?'leg ':s.kind=='back'?'backsight ':s.kind=='lrud'?'LRUD ':'splay ')+svL(s.d)+' '+svUn()+' '+n1(s.az)+'° '+n1(s.cl)+'° at '+s.from+')?'))return;
   stop();svUndoShot();svDlgClose();};}
@@ -2890,17 +2913,28 @@ function svItemMenu(it){var kind=it.k,list=kind=='line'?SVLINES:kind=='area'?SVA
  if(kind=='pen')h+='<label>Colour</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+SVPENS.map(function(cc){return'<button class="ib" data-c="'+cc+'" style="background:'+cc+';border:2px solid '+(cc==(it.col||SVPENS[0])?'#fff':'transparent')+';width:36px;height:36px"></button>';}).join('')+'</div>';
  if(kind=='point'&&it.text!=null)h+='<label>Text</label><input id="imX" value="'+esc(it.text||'')+'">';
  h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">'+(kind=='line'||kind=='pen'?'<button class="btn alt" id="imF" style="flex:1">⇄ Flip it'+(kind=='line'&&SVWALLS[it.type]?' (the passage side)':'')+'</button>':'')+(kind=='point'&&SVDIR[it.type]?'<button class="btn alt" id="imF" style="flex:1">⇄ Turn it round</button>':'')+
-  (kind=='point'?'<button class="btn alt" id="imS1" style="flex:1">Smaller</button><button class="btn alt" id="imS2" style="flex:1">Bigger</button>':'')+'</div>'+
+  (kind=='point'?'<button class="btn alt" id="imS1" style="flex:1">Smaller</button><button class="btn alt" id="imS2" style="flex:1">Bigger</button>':'')+
+  (kind=='line'&&it.pts&&it.pts.length<300?'<button class="btn alt" id="imPt" style="flex:1">＋ More points to drag</button>':'')+'</div>'+
   '<button class="btn" id="imGo">Done</button><button class="btn alt" id="imDel">Delete it</button>';
  svDlg(h);
  if($('imT'))$('imT').onchange=function(){it.type=$('imT').value;svDraw();};
  Array.prototype.forEach.call(document.querySelectorAll('[data-c]'),function(b){b.onclick=function(){it.col=b.getAttribute('data-c');svDraw();Array.prototype.forEach.call(document.querySelectorAll('[data-c]'),function(o){o.style.borderColor=o===b?'#fff':'transparent';});};});
  if($('imF'))$('imF').onclick=function(){if(kind=='point')it.rot=(it.rot||0)+Math.PI;else it.pts.reverse();svDraw();toast('Flipped',900);};
+ if($('imPt'))$('imPt').onclick=function(){var o=[it.pts[0]];for(var i=1;i<it.pts.length;i++){var a=it.pts[i-1],b=it.pts[i];o.push([(a[0]+b[0])/2,(a[1]+b[1])/2],b);}it.pts=o;svDraw();toast('Twice the points - drag any of them with Select',1800);};
  if($('imS1'))$('imS1').onclick=function(){it.sz=(it.sz||16/SVK.sc)*0.8;svDraw();};if($('imS2'))$('imS2').onclick=function(){it.sz=(it.sz||16/SVK.sc)*1.25;svDraw();};
  $('imGo').onclick=function(){if($('imX'))it.text=$('imX').value;done();};
  $('imDel').onclick=function(){var l=svList(),i=l.indexOf(it);if(i>=0){svSet(it,before);l.splice(i,1);SVK.sel=null;svOp({del:it,at:i});}svDlgClose();};}
 // ======================================================================= palettes: lines, areas, symbols (NSS), and the pen's colours
-function svPal(kind){var pal=$('svPal');if(kind=='pen'){var cur=SVK.pen||{col:SVPENS[0],w:2};SVK.pen=cur;
+// the eraser (21 Nov 2026, Kellen Nunn Jones: "it desperately needs an eraser feature"): it was there as ⌫ "Rub out", a 12 px rub that
+// erased parts of what it crossed, but a tap took out the whole line. Now it looks like an eraser, has three sizes, a tap erases just
+// that spot, and a "whole lines" mode takes out everything it touches (lines, areas, symbols) whole.
+function svERad(){return+(SVQ.erad||12);}
+function svPal(kind){var pal=$('svPal');if(kind=='erase'){var r=svERad(),whole=!!SVQ.ewhole;
+  pal.innerHTML='<div class="mut" style="font-size:12px;margin:0 0 6px 4px">Eraser size</div><div style="display:flex;gap:6px;margin:0 4px 8px">'+[[6,'Fine'],[12,'Medium'],[24,'Big']].map(function(o){return'<button class="ib'+(r==o[0]?' on':'')+'" data-r="'+o[0]+'" style="flex:1;height:44px"><span style="display:inline-block;width:'+o[0]+'px;height:'+o[0]+'px;border-radius:50%;background:#e6ecf2;vertical-align:middle"></span> '+o[1]+'</button>';}).join('')+'</div>'+
+   '<div style="display:flex;gap:6px;margin:0 4px"><button class="ib'+(whole?'':' on')+'" data-m="0" style="flex:1;height:40px">Erase parts</button><button class="ib'+(whole?' on':'')+'" data-m="1" style="flex:1;height:40px">Whole lines</button></div>';
+  pal.style.display='block';Array.prototype.forEach.call(pal.querySelectorAll('[data-r]'),function(b){b.onclick=function(){SVQ.erad=+b.getAttribute('data-r');svQSave();svPal('erase');};});
+  Array.prototype.forEach.call(pal.querySelectorAll('[data-m]'),function(b){b.onclick=function(){SVQ.ewhole=b.getAttribute('data-m')=='1';svQSave();pal.style.display='none';};});return;}
+ if(kind=='pen'){var cur=SVK.pen||{col:SVPENS[0],w:2};SVK.pen=cur;
   pal.innerHTML='<div class="mut" style="font-size:12px;margin:0 0 6px 4px">Pen - notes and anything the symbols don\'t cover</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 4px 8px">'+SVPENS.map(function(cc){return'<button class="ib" data-c="'+cc+'" style="background:'+cc+';width:38px;height:38px;border:2px solid '+(cc==cur.col?'#fff':'transparent')+'"></button>';}).join('')+'</div>'+
    '<div style="display:flex;gap:6px;margin:0 4px">'+[1,2,4].map(function(w){return'<button class="ib'+(cur.w==w?' on':'')+'" data-w="'+w+'" style="flex:1;height:38px"><span style="display:inline-block;width:34px;height:'+w+'px;background:#e6ecf2;border-radius:2px;vertical-align:middle"></span></button>';}).join('')+'</div>';
   pal.style.display='block';Array.prototype.forEach.call(pal.querySelectorAll('[data-c]'),function(b){b.onclick=function(){cur.col=b.getAttribute('data-c');SVK.tool='pen';pal.style.display='none';svToolsOn();};});
@@ -2916,22 +2950,33 @@ function svHit(sx,sy,maxd){var Pp=svPts(),list=svList(),best=null,bd=maxd||14;li
   for(var j=0;j<w.length;j++){var d=j?svSegD(sx,sy,w[j-1],w[j]):Math.hypot(sx-w[0][0],sy-w[0][1]);if(d<bd){bd=d;best=it;}}});return best;}
 function svHitStation(sx,sy){var Pp=svPts(),src=SVK.view=='plan'?Pp.R.P:SVK.view=='prof'?Pp.R.X:{},best=null,bd=16;Object.keys(src).forEach(function(st){var p=w2s(Pp.pos(st)),d=Math.hypot(p[0]-sx,p[1]-sy);if(d<bd){bd=d;best=st;}});return best;}
 function svHitXs(sx,sy){var hit=null;SV.xs.forEach(function(x){if((x.view||'plan')!=SVK.view||!x._box)return;var b=x._box;if(sx>=b[0]&&sx<=b[1]&&sy>=b[2]&&sy<=b[3])hit=x;});return hit;}
-// snapping a point to the ends (or points) of lines already drawn
-function svSnapPt(w){if(!svQ('snap',true))return w;var Pp=svPts(),s=w2s(w),best=null,bd=13;svList().forEach(function(it){if(it.k!='line'&&it.k!='area')return;var p=svWorldPts(it,Pp);[p[0],p[p.length-1]].concat(it.k=='area'?p:[]).forEach(function(q){var d=Math.hypot(w2s(q)[0]-s[0],w2s(q)[1]-s[1]);if(d<bd){bd=d;best=q;}});});
+// snapping a line's ends to the ends of lines already drawn (21 Nov 2026, Kellen Nunn Jones via Sully: "The biggest gripe I had was the
+// snapping feature when drawing lines making it very hard to draw with high detail"). It was 13 px to any line end or any area corner,
+// start and finish, on every stroke. Now: the distance is a setting (off / 7 px / 13 px, 7 by default); a stroke shorter than four times
+// that is never snapped (detail work); lines snap to line ends only (area corners only for areas); and the finger's own path is kept
+// finer (Line detail). In a cross section's editor the ends also snap to the splay ends - the splays are the guide there.
+function svSnapR(){var v=SVQ.snapPx;if(v==null)v=SVQ.snap===false?0:7;return+v||0;}
+var SVXS_SNAP=14;
+function svSnapPt(w,kind,rad){rad=rad==null?svSnapR():rad;var xs=SVK.view=='xs'?svXsById(SVK.xs):null;if(!rad&&!xs)return w;var Pp=svPts(),s=w2s(w),best=null,bd=1e9;
+ function tr(q,r){var p=w2s(q),d=Math.hypot(p[0]-s[0],p[1]-s[1]);if(d<r&&d<bd){bd=d;best=q;}}
+ if(rad)svList().forEach(function(it){if(it.k=='line'){var p=svWorldPts(it,Pp);tr(p[0],rad);tr(p[p.length-1],rad);}else if(it.k=='area'&&kind=='area')svWorldPts(it,Pp).forEach(function(q){tr(q,rad);});});
+ if(xs)svXsSplays(xs).forEach(function(p){tr([p[0],p[1]],SVXS_SNAP);});
  return best?[best[0],best[1]]:w;}
+// how closely a stroke follows the finger: points kept every gap px, and the line simplified within eps px
+function svDetail(){var m={fine:{gap:1.2,eps:0.6},normal:{gap:2.5,eps:1.6},smooth:{gap:4,eps:3}};return m[SVQ.detail]||m.fine;}
 // ======================================================================= touch
 function svHook(){var cv=SVK.cv,P=SVK.ptr;
  cv.onpointerdown=function(e){cv.setPointerCapture(e.pointerId);P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);SVK.fit=false;clearTimeout(SVK.hold);
   if(ids.length==2){SVK.draw=null;SVK.rub=null;SVK.drag=null;var a=P[ids[0]],b=P[ids[1]];SVK.pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),m:[(a[0]+b[0])/2,(a[1]+b[1])/2],sc:SVK.sc,ox:SVK.ox,oy:SVK.oy};return;}
   var w=s2w(e.offsetX,e.offsetY),t=SVK.tool;SVK.down={x:e.offsetX,y:e.offsetY,t:Date.now(),moved:false};
   if(t=='move'){var xs=SVK.view!='xs'&&svHitXs(e.offsetX,e.offsetY);if(xs){SVK.drag={xs:xs,before:svClone(xs),w0:w,off0:(xs.off||[0,0]).slice()};}else SVK.pan={x:e.offsetX,y:e.offsetY,ox:SVK.ox,oy:SVK.oy};}
-  else if(t=='line'||t=='area'||t=='pen'){var w1=t=='pen'?w:svSnapPt(w);SVK.draw={k:t,type:t=='pen'?'pen':SVK.type||(t=='line'?'wall':'water'),pts:[w1],col:SVK.pen&&SVK.pen.col,w:SVK.pen&&SVK.pen.w};
+  else if(t=='line'||t=='area'||t=='pen'){SVK.draw={k:t,type:t=='pen'?'pen':SVK.type||(t=='line'?'wall':'water'),pts:[w],col:SVK.pen&&SVK.pen.col,w:SVK.pen&&SVK.pen.w};
    SVK.hold=setTimeout(function(){if(SVK.down&&!SVK.down.moved){var it=svHit(SVK.down.x,SVK.down.y,16);if(it){SVK.draw=null;SVK.sel=it;svDraw();svItemMenu(it);}}},550);}
   else if(t=='cut'){SVK.cutDraw={a:w,b:w};}
   else if(t=='point'){SVK.draw={k:'point',type:SVK.type,pts:[w],x0:e.offsetX,y0:e.offsetY};}
   else if(t=='select'){var sel=SVK.sel,Pp=svPts();if(sel&&sel.k!='point'){var wp=svWorldPts(sel,Pp).map(w2s),ni=-1,nd=16;wp.forEach(function(p,i){var d=Math.hypot(p[0]-e.offsetX,p[1]-e.offsetY);if(d<nd){nd=d;ni=i;}});if(ni>=0){SVK.drag={it:sel,node:ni,before:svClone(sel),w0:w};return;}}
    var it=svHit(e.offsetX,e.offsetY,16);if(it){var again=it===SVK.sel;SVK.sel=it;SVK.drag={it:it,before:svClone(it),w0:w,again:again};SVK.hold=setTimeout(function(){if(SVK.down&&!SVK.down.moved&&SVK.drag){SVK.drag=null;svItemMenu(it);}},550);}else SVK.sel=null;svDraw();}
-  else if(t=='erase'){SVK.rub={pts:[w],sx:[[e.offsetX,e.offsetY]],rad:12/SVK.sc};}
+  else if(t=='erase'){$('svPal').style.display='none';SVK.rub={pts:[w],sx:[[e.offsetX,e.offsetY]],rad:svERad()/SVK.sc};svDraw();}
   else if(t=='xs'){SVK.pan={x:e.offsetX,y:e.offsetY,ox:SVK.ox,oy:SVK.oy};}};
  cv.onpointermove=function(e){if(!P[e.pointerId])return;P[e.pointerId]=[e.offsetX,e.offsetY];var ids=Object.keys(P);
   if(SVK.down&&Math.hypot(e.offsetX-SVK.down.x,e.offsetY-SVK.down.y)>6)SVK.down.moved=true;
@@ -2942,25 +2987,32 @@ function svHook(){var cv=SVK.cv,P=SVK.ptr;
   var w=s2w(e.offsetX,e.offsetY);
   if(SVK.drag&&SVK.down&&SVK.down.moved){clearTimeout(SVK.hold);var D=SVK.drag,dx=w[0]-D.w0[0],dy=w[1]-D.w0[1];
    if(D.xs){D.xs.off=[D.off0[0]+dx,D.off0[1]+dy];}
-   else if(D.node!=null){var it=D.it,sh=svShift(it,svPts());it.pts[D.node]=[D.before.pts[D.node][0]+dx,D.before.pts[D.node][1]+dy];}
+   else if(D.node!=null){var it=D.it,np=[D.before.pts[D.node][0]+dx,D.before.pts[D.node][1]+dy];if(SVK.view=='xs')np=svSnapPt(np,'line',0);it.pts[D.node]=np;
+    // a closed outline (its first point repeated at the end) keeps both ends together
+    var L=it.pts.length-1,bp=D.before.pts;if(L>1&&bp[0][0]==bp[L][0]&&bp[0][1]==bp[L][1]){if(D.node==0)it.pts[L]=np.slice();else if(D.node==L)it.pts[0]=np.slice();}}
    else{var it=D.it;if(it.k=='point'){it.x=D.before.x+dx;it.y=D.before.y+dy;}else{it.pts=D.before.pts.map(function(p){return[p[0]+dx,p[1]+dy];});if(it.holes)it.holes=D.before.holes.map(function(h){return h.map(function(p){return[p[0]+dx,p[1]+dy];});});}}
    svDraw();return;}
   if(SVK.rub){SVK.rub.pts.push(w);SVK.rub.sx.push([e.offsetX,e.offsetY]);svDraw();return;}
-  if(SVK.draw&&SVK.draw.k!='point'){var l=SVK.draw.pts[SVK.draw.pts.length-1];if(Math.hypot((w[0]-l[0])*SVK.sc,(w[1]-l[1])*SVK.sc)>2.5){clearTimeout(SVK.hold);SVK.draw.pts.push(w);svDraw();}}
+  if(SVK.draw&&SVK.draw.k!='point'){var l=SVK.draw.pts[SVK.draw.pts.length-1];if(Math.hypot((w[0]-l[0])*SVK.sc,(w[1]-l[1])*SVK.sc)>svDetail().gap){clearTimeout(SVK.hold);SVK.draw.pts.push(w);svDraw();}}
   else if(SVK.draw&&SVK.draw.k=='point'){SVK.draw.x1=e.offsetX;SVK.draw.y1=e.offsetY;}};
  cv.onpointerup=cv.onpointercancel=function(e){delete P[e.pointerId];if(Object.keys(P).length<2)SVK.pinch=null;if(Object.keys(P).length)return;clearTimeout(SVK.hold);var dn=SVK.down;SVK.down=null;
   var tap=dn&&!dn.moved&&e.type=='pointerup';
   if(SVK.cutDraw){var cd=SVK.cutDraw;SVK.cutDraw=null;if(e.type=='pointerup')svXsRxCut(cd);svDraw();return;}
   if(SVK.pan){SVK.pan=null;if(tap&&SVK.view!='xs'){var st=svHitStation(dn.x,dn.y),xs=st?null:svHitXs(dn.x,dn.y);if(SVK.tool=='xs'){if(st)svXsNew(st);else if(xs)svXsMenu(xs);}else if(st)svStnMenu(st);else if(xs)svXsMenu(xs);}svDraw();return;}
   if(SVK.drag){var D=SVK.drag;SVK.drag=null;if(D.xs){if(tap)svXsMenu(D.xs);else{svXsSnap(D.xs);svXsOp(D.xs,D.before);}svDraw();return;}
+   if(!tap&&D.node!=null){var it=D.it,L=it.pts.length;if(L>2){var q=w2s(it.pts[D.node]),closed=it.pts[0][0]==it.pts[L-1][0]&&it.pts[0][1]==it.pts[L-1][1];
+     [D.node-1,D.node+1].some(function(j){if(j<0||j>=L)return false;var r=w2s(it.pts[j]);if(Math.hypot(r[0]-q[0],r[1]-q[1])<8){
+      // dropped on a neighbour: that point goes (a closed outline's shared first/last point is kept)
+      if(closed&&(D.node==0||D.node==L-1))return false;it.pts.splice(D.node,1);toast('Point taken out',1000);return true;}return false;});}}
    if(!tap)svOp({edit:D.it,before:D.before,after:svClone(D.it)});else if(D.again&&Date.now()-dn.t<400)svItemMenu(D.it);svDraw();return;}
-  if(SVK.rub){var r=SVK.rub;SVK.rub=null;if(tap||r.pts.length<3){svErase(dn.x,dn.y);}else svRubOut(r);svDraw();return;}
+  if(SVK.rub){var r=SVK.rub;SVK.rub=null;if(SVQ.ewhole){if(tap)svErase(dn.x,dn.y);else svRubWhole(r);}else svRubOut(r);svDraw();return;}
   var d=SVK.draw;SVK.draw=null;if(!d){svDraw();return;}
   if(d.k=='point'){var it={k:'point',type:d.type,x:d.pts[0][0],y:d.pts[0][1],rot:0};if(svQ('symzoom',true))it.sz=16/SVK.sc;if(SVDIR[d.type]&&d.x1!=null&&Math.hypot(d.x1-d.x0,d.y1-d.y0)>8)it.rot=Math.atan2(d.y1-d.y0,d.x1-d.x0);
    if(d.type=='pit_pt'||d.type=='dome_pt'||d.type=='ch'||d.type=='climb'||d.type=='label'){svAsk(d.type=='label'?'Text':d.type=='pit_pt'?'Pit depth ('+svUn()+')':d.type=='dome_pt'?'Dome height ('+svUn()+')':d.type=='ch'?'Ceiling height ('+svUn()+')':'Climb height ('+svUn()+', optional)','',function(v){if(v==null)return;it.text=v;svAddItem(it);});return;}
    svAddItem(it);return;}
-  if(d.k!='pen'&&d.pts.length>1)d.pts[d.pts.length-1]=svSnapPt(d.pts[d.pts.length-1]);
-  var pts=svSimplify(d.pts,(d.k=='pen'?1:1.6)/SVK.sc);if(pts.length<2){svDraw();return;}
+  if(d.k!='pen'&&d.pts.length>1){var Ls=0;for(var i=1;i<d.pts.length;i++)Ls+=Math.hypot(d.pts[i][0]-d.pts[i-1][0],d.pts[i][1]-d.pts[i-1][1])*SVK.sc;
+   var need=4*(SVK.view=='xs'?Math.max(svSnapR(),SVXS_SNAP/2):svSnapR());if(Ls>=need){d.pts[0]=svSnapPt(d.pts[0],d.k);d.pts[d.pts.length-1]=svSnapPt(d.pts[d.pts.length-1],d.k);}}
+  var pts=svSimplify(d.pts,Math.min(d.k=='pen'?1:9,svDetail().eps)/SVK.sc);if(pts.length<2){svDraw();return;}
   var it={k:d.k=='pen'?'pen':d.k,type:d.type,pts:pts};if(d.k=='pen'){it.col=d.col||SVPENS[0];it.w=d.w||2;}
   if(it.k=='line'&&svQ('clip',true)&&!SVWALLS[it.type])svClipToWalls(it);
   if(it.k=='line'&&SVWALLS[it.type])svOrientWall(it);
@@ -3004,6 +3056,13 @@ function svRubOut(r){var Pp=svPts(),list=svList(),rad=r.rad,rp=r.pts,olds=[],new
   var pieces=[],cur=[],cut=false;dense.forEach(function(p){if(near(p)){cut=true;if(cur.length>1)pieces.push(cur);cur=[];}else cur.push(p);});if(cur.length>1)pieces.push(cur);if(!cut)return;
   olds.push(it);pieces.forEach(function(pc){var o={k:it.k,type:it.type,pts:svSimplify(pc,1.2/SVK.sc)};if(it.col){o.col=it.col;o.w=it.w;}news.push(o);});});
  if(!olds.length)return;olds.forEach(function(o){list.splice(list.indexOf(o),1);});news.forEach(function(n){var an=svAnchor(n.pts);if(an){n.st=an.st;n.at=an.at;}list.push(n);});svOp({repl:{olds:olds,news:news}});}
+// every item the rub touches, taken out whole
+function svRubWhole(r){var Pp=svPts(),list=svList(),rad=r.rad,rp=r.pts,olds=[];
+ function near(p){for(var i=0;i<rp.length;i++){var d=i?svSegD(p[0],p[1],rp[i-1],rp[i]):Math.hypot(p[0]-rp[0][0],p[1]-rp[0][1]);if(d<rad)return true;}return false;}
+ list.forEach(function(it){if(it.k=='point'){var sh=svShift(it,Pp);if(near([it.x+sh[0],it.y+sh[1]]))olds.push(it);return;}
+  var w=svWorldPts(it,Pp);for(var i=0;i<w.length;i++){if(near(w[i])||(i&&rp.some(function(q){return svSegD(q[0],q[1],w[i-1],w[i])<rad;}))){olds.push(it);return;}}
+  if(it.k=='area'&&rp.some(function(q){return svInPoly(q,w);}))olds.push(it);});
+ if(!olds.length)return;olds.forEach(function(o){list.splice(list.indexOf(o),1);});SVK.sel=null;svOp({repl:{olds:olds,news:[]}});}
 function svPolyArea(p){var a=0;for(var i=0;i<p.length;i++){var q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1];}return a/2;}
 // a shape given by an inside test, traced back to polygons: marching squares on a fine grid, the loops sorted into outlines and holes
 function svRasterAreas(b,inside,type){var span=Math.max(b[1]-b[0],b[3]-b[2]),cs=Math.max(span/180,0.03),x0=b[0]-2*cs,y0=b[2]-2*cs,nx=Math.ceil((b[1]-b[0])/cs)+5,ny=Math.ceil((b[3]-b[2])/cs)+5,g=new Uint8Array(nx*ny);
