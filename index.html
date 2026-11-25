@@ -1230,8 +1230,8 @@ function homeShow(){SIDE='tacheo';$('land').style.display='none';$('mv').style.d
  // one is updating). Not on Tacheo's own Phone link page - the computer updates units itself.
  if(!window.TOPSIDE_PC&&!FW_OFF)h+='<div class="tiles" style="margin-bottom:4px">'+tileHtml('tFw','⬆','#1e40af','Update the Survey Device',fwTileSub(),'',true).replace('class="tile wide"','class="tile wide'+(fwHot()?' fwTile':'')+'"')+'</div>';
 h+='<div class="hgrp" id="hgIn">In Cave</div>';
- // 24 Nov 2026 (Sully, 09:07: "Sketch should be inside survey."): the one-tap Sketch card lives here, at the top of In Cave, not on the landing page
- h+='<div class="land skCard" id="lSk"><button class="skGo" id="lSkGo"><span class="lic">✏️</span><span class="lt">Sketch</span><span class="ls" id="lSkS">Straight to the plan sketch of your last survey.</span></button><div class="skRow" id="lSkRow"></div></div>';
+ // 24 Nov 2026 22:11 (Sully: "Sketch should be inside Survey tile."): the one-tap Sketch card moved again, off this page and onto the
+ // Survey tile's page (svUnitsShow), at the top - Survey and Sketch are one job underground
  h+='<div class="tiles">';
  if(D&&D.st)h+=tileHtml('hCur','🗺','#2f80ed','Back to '+esc(D.name),ft(D.len)+' · published '+esc(D.when),'',true);
  // 19 Nov 2026 (Sully, 08:28: "Fold Tacheo and Survey and Sketch into 1 tab. Organize how best you see fit."): the instrument and the
@@ -1256,7 +1256,7 @@ h+='<div class="hgrp" id="hgIn">In Cave</div>';
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:14px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a><a href="https://p0sull02.github.io/tacheo-site/download.html" style="color:#7fb0ff">All Tacheo downloads →</a></p>';   // + help (Sully, 15:16: "We need a tutorial/help page for the phone app too")   // 16 Nov 2026 (Sully: "a consolidated page ... with all the downloads")
  $('homeIn').innerHTML=h;$('home').style.display='block';
  var e;if(e=$('hCur'))e.onclick=function(){$('home').style.display='none';try{if(!(history.state&&history.state.ctCave))history.pushState({ctCave:1},'');}catch(x){}resize();};hookInstall('hInstallTop');$('hLand').onclick=landingShow;
- $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;svSketchCard();if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tLearn'))e.onclick=function(){location.href='survey-tutorial.html';};if(e=$('tDraft'))e.onclick=draftedSheet;if(e=$('tFw')){e.onclick=fwPage;if(FW&&!FW.list)fwLoad().then(fwTileUpd);} if(e=$('hgIn'))e.onclick=function(){var t=Date.now(),n=(hgIn.t&&t-hgIn.t<700)?(hgIn.n||0)+1:1;hgIn.t=t;hgIn.n=n;if(n<5)return;hgIn.n=0;FW_OFF=!FW_OFF;store('ct-fw-lab',FW_OFF?'0':'1');toast(FW_OFF?'Bluetooth update test: off':'Bluetooth update test: ON - this phone only',3500);homeShow();};
+ $('tCaves').onclick=cavesSheet;$('tAdd').onclick=addSheet;$('tPhotos').onclick=photosShow;if(e=$('tScan'))e.onclick=scanShow;if(e=$('tSurvey'))e.onclick=svListShow;if(e=$('tPc'))e.onclick=pcSheet;if(e=$('tGps'))e.onclick=gpsPage;if(e=$('tLearn'))e.onclick=function(){location.href='survey-tutorial.html';};if(e=$('tDraft'))e.onclick=draftedSheet;if(e=$('tFw')){e.onclick=fwPage;if(FW&&!FW.list)fwLoad().then(fwTileUpd);} if(e=$('hgIn'))e.onclick=function(){var t=Date.now(),n=(hgIn.t&&t-hgIn.t<700)?(hgIn.n||0)+1:1;hgIn.t=t;hgIn.n=n;if(n<5)return;hgIn.n=0;FW_OFF=!FW_OFF;store('ct-fw-lab',FW_OFF?'0':'1');toast(FW_OFF?'Bluetooth update test: off':'Bluetooth update test: ON - this phone only',3500);homeShow();};
  savedCaves().then(function(keys){var n=keys?keys.length:0,s=$('tCavesS');if(s)s.textContent=n?n+(n==1?' cave':' caves')+' on this phone':'None yet - add one';});
  photoAll().then(function(l){var sw=l.filter(function(p){return p.scan&&!p.sent;}).length;setBadge('tScan',sw);if(sw&&$('tScanS'))$('tScanS').textContent=sw+' waiting to go to '+(PC?esc(PC.name):'your computer');l=l.filter(function(p){return!p.scan;});var w=l.filter(function(p){return!p.sent;}).length,s=$('tPhotosS');setBadge('tPhotos',w);if(s&&w)s.textContent=w+' waiting to go to '+(PC?esc(PC.name):'your computer');});
  if(PC&&$('tPc'))pcHello().then(function(hh){var s=$('tPcS');if(s)s.textContent='Connected · '+PCVIA;return pcInbox().then(function(l){setBadge('tPc',(l||[]).length);if(l&&l.length&&s)s.textContent=l.length+(l.length==1?' thing':' things')+' sent to this phone';});},function(){var s=$('tPcS');if(s)s.textContent=pcWhyShort();});}
@@ -2156,11 +2156,11 @@ function svUnitsShow(){svOpenUi();SVVIEW='units';SVFROMLAND=false;
  $('svBar').innerHTML='<button class="ib" id="svBk">←</button><b style="font-size:15px;margin:0 2px">Survey</b><span class="chip" id="svDevC" style="cursor:pointer"></span><span style="flex:1"></span><button class="ib" id="svSkB" style="background:#1a9850;border-color:#1a9850;font-weight:700">✏️ Sketch</button><button class="ib" id="svMsgB" style="background:'+SVA+';border-color:'+SVA+'">💬</button>';
  $('svSkB').onclick=function(){if(!SV){toast('Pick or start a survey first',2000);return;}var s=SV;xtStop();svPut(s).catch(function(){});SVVIEW='plan';SVFORCE='plan';svOpen(s);};
  $('svBk').onclick=function(){SVVIEW='';xtStop();if(SV)svPut(SV).catch(function(){});svClose();};$('svDevC').onclick=function(){var e=$('svUnitsPg');if(e)e.scrollIntoView({block:'start',behavior:'smooth'});};$('svMsgB').onclick=function(){svChatShow();};
- $('svBody').innerHTML='<div class="svScroll" id="svHubSc"><div style="padding:10px 12px 90px;max-width:640px;margin:0 auto"><p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots go into the survey at the bottom of the page.':'Bluetooth to the Tacheo is in the <b>Tacheo app for Android</b>. Shots can be typed into the survey at the bottom of the page.')+'</p><div id="svUnitsPg"></div>'+
+ $('svBody').innerHTML='<div class="svScroll" id="svHubSc"><div style="padding:10px 12px 90px;max-width:640px;margin:0 auto">'+SKCARD+'<p class="mut" style="font-size:13px;margin:2px 0 10px">'+(svBleOk()?'Two or more units can be connected at once (the FS and the BS). Shots go into the survey at the bottom of the page.':'Bluetooth to the Tacheo is in the <b>Tacheo app for Android</b>. Shots can be typed into the survey at the bottom of the page.')+'</p><div id="svUnitsPg"></div>'+
   '<div class="card uPgSec">'+svDet('xt','⇄ CrossTalk - both units\' shots as they land','')+'<div id="xtPg"></div></div></details></div>'+
   '<div class="card" id="svHubS" style="margin-top:12px"><p class="mut">Loading the surveys…</p></div></div></div>';
  svDetWire($('svBody'));XT.on=true;if(XT.timer)clearInterval(XT.timer);XT.timer=setInterval(function(){if(SVVIEW!='units'){xtStop();return;}xtPoll();},3000);xtPoll();
- svDevChip();svAutoConnect();svDevSheet();xtDraw();svHubSurvey();}
+ svDevChip();svAutoConnect();svDevSheet();xtDraw();svHubSurvey();svSketchCard();}
 var SVPG=null,SVHUBL=[];   // the book page shown (null = the newest), the surveys on the phone
 function svPerPg(){var n=+store('ct-sv-ppg');return n>=4&&n<=60?n:13;}
 function svHubSurvey(){svAll().then(function(l){SVHUBL=l;var id=store('ct-sv-sel'),s=null;
@@ -2216,6 +2216,8 @@ function svListShow(){svUnitsShow();}
 // sketch goes back to the landing page. A new survey made from here opens on the plan too, not on Data.
 // 24 Nov 09:07 (Sully: "Sketch should be inside survey."): the card moved to the top of the Survey page; back returns there.
 var SVFORCE=null,SVFROMLAND=false;
+// the one-tap Sketch card, first thing on the Survey tile's page (24 Nov 2026 22:11, Sully: "Sketch should be inside Survey tile.")
+var SKCARD='<div class="land skCard" id="lSk" style="margin-top:2px"><button class="skGo" id="lSkGo"><span class="lic">✏️</span><span class="lt">Sketch</span><span class="ls" id="lSkS">Straight to the plan sketch of your last survey.</span></button><div class="skRow" id="lSkRow"></div></div>';
 function svSkLabel(x){return(x.cave||x.name)+(x.cave&&x.name&&x.name!=x.date?' · '+x.name:'')+' · '+x.date;}
 function svSketchCard(){svAll().then(function(l){var row=$('lSkRow'),sub=$('lSkS');if(!row)return;var id=store('ct-sv-sel'),last=l.filter(function(x){return x.id==id;})[0]||l[0];
   if(sub)sub.textContent=last?'Open the plan sketch: '+svSkLabel(last):'Start a survey and sketch it - no shots needed yet.';
@@ -2226,7 +2228,7 @@ function svSketchGo(id){$('land').style.display='none';SIDE='tacheo';store('ct-s
  (id?svDo('readonly',function(s){return s.get(id);}).catch(function(){return null;}):Promise.resolve(null)).then(function(s){
   if(s){store('ct-sv-sel',s.id);SVVIEW='plan';SVFORCE='plan';svOpen(s);return;}
   svOpenUi();SVVIEW='plan';SVFORCE='plan';$('svBar').innerHTML='<button class="ib" id="svBk">←</button><b style="font-size:15px;margin:0 2px">New survey to sketch</b>';$('svBk').onclick=svBackToLand;svNewDlg();});}
-function svBackToLand(){SVFROMLAND=false;SVFORCE=null;var s=SV;(s?svPut(s):Promise.resolve()).catch(function(){}).then(function(){$('svy').style.display='none';SV=null;SVVIEW='';homeShow();});}   // 20 Nov 2026: the list is the picker on the one Survey page
+function svBackToLand(){SVFROMLAND=false;SVFORCE=null;var s=SV;(s?svPut(s):Promise.resolve()).catch(function(){}).then(function(){SVVIEW='';svUnitsShow();});}   // 24 Nov 2026 22:11: back from a sketch opened from the card returns to the Survey tile's page, where the card is   // 20 Nov 2026: the list is the picker on the one Survey page
 function svDlg(html){var d=$('svDlg');$('svDlgIn').innerHTML=html;d.style.display='flex';d.onclick=function(ev){if(ev.target==d)svDlgClose();};}
 function svDlgClose(){$('svDlg').style.display='none';}
 // ---- a new survey: the cave, the survey, the GPS at the first station (Sully, 18 Nov 2026: "to start a new survey, it'll ask some
