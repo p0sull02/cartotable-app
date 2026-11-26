@@ -126,24 +126,24 @@ function hook(id,key){[].forEach.call(document.querySelectorAll('#'+id+' button'
 function sync(){[['pPeople','people'],['pGear','gear'],['pMethod','method']].forEach(function(x){[].forEach.call(document.querySelectorAll('#'+x[0]+' button'),function(b){b.classList.toggle('on',String(sel[x[1]])==b.dataset.v);});});}
 
 // ------------------------------------------------------------------ the roles
-var COL={L:'#f5c542',I:'#6aa8e0',B:'#4cc38a',S:'#c79bff',F:'#f5c542',K:'#6aa8e0',D:'#4cc38a'};
+var COL={P:'#f5c542',I:'#6aa8e0',B:'#4cc38a',S:'#c79bff',F:'#f5c542',K:'#6aa8e0',D:'#4cc38a'};
 function roles(p,g,m){
  var dev=g!='analog',dig=g=='digital';
  if(m=='shoot'){if(p==3)return{F:'Front - sets stations, back-sight unit',K:'Back - front-sight unit',D:dig?'Sketcher - tablet, sketches as the shots arrive':'Sketcher - book and sketch, follows'};return{F:'Front - sets stations, back-sight unit',K:dig?'Back - front-sight unit + tablet':'Back - front-sight unit'};}
- if(p==3)return dev?{L:'Point - sets stations, holds the light',I:'Instrument - shoots the device',B:dig?'Sketcher - tablet':'Book & sketch'}:{L:'Lead - tape, sets stations, LRUDs',I:'Instruments - compass & clino',B:'Book & sketch'};
- if(p==2)return dev?{I:'Instrument - sets stations and shoots',B:dig?'Sketcher - tablet':'Book & sketch'}:{L:'Lead - tape, sets stations, LRUDs',I:'Instruments, book & sketch'};
+ if(p==3)return dev?{P:'Point - sets stations, holds the light',I:'Instrument - shoots the device',B:dig?'Sketcher - tablet':'Book & sketch'}:{P:'Point - tape, sets stations, holds the light, LRUDs',I:'Instruments - compass & clino',B:'Book & sketch'};
+ if(p==2)return dev?{I:'Instrument - sets stations and shoots',B:dig?'Sketcher - tablet':'Book & sketch'}:{P:'Point - tape, sets stations, holds the light, LRUDs',I:'Instruments, book & sketch'};
  return{S:dev?'Solo - device, '+(dig?'phone or tablet':'book and sketch'):'Solo - compass, clino, tape (tied off) & book'};}
 
 // ------------------------------------------------------------------ chapter 1: the survey, as steps (each a state of the team)
 var steps=[],firstSketch=0;
 function build(){sync();var p=sel.people,g=sel.gear,m=sel.method,dev=g!='analog',dig=g=='digital',R=roles(p,g,m),ids=Object.keys(R);
- steps=[];var st={pos:{},si:{},beam:null,book:[],lrud:{},sketch:-1,marks:0,feet:0};
+ steps=[];var st={pos:{},si:{},beam:null,book:[],lrud:{},newLr:[],sketch:-1,marks:0,feet:0};
  ids.forEach(function(k,j){st.pos[k]=inPassage(0,[-36-j*20,6]);st.si[k]=-1;});
- function snap(t,say,tip){var c=JSON.parse(JSON.stringify(st));c.kind='survey';c.t=t;c.say=say+(tip?'<span class="tip">'+tip+'</span>':'');steps.push(c);st.beam=null;st.newRow=-1;}
+ function snap(t,say,tip){var c=JSON.parse(JSON.stringify(st));c.kind='survey';c.t=t;c.say=say+(tip?'<span class="tip">'+tip+'</span>':'');steps.push(c);st.beam=null;st.newRow=-1;st.newLr=[];}
  function at(k,i,off){st.pos[k]=inPassage(i,off||[0,0]);st.si[k]=i;}
  function fs(i){var l=leg(i),r=st.book[i]||{f:nm(i),t:nm(i+1)};r.d=l.d;r.az=l.az;r.inc=l.inc;st.book[i]=r;st.newRow=i;}
  function bs(i){var l=leg(i),r=st.book[i];r.baz=(l.az+180+(i%2?0.5:-0.5))%360;r.binc=-l.inc+(i%2?-0.5:0.5);st.newRow=i;}
- function lrud(i){st.lrud[i]=1;}
+ function lrud(i){st.lrud[i]=1;st.newLr.push(i);}
  var rd=function(x,n){return x.toFixed(n);};
  var gearTxt=g=='analog'?'a compass and clinometer (Suunto or similar), a fiberglass tape, a survey book, pencils and flagging':g=='device'?'a survey device that takes the whole shot - distance, azimuth and inclination - in one go (a Tacheo, DistoX or SAP), a survey book, a cave compass (plotting protractor), pencils and flagging':'a survey device linked by Bluetooth to a phone or tablet running a survey app (Tacheo\'s Survey, TopoDroid or SexyTopo), and flagging';
  snap('The gear and who does what','You need '+gearTxt+'.<br><br>'+ids.map(function(k){return'<b>'+R[k].split(' - ')[0]+'</b> - '+(R[k].split(' - ')[1]||'everything');}).join('<br>'),
@@ -156,7 +156,7 @@ function build(){sync();var p=sel.people,g=sel.gear,m=sel.method,dev=g!='analog'
  for(var i=0;i<nLegs;i++){
   var quick=i>=detail,lg=leg(i),N=nm(i),N1=nm(i+1);
   if(m=='shoot'){
-   at('F',i+1,[10,-16]);at('K',i,[-10,15]);if(R.D)at('D',Math.max(0,i-1),[-30,8]);st.marks=i+2;
+   at('F',i+1);at('K',i);if(R.D)at('D',Math.max(0,i-1),[-18,14]);st.marks=i+2;
    if(!quick)snap('Front sets '+N1,'<b>Front</b> walks ahead to a good spot - somewhere you can see back to '+N+' and forward again - and marks <b>'+N1+'</b> (flagging, a reflective dot, or a pencil mark on the rock).','Pick stations for the next shot as well as this one: where you can see both ways.');
    st.beam={from:'K',to:i+1,kind:'laser'};fs(i);
    if(!quick)snap('Back shoots the front sight','<b>Back</b>, standing on '+N+', shoots the <b>front sight</b> to the mark on '+N1+': '+rd(lg.d,1)+' ft, '+rd(lg.az,1)+'°, '+(lg.inc>0?'+':'')+rd(lg.inc,1)+'°. Shoot it three times - three matching shots make the leg.',dig?'The shot lands in the app by itself.':'The device keeps the shots - they\'re downloaded later, so nobody stops to write.');
@@ -168,23 +168,23 @@ function build(){sync();var p=sel.people,g=sel.gear,m=sel.method,dev=g!='analog'
    if(R.D&&!quick){st.sketch=Math.max(st.sketch,i-1);snap('The sketcher follows','<b>Sketcher</b> works behind the shooters'+(dig?' with the shots already on the tablet':'')+', sketching the passage the data has already reached. Nobody waits for the sketch.');}
    if(quick&&i==detail)snap('Keep shooting to the goal','Front moves on, Back walks up to the station Front just left, and the same few shots repeat: front sight, backsight, LRUDs. <b>'+Math.round(st.feet)+' ft</b> so far.','No sketching stops - that\'s where the time goes on a normal survey.');
   }else{
-   if(p==3){at('L',i+1,[10,-16]);at('I',i,[-8,15]);at('B',i,[-24,26]);}
-   else if(p==2){if(dev){at('I',i+1,[10,-16]);at('B',i,[-24,24]);}else{at('L',i+1,[10,-16]);at('I',i,[-10,15]);}}
-   else at('S',i,[-8,13]);
+   if(p==3){at('P',i+1);at('I',i);at('B',i,[-16,16]);}
+   else if(p==2){if(dev){at('I',i+1);at('B',i,[-16,16]);}else{at('P',i+1);at('I',i);}}
+   else at('S',i);
    st.marks=i+2;
-   var setter=p==3?'Lead':p==2&&!dev?'Lead':p==2?'Instrument':'You';
+   var setter=p==3?'Point':p==2&&!dev?'Point':p==2?'Instrument':'You';
    if(!quick)snap('Set '+N1,'<b>'+setter+'</b> '+(p==1||(p==2&&dev)?'pick':'goes ahead and picks')+' the next station, <b>'+N1+'</b> - a spot you can see from '+N+' and that looks on down the passage - and marks it.'+(p==1&&!dev?' Tie the tape\'s end to '+N+' (or use a topofil hip-chain) so it reads from the station.':'')+(p==2&&dev?' Then they come back to '+N+' to shoot.':''),'Short legs in twisty passage; longer ones where it runs straight.');
-   if(p==2&&dev)at('I',i,[-8,13]);
-   if(!dev){st.beam={from:p==1?'S':'I',to:i+1,kind:'tape'};if(!quick)snap('Tape the distance','The tape runs from '+N+' to '+N1+', pulled straight and taut. '+(p==3?'<b>Lead</b> holds it on the station; <b>Instruments</b> reads it at '+N+': ':'Read it: ')+'<b>'+rd(lg.d,1)+' ft</b>.','Read to the tenth of a foot. Call it out; the book says it back.');}
+   if(p==2&&dev)at('I',i);
+   if(!dev){st.beam={from:p==1?'S':'I',to:i+1,kind:'tape'};if(!quick)snap('Tape the distance','The tape runs from '+N+' to '+N1+', pulled straight and taut. '+(p==3?'<b>Point</b> holds it on the station; <b>Instruments</b> reads it at '+N+': ':'Read it: ')+'<b>'+rd(lg.d,1)+' ft</b>.','Read to the tenth of a foot. Call it out; the book says it back.');}
    st.beam={from:p==1?'S':'I',to:i+1,kind:dev?'laser':'sight'};fs(i);
    if(!quick)snap('Front sight',dev?('<b>'+(p==1?'You':'Instrument')+'</b>, on '+N+', puts the laser on the mark at '+N1+' and shoots: <b>'+rd(lg.d,1)+' ft, '+rd(lg.az,1)+'°, '+(lg.inc>0?'+':'')+rd(lg.inc,1)+'°</b>. Take it three times; three matching shots are the leg.'+(dig?' It arrives in the app on its own.':' Read it off the screen; the book writes it and says it back.')):
      '<b>'+(p==1?'You':'Instruments')+'</b> sight'+(p==1?'':'s')+' the light on '+N1+' through the compass, then the clino: <b>'+rd(lg.az,1)+'°</b> and <b>'+(lg.inc>0?'+':'')+rd(lg.inc,1)+'°</b>. '+(p==3?'Call them out - <b>Book</b> writes them down and reads them back.':'Write them down as you read them.'),
      dev?'':'Hold the instrument level, read to half a degree, and keep metal (helmet lights, carabiners) away from the compass.');
-   if(p==3){at('I',i+1,[-8,15]);at('L',i+1,[10,-16]);at('B',i+1,[-24,26]);}else if(p==2){at('I',i+1,[-8,13]);if(dev)at('B',i+1,[-24,24]);else at('L',i+1,[12,-14]);}else at('S',i+1,[-8,13]);
+   if(p==3){at('I',i+1);at('P',i+1,[14,-16]);at('B',i);}else if(p==2){at('I',i+1);if(dev)at('B',i+1,[-16,16]);else at('P',i+1,[14,-16]);}else at('S',i+1);
    st.beam={from:p==1?'S':'I',to:i,kind:dev?'laser':'sight'};bs(i);
-   if(!quick)snap('Backsight','<b>'+(p==1?'You':dev?'Instrument':'Instruments')+'</b> move'+(p==1?'':'s')+' up to '+N1+' and shoot'+(p==1?'':'s')+' back to '+N+'. The backsight should read the front sight turned round 180° - azimuth within 2°, inclination the same size with the sign flipped.'+(p==1?' Leave a target (a light or a reflector) on '+N+' to sight back to.':''),'Out of tolerance? Shoot both again before you move on - it\'s the cheapest blunder you\'ll ever fix.');
+   if(!quick)snap('Backsight','<b>'+(p==1?'You':dev?'Instrument':'Instruments')+'</b> move'+(p==1?'':'s')+' up to '+N1+' and shoot'+(p==1?'':'s')+' back to '+N+'. The backsight should read the front sight turned round 180° - azimuth within 2°, inclination the same size with the sign flipped.'+(p==1||(p==2&&!dev)?' Leave a target (a light or a reflector) on '+N+' to sight back to.':p==3&&!dev?' <b>Book</b> holds a light on '+N+' to sight on.':''),'Out of tolerance? Shoot both again before you move on - it\'s the cheapest blunder you\'ll ever fix.');
    lrud(i);lrud(i+1);
-   if(!quick)snap('LRUDs',(dev?'At each station, shoot the distances to the left and right walls, the ceiling and the floor - the <b>LRUDs</b>. On a Tacheo, hold SHOT half a second for an LRUD.':'At each station, '+(p>1?'<b>Lead</b> measures':'measure')+' left, right, up and down to the walls - tape or a good estimate - the <b>LRUDs</b>.')+(p>1?' Book writes them on the station\'s line.':''));
+   if(!quick)snap('LRUDs',(dev?'At each station, shoot the distances to the left and right walls, the ceiling and the floor - the <b>LRUDs</b>. On a Tacheo, hold SHOT half a second for an LRUD.':'At each station, '+(p>1?'<b>Point</b> measures':'measure')+' left, right, up and down to the walls - tape or a good estimate - the <b>LRUDs</b>.')+(p>1?' Book writes them on the station\'s line.':''));
    st.sketch=i;
    if(!quick)snap('Sketch',(p==3?'<b>'+(dig?'Sketcher':'Book')+'</b>':p==2?'<b>'+(dev?'Sketcher':'Instruments')+'</b>':'<b>You</b>')+' sketch'+(p==1?'':'es')+' the passage from '+N+' to '+N1+' to scale'+(dig?' on the tablet, over the line plot the shots have already drawn':' in the book, plotting the leg first from the numbers')+'. Chapter 2 shows how, line by line.','Draw what you see, not what you expect. Note leads, drops and anything that needs a second look.');
    if(quick&&i==detail)snap('Leapfrog on','Everyone moves up one station and does it again: set the next station, '+(dev?'':'tape, ')+'front sight, backsight, LRUDs, sketch. That\'s the rhythm of the whole trip.');
@@ -204,7 +204,7 @@ function build(){sync();var p=sel.people,g=sel.gear,m=sel.method,dev=g!='analog'
  snap('Back at the computer',dev?'Plug the device in, or connect the app, and download the shots into Tacheo. The trip lands in your Walls project; CartoTable compiles it, checks loops and blunders, and lines the sketch up with the data.':'Type the book into your survey program (a Walls .srv file in Tacheo\'s CartoTable), then scan the sketch pages. CartoTable compiles the trip, checks the loops and flags any blunders.',
   'Do it within a day or two, while you can still read your own notes.');
  firstSketch=steps.length;buildSketch(dig,st.book);
- $('bar').max=steps.length-1;cur=-1;
+ cur=-1;shown=null;timeline();
  $('roles').innerHTML=ids.map(function(k){return'<span><i style="background:'+COL[k]+'">'+k+'</i>'+R[k].split(' - ')[0]+'</span>';}).join('');
  var start=pendingSketch?firstSketch:0;pendingSketch=false;show(start,true);}
 var pendingSketch=false;
@@ -307,22 +307,30 @@ function grid(step,major){ctx.save();var x0=cam.x-W/2/cam.k,x1=cam.x+W/2/cam.k,y
 var walkCache=null;
 function routes(prev,s){var out={};Object.keys(s.pos).forEach(function(k){var a=prev&&prev.pos[k]||s.pos[k],b=s.pos[k];if(!prev||(a[0]==b[0]&&a[1]==b[1]))return;
  var i0=prev.si[k],i1=s.si[k],pts=[a];if(i0!==i1){var from=Math.max(i0,0),dir=i1>from?1:-1;if(i0<0)pts.push(ST[0]);else pts.push(ST[from]);for(var i=from+dir;dir>0?i<=i1:i>=i1;i+=dir)pts.push(ST[i]);}pts.push(b);
- var L=plen(pts);out[k]={pts:pts,len:L,dur:Math.max(.6,L/85)};});return out;}
+ var L=plen(pts);out[k]={pts:pts,len:L,dur:Math.max(.8,L/70)};});return out;}
+// a step's timing: everyone walks together, then the shot, the LRUD tapes or the pencil - m is when its motion ends
+function timing(s,prev,R){var tw=0;Object.keys(R).forEach(function(k){tw=Math.max(tw,R[k].dur);});var tAct=tw+(tw?.15:0),m=tAct+(s.beam?.8:0);
+ if(s.newLr&&s.newLr.length)m=Math.max(m,tAct+1.3);if(s.sketch>=0&&(!prev||prev.sketch<s.sketch))m=Math.max(m,tAct+1.9);return{tw:tw,tAct:tAct,m:m};}
 var heading={};
 // the camera follows the team: everyone (where they start and where they go), the station being shot, at least two legs wide
 function surveyView(s,prev){var pts=[];Object.keys(s.pos).forEach(function(k){pts.push(s.pos[k]);if(prev&&prev.pos[k])pts.push(prev.pos[k]);});if(s.beam)pts.push(ST[s.beam.to]);if(s.marks>0)pts.push(ST[s.marks-1]);
  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;pts.forEach(function(p){x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1]);});
  var cx=(x0+x1)/2,cy=(y0+y1)/2,w=Math.max(x1-x0+70,230),h=Math.max(y1-y0+70,120);return[cx-w/2,cy-h/2,cx+w/2,cy+h/2];}
 function drawSurvey(s,prev,t){
- var R=walkCache,plan=.7,tw=0;Object.keys(R).forEach(function(k){tw=Math.max(tw,R[k].dur);});var tAct=plan+tw+(tw?.15:0);
+ var R=walkCache,plan=.001,TM=timing(s,prev,R),tAct=TM.tAct;   // no planning pause: the route shows ahead while they walk it
  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);grid(40,5);
  // the passage: the floor plan
  var poly=WL.concat(WR.slice().reverse());ctx.beginPath();poly.forEach(function(q,i){var p=S(q);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);});ctx.closePath();ctx.fillStyle=C.fill;ctx.fill();
  ctx.strokeStyle=C.wall;ctx.lineWidth=Math.max(1.6,2.2*cam.k);ctx.lineJoin='round';line(WL,1);line(WR,1);
  // the sketch so far (pencil over the plan)
- if(s.sketch>=0){var kk=Math.min(ST.length-1,s.sketch+1);ctx.strokeStyle=C.ink;ctx.lineWidth=1.3;line(wallTo(WL,kk),1);line(wallTo(WR,kk),1);
+ if(s.sketch>=0){var kk=Math.min(ST.length-1,s.sketch+1),kp=prev&&prev.sketch>=0?Math.min(ST.length-1,prev.sketch+1):0,gf=kk>kp?clamp((t-tAct)/1.8,0,1):1;ctx.strokeStyle=C.ink;ctx.lineWidth=1.3;
+  if(kk>kp){if(kp>0){line(wallTo(WL,kp),1);line(wallTo(WR,kp),1);}var q1=line(WL.slice(6+kp*6,6+kk*6+1),gf);line(WR.slice(6+kp*6,6+kk*6+1),gf);if(gf<1)penTip(q1);}
+  else{line(wallTo(WL,kk),1);line(wallTo(WR,kk),1);}
   ctx.fillStyle=C.ink;for(var j=0;j<=kk;j++)if(s.lrud[j]){[-1,1].forEach(function(sd){var p=S(side(j,sd));ctx.beginPath();ctx.arc(p[0],p[1],1.8,0,TAU);ctx.fill();});}}
  // the legs surveyed
+ // the LRUDs being measured: a tape run out to each wall
+ if(s.newLr&&s.newLr.length){var lf=clamp((t-tAct-.1)/.9,0,1),la=t-tAct>2.6?Math.max(.35,1-(t-tAct-2.6)/1.2):1;ctx.save();ctx.strokeStyle=C.tape;ctx.lineWidth=1.8;ctx.globalAlpha=la;
+  s.newLr.forEach(function(j){[-1,1].forEach(function(sd){var a=ST[j],b=side(j,sd);line([a,[a[0]+(b[0]-a[0])*lf,a[1]+(b[1]-a[1])*lf]],1);});});ctx.restore();}
  ctx.lineWidth=1.4;for(var i=0;i<s.book.length;i++)if(s.book[i]){ctx.strokeStyle=s.book[i].baz!=null?C.steel:'rgba(95,147,192,.7)';ctx.setLineDash(s.book[i].baz!=null?[]:[5,4]);line([ST[i],ST[i+1]],1);}ctx.setLineDash([]);
  // stations
  var sc0=clamp(cam.k/1.5,1,1.6);ctx.font='600 '+Math.round(11*sc0)+'px '+MONO;ctx.textBaseline='bottom';ST.forEach(function(q,i){if(i>=s.marks)return;var p=S(q);ctx.fillStyle=C.accent;ctx.beginPath();ctx.arc(p[0],p[1],3.4*sc0,0,TAU);ctx.fill();ctx.strokeStyle=C.bg;ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#ffc58f';ctx.fillText(nm(i),p[0]+6,p[1]-5);});
@@ -351,7 +359,7 @@ function drawSurvey(s,prev,t){
   ctx.fillStyle=C.bg;ctx.font='800 '+Math.round(10.5*sc)+'px '+MONO;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(k,p[0],p[1]+.5);ctx.restore();});
  var ft=0;s.book.forEach(function(r){if(r&&r.d)ft+=r.d;});
  hud(['PLAN','VIEW','·','SURVEY','A'],'STEP '+(cur+1)+' / '+firstSketch+(s.split?'  ·  SKETCH SPLIT AT '+nm(s.split):''),'SURVEYED '+ft.toFixed(1)+' FT');north();scale(20);
- return tAct+(s.beam?.6:0);}
+ return TM.m;}
 
 // ---- the sketch scene: the book page, drawn by the pen
 function drawSketch(s,t){
@@ -407,23 +415,34 @@ function drawBook(s){var dig=sel.gear=='digital',dev=sel.gear!='analog',shoot=se
 var typeT=null;
 
 // ------------------------------------------------------------------ playing it
-var cur=-1,prevStep=null,t0=0,timer=false,shown=null,stepEnd=0;
-function show(i,jump){if(i<0||i>=steps.length)return;var prev=shown;cur=i;shown=steps[i];$('bar').value=i;
+// One clock runs the whole tutorial (Sully, 26 Nov 2026: "I want a smooth animation, not sporadic step by step"): every step has its
+// place on the timeline (its motion, then long enough to read), playing runs straight through, the text follows the playhead, and the
+// slider scrubs the motion itself. Next/Back go to a step and play its motion once.
+var cur=-1,prevStep=null,timer=false,shown=null,T=0,holdTo=0,starts=[],durs=[],motion=[],total=0,barDrag=false;
+function prevOf(k){return k>0&&steps[k].kind=='survey'&&steps[k-1].kind=='survey'?steps[k-1]:null;}
+function readT(s){return clamp(s.say.replace(/<[^>]+>/g,'').length*.022,2.2,6);}
+function timeline(){starts=[];durs=[];motion=[];var tt=0;steps.forEach(function(s,k){var pv=prevOf(k),m=s.kind=='sketch'?s.end:timing(s,pv,routes(pv,s)).m,d=Math.max(m+.9,readT(s));motion.push(m);starts.push(tt);durs.push(d);tt+=d;});
+ total=tt;$('bar').max=steps.length;$('bar').step='any';}
+function stepAt(t){var k=0;while(k<steps.length-1&&starts[k+1]<=t)k++;return k;}
+function enter(k,snapCam){var prev=shown,back=k<cur;cur=k;shown=steps[k];
  var sk=shown.kind=='sketch';if(!prev||prev.kind!=shown.kind)resize();$('cSurvey').classList.toggle('on',!sk);$('cSketch').classList.toggle('on',sk);
- $('stepN').textContent=(sk?'Sketch · step '+(i-firstSketch+1)+' of '+(steps.length-firstSketch):'Survey · step '+(i+1)+' of '+firstSketch);$('stepT').textContent=shown.t;$('say').innerHTML=shown.say;drawBook(shown);
- prevStep=jump||!prev||prev.kind!='survey'||sk?null:prev;walkCache=sk?{}:routes(prevStep,shown);if(jump&&!sk)heading={};
- shown.sv=sk?null:surveyView(shown,prev&&prev.kind=='survey'?prev:null);var view=sk?shown.view:shown.sv;camT=fit(view);if(!cam||jump&&!sk||(prev&&prev.kind!=shown.kind))cam={k:camT.k,x:camT.x,y:camT.y};
- t0=performance.now()/1000;skip=jump&&!sk?99:0;}
-var skip=0;
-function play(on){timer=on;$('bPlay').textContent=on?'❚❚':'▶';if(on&&cur>=steps.length-1)show(0,true);}
+ $('stepN').textContent=(sk?'Sketch · step '+(k-firstSketch+1)+' of '+(steps.length-firstSketch):'Survey · step '+(k+1)+' of '+firstSketch);$('stepT').textContent=shown.t;$('say').innerHTML=shown.say;drawBook(shown);
+ prevStep=sk?null:prevOf(k);walkCache=sk?{}:routes(prevStep,shown);if(back||snapCam)heading={};
+ shown.sv=sk?null:surveyView(shown,prevStep);var view=sk?shown.view:shown.sv;camT=fit(view);if(!cam||snapCam||(prev&&prev.kind!=shown.kind))cam={k:camT.k,x:camT.x,y:camT.y};}
+function show(i,jump){if(i<0||i>=steps.length)return;T=starts[i];holdTo=starts[i]+motion[i];enter(i,!!jump);}
+function play(on){timer=on;$('bPlay').textContent=on?'❚❚':'▶';if(on&&T>=total-.05){T=0;holdTo=0;enter(0,true);}}
 var lastNow=0;
 function frame(now){now/=1000;var dt=Math.min(.1,now-(lastNow||now));lastNow=now;
- if(shown){var tgt=fit(shown.kind=='sketch'?shown.view:shown.sv),e=1-Math.exp(-dt/.45);cam.x+=(tgt.x-cam.x)*e;cam.y+=(tgt.y-cam.y)*e;cam.k+=(tgt.k-cam.k)*e;
-  var t=now-t0+skip;stepEnd=shown.kind=='sketch'?drawSketch(shown,t):drawSurvey(shown,prevStep,t);
-  if(timer){var read=clamp(shown.say.replace(/<[^>]+>/g,'').length*.03,3,9);if(now-t0>(skip?0:stepEnd)+read){if(cur>=steps.length-1)play(false);else show(cur+1);}}}
+ if(shown&&steps.length){
+  if(timer){T+=dt;if(T>=total){T=total-1e-3;play(false);}}else if(T<holdTo)T=Math.min(holdTo,T+dt);
+  var k=stepAt(T);if(k!==cur)enter(k,Math.abs(k-cur)>1);
+  var tgt=fit(shown.kind=='sketch'?shown.view:shown.sv),e=1-Math.exp(-dt/.6);cam.x+=(tgt.x-cam.x)*e;cam.y+=(tgt.y-cam.y)*e;cam.k+=(tgt.k-cam.k)*e;
+  var t=T-starts[k];if(shown.kind=='sketch')drawSketch(shown,t);else drawSurvey(shown,prevStep,t);
+  if(!barDrag)$('bar').value=k+clamp(t/durs[k],0,.999);}
  requestAnimationFrame(frame);}
-$('bNext').onclick=function(){play(false);show(cur+1);};$('bBack').onclick=function(){play(false);show(cur-1,true);};$('bPlay').onclick=function(){play(!timer);};
-$('bar').oninput=function(){play(false);show(+this.value,true);};
+$('bNext').onclick=function(){play(false);show(Math.min(steps.length-1,cur+1));};$('bBack').onclick=function(){play(false);show(Math.max(0,cur-1),true);};$('bPlay').onclick=function(){play(!timer);};
+$('bar').oninput=function(){play(false);barDrag=true;var v=+this.value,k=Math.min(steps.length-1,Math.floor(v));T=starts[k]+Math.min(.999,v-k)*durs[k];holdTo=T;};
+$('bar').onchange=function(){barDrag=false;};
 $('cSurvey').onclick=function(){play(false);show(0,true);};$('cSketch').onclick=function(){play(false);show(firstSketch,true);};
 $('fsB').onclick=function(){var w=$('cvWrap');if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}else(w.requestFullscreen||w.webkitRequestFullscreen||function(){}).call(w);};
 document.addEventListener('fullscreenchange',function(){setTimeout(resize,60);});
