@@ -3652,7 +3652,7 @@ function svAsk1(cmd,endRe,ms,u){u=u||svPrimary();return new Promise(function(ok)
 function svRxLine(u,line){try{xtRx(u,line);}catch(e){}var xm=line.match(/^XSEC new id=(\d+)/);if(xm){svXsArrive(u,xm[1]);return;}var m=line.match(/^MSG (SHOWN|READ|TIMEOUT) (\d+)/);if(m)svMsgState(u,+m[2],m[1]);
  var w=u.waiters[0];if(!w)return;w.lines.push(line);if(w.re.test(line))w.done(false);}
 function svInfo(u){u=u||svPrimary();return svAsk1('INFO',/^END/,8000,u).then(function(l){if(!l||!u)return;var i=u.info||{};l.forEach(function(x){var p=x.split(' ');
-  if(p[0]=='VER')i.ver=x.slice(4);else if(p[0]=='SN')i.sn=p[1];else if(p[0]=='BATT'){i.batt=Math.round(+p[2]);i.shots=+p[3]||0;}else if(p[0]=='CAL')i.cal=(+p[2]).toFixed(2)+'°';else if(p[0]=='SET'){var lr=x.match(/longrange=(\d)/);if(lr)i.longrange=lr[1]=='1';}else if(p[0]=='TRIP')i.trip=p[1]+' legs, '+svL(+p[2],0)+' '+svUn()+', '+p[3]+' LRUDs';});
+  if(p[0]=='VER')i.ver=x.slice(4);else if(p[0]=='SN')i.sn=p[1];else if(p[0]=='BATT'){i.batt=Math.round(+p[2]);i.shots=+p[3]||0;}else if(p[0]=='CAL')i.cal=(+p[2]).toFixed(2)+'°';else if(p[0]=='SET'){var lr=x.match(/longrange=(\d)/);if(lr)i.longrange=lr[1]=='1';var ph=x.match(/phone=(\d)/);if(ph)i.phone=ph[1]=='1';}else if(p[0]=='TRIP')i.trip=p[1]+' legs, '+svL(+p[2],0)+' '+svUn()+', '+p[3]+' LRUDs';});
  u.info=i;svDevChip();if(SVVIEW=='units'&&$('svUnitsPg'))svDevSheet(true);});}
 // ======================================================================= live cross sections (Sully, 20 Nov 2026, 19:11: "the button on app can still
 // auto start the cross section screen, but when the tach sends a cross section over, either prompted by the app user or just initiated by the
@@ -3687,7 +3687,12 @@ function svXsMini(x){var P=(x.pts||[]).filter(function(p){return p[2];});if(P.le
  var k=Math.min(52/Math.max(1e-3,u1-u0),40/Math.max(1e-3,v1-v0)),pt=P.map(function(p){return((p[0]-u0)*k+4).toFixed(1)+','+(44-(p[1]-v0)*k).toFixed(1);}).join(' ');
  return'<svg width="60" height="48" viewBox="0 0 60 48" style="flex:none"><polygon points="'+pt+'" fill="rgba(26,152,80,.18)" stroke="#2fbf6f" stroke-width="1.6" stroke-linejoin="round"/></svg>';}
 // on connecting: what it is, the clock (the messages' times), whether it has messages (1.17.8 / SAP6 1.16.30.5), the station names
-function svHello(u){svInfo(u).then(function(){var d=new Date();return svAsk1('TIME='+Math.floor(d.getTime()/1000)+','+(-d.getTimezoneOffset()),/^OK|^\?\?|^ERR/,3000,u);})
+// 26 Nov 2026 (Paul's field test: the phone took the 1-button's front sights but never the 2-button's backsights - "States: Waiting on BS" -
+// though it could see and control that unit): a unit with Pairing > Phone link Off still takes the app's connection (its radio is on for
+// CrossTalk) and answers commands, but queues no shots for it. So a unit that comes in with phone=0 gets SET=phone,1, and the phone says so.
+function svPhoneOn(u){if(!u||!u.info||u.info.phone!==false)return Promise.resolve();return svAsk1('SET=phone,1',/^OK|^BAD|^\?\?|^ERR/,3000,u).then(function(l){
+ if(l&&l.some(function(x){return /^OK/.test(x);})){u.info.phone=true;toast('Phone link was off on '+esc(svShort(u))+' - turned it on, so its shots come to this phone',3500);}});}
+function svHello(u){svInfo(u).then(function(){return svPhoneOn(u);}).then(function(){var d=new Date();return svAsk1('TIME='+Math.floor(d.getTime()/1000)+','+(-d.getTimezoneOffset()),/^OK|^\?\?|^ERR/,3000,u);})
  .then(function(){return svAsk1('MSG?',/^MSG |^\?\?|^ERR|^Unknown/i,3000,u);}).then(function(l){u.msg=!!(l&&l.some(function(x){return /^MSG (IDLE|WAITING|SHOWING)/.test(x);}));if(u.follow)svTellStation(true,u);}).then(function(){svXsWatchStart(u);});}
 // the station names: the unit shows the station it's at and names its own legs to match (STNAT, STNSET; firmware 1.13+)
 // v23 Nov 2026: the whole series (A25-B, firmware 1.17.14 takes - and .); a side lead with no leg yet goes as STNLEAD=<from>,<series>, so the
