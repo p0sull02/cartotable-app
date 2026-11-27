@@ -3856,7 +3856,11 @@ var FW_URL='https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/m
 var FW_TEST_URL='https://raw.githubusercontent.com/p0sull02/tacheo-topside-releases/main/firmware-test.txt';
 function fwTestOn(){return store('ct-fw-test')=='1';}
 setTimeout(function(){if(!window.TOPSIDE_PC&&!FW_OFF)fwLoad().then(fwTileUpd);},1500);   // the list at start (Home may be drawn before this part of the page has run), so the tile knows
-function fwOk(){return!FW_OFF&&!!(window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function');}
+// 27 Nov 2026: the app's own Bluetooth updater before 1.12 gave the unit 20 s to clear its old firmware and hung up mid-erase, leaving it in its
+// USB update mode (20 Nov, and twice on 27 Nov - the second time 1.12 hadn't installed). Only app 1.12+ may send firmware over Bluetooth.
+function fwAppVer(){var m=navigator.userAgent.match(/TopsideApp\/([\d.]+)/);return m?m[1]:'';}
+function fwAppOk(){var v=fwAppVer();return!!v&&fwCmp(v,'1.12')>=0;}
+function fwOk(){return!FW_OFF&&fwAppOk()&&!!(window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function');}
 function fwParse(txt){var out=[],cur=null;String(txt||'').split(/\r?\n/).forEach(function(l){if(/^\s*#/.test(l))return;var m=l.match(/^(\w+):\s*(.*)$/);
   if(!m){cur=null;return;}if(m[1]=='file'){cur={file:m[2].trim()};out.push(cur);var v=cur.file.match(/_v([\d.]+)_([A-Za-z0-9]+)\.zip$/);if(v){cur.ver=v[1];cur.build=v[2];}}else if(cur)cur[m[1]]=m[2].trim();});
  return out.filter(function(x){return x.ver&&x.build&&/^https:\/\/raw\.githubusercontent\.com\/p0sull02\/tacheo-topside-releases\//.test(x.url||'');});}
@@ -3885,7 +3889,8 @@ function fwRender(){var b=$('fwBody');if(!b)return;var h='';
  if(FW.err)h+='<div class="card" style="border-color:#b7791f">'+esc(FW.err)+'</div>';
  if(FW_OFF)h+='<div class="card" style="border-color:#334155"><b>Bluetooth updates are paused</b><div class="mut" style="font-size:13px;margin-top:4px">Update the units over USB with Tacheo on a computer for now. This page still shows what each unit runs and the newest firmware.</div></div>';
  else h+='<div class="card" style="border-color:#c0392b"><b>Test switch on - this phone only</b><div class="mut" style="font-size:13px;margin-top:4px">Bluetooth updates are pulled for everyone else: one stopped a unit on 20 Nov. Have the unit\'s USB cable and Tacheo on the computer ready before you start. 5 taps on Home\'s In Cave heading turns this off.</div></div>';
- if(!fwOk()&&!FW_OFF){h+='<div class="card" style="border-color:#1d4ed8"><b>'+(IOS?'iPhones can\'t do this yet':'This needs the Tacheo app for Android')+'</b><div class="mut" style="font-size:13px;margin-top:4px">'+
+ if(!FW_OFF&&fwAppVer()&&!fwAppOk()&&window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function')h+='<div class="card" style="border-color:#c0392b"><b>This phone\'s Tacheo app is '+esc(fwAppVer())+' - too old for Bluetooth updates</b><div class="mut" style="font-size:13px;margin-top:4px">Its updater stops units part way. Install Tacheo app 1.12 or newer first (Settings → Apps → Tacheo shows the version), then swipe the app closed and open it again.</div></div>';
+ else if(!fwOk()&&!FW_OFF){h+='<div class="card" style="border-color:#1d4ed8"><b>'+(IOS?'iPhones can\'t do this yet':'This needs the Tacheo app for Android')+'</b><div class="mut" style="font-size:13px;margin-top:4px">'+
    (IOS?'iPhones don\'t let web apps use Bluetooth. Update units with Tacheo on your computer (plug the unit in, Updates and Upgrades).':
    (/TopsideApp\//.test(navigator.userAgent)?'This copy of the app is too old for Bluetooth updates - update the Tacheo app (1.9 or newer) from Home.':'A web page can\'t reach the unit\'s radio. Install the Tacheo app for Android (Home has the button), or update the unit with Tacheo on your computer.'))+'</div></div>';}
  var on=svOnUnits();
