@@ -3876,7 +3876,7 @@ function fwHot(){return!!(FW&&(FW.busy&&FW.busy.stage!='failed'||fwNews()>0));}
 function fwTileUpd(){var e=$('tFw');if(!e)return;e.classList.toggle('fwTile',fwHot());var s=$('tFwS');if(s)s.innerHTML=fwTileSub();}
 function fwTileSub(){if(!FW)return'New unit firmware, over Bluetooth - no computer needed';if(FW.busy)return'Updating '+esc(FW.busy.name)+' - '+(FW.busy.pct||0)+' %';var n=FW.list?fwNews():0;if(n)return'New firmware waiting for '+n+(n==1?' unit':' units')+' - tap to update';return Object.keys(load2('ct-fw-units')||{}).length?'Your units are up to date · firmware over Bluetooth':'Firmware for your units, over Bluetooth';}
 var FW_STAGE={reading:'Opening the firmware',connecting:'Connecting to the unit',jump:'Asking the unit to go into update mode',finding:'Waiting for the unit\'s update mode',
- starting:'Starting - the unit clears its old firmware',sending:'Sending the new firmware',checking:'The unit is checking it',done:'Done',failed:'Stopped'};
+ starting:'Starting',erasing:'The unit is clearing its old firmware - keep the phone close',erased:'Cleared - sending next',sending:'Sending the new firmware',checking:'The unit is checking it',done:'Done',failed:'Stopped'};
 function fwPage(fromDev){sheet('⬆ Update the Survey Device','<div id="fwBody"><div class="mut">Looking for new firmware…</div></div>');if(fromDev===true)$('pcBack').onclick=devPage;
  svOnUnits().forEach(function(u){if(!fwVB(u))svInfo(u);});
  fwLoad().then(fwRender);}
