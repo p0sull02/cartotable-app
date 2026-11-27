@@ -3593,10 +3593,13 @@ function svFwNote(i){if(!TFW||!i||!i.ver)return'';var p=String(i.ver).trim().spl
  if(!v||!n||!svVerNewer(n,v))return'';
  return'<div style="margin:-4px 0 12px;padding:10px 12px;border-radius:12px;background:rgba(242,169,59,.14);border:1px solid rgba(242,169,59,.5);font-size:14px;line-height:1.4">⬆ <b>Firmware v'+esc(n)+' is out</b> for this unit (it has v'+esc(v)+'). Update it with Tacheo on a computer: it offers it when the unit is plugged in or connected.</div>';}
 function svDevSheet(keepScan){svFwLoad();if(!svBleOk()){svDlg('<div class="big">Instruments</div><p>Shots from a Tacheo or SAP6 come in over Bluetooth in the <b>Tacheo app for Android</b>. '+(IOS?'iPhones don\'t let apps like this one use Bluetooth, so on an iPhone shots are typed (<b>Add a shot</b>).':'Here, type them with <b>Add a shot</b>.')+'</p>'+(ANDROID?'<a class="btn" href="Topside.apk" style="text-decoration:none">Get the Android app</a>':'')+'<button class="btn alt" id="dvNo">Close</button>');$('dvNo').onclick=svDlgClose;return;}
- var page=SVVIEW=='units'&&$('svUnitsPg'),us=svUnits().filter(function(u){return u.state=='on';}),wt=svUnits().filter(function(u){return u.state=='connecting'||(u.state=='off'&&u.lost&&u.keep);}),h=page?'':'<div class="big">Instruments</div>';
- if(wt.length)h+='<div class="card uWait">'+wt.map(function(u){var c=u.state=='connecting';return'<div class="uWRow" data-wa="'+esc(u.addr)+'"><span class="uDot" style="background:'+(c?'#f5a524':'#5b6773')+'"></span><b>'+esc(svShort(u))+'</b><span class="mut">'+(c?'reconnecting…':'not found')+'</span>'+
-  (c?'<button class="uB uDim" data-w="stop">Stop</button>':'<button class="uB uDim" data-w="retry">Reconnect</button>')+'<button class="uB uDim" data-w="forget">Forget</button></div>';}).join('')+'</div>';
- if(!us.length&&!wt.length)h+='<p class="mut">Switch the Tacheo on with <b>Bluetooth → Phone On</b>. A SAP6 works too, and two or more units can be connected at once (the FS and the BS).</p>';
+ // 27 Nov 2026 (Sully, 15:11: "Don't show previously connected devices, have that buried in a menu. Right now it's confusing. I can't tell
+ // if it's actually reconnecting to both devices."): only connected units are listed. Units the phone remembers are in Saved units (folded,
+ // below Connect), each with what it is doing right now - Reconnecting (with a clock to the 60 s give-up), Not found, or Not connected. While any
+ // is being tried, one line at the top says how many and for how long, nothing more.
+ var page=SVVIEW=='units'&&$('svUnitsPg'),us=svUnits().filter(function(u){return u.state=='on';}),sv=svUnits().filter(function(u){return u.state!='on';}),wt=sv.filter(function(u){return u.state=='connecting';}),h=page?'':'<div class="big">Instruments</div>';
+ if(wt.length)h+='<p class="mut" style="margin:4px 2px 12px">🔄 Reconnecting to '+(wt.length==1?esc(svShort(wt[0])):wt.length+' saved units')+' · <span class="svSeekT">'+svSeekClock(wt)+'</span> <span style="opacity:.75">(Saved units, below)</span></p>';
+ if(!us.length)h+='<p class="mut">'+(wt.length?'No unit connected yet. ':'')+'Switch the Tacheo on with <b>Bluetooth → Phone On</b>. A SAP6 works too, and two or more units can be connected at once (the FS and the BS).</p>';
  us.forEach(function(u){var i=u.info||{};
   var on=u.state=='on',bt=i.batt!=null?i.batt:null,bc=bt==null?'#5b6773':bt<20?'#e5484d':bt<40?'#f5a524':'#30a46c';
   h+='<div class="card ucard" data-a="'+esc(u.addr)+'">'+
@@ -3613,8 +3616,12 @@ function svDevSheet(keepScan){svFwLoad();if(!svBleOk()){svDlg('<div class="big">
    svDet(u.addr+':more','Disconnect or switch off','')+'<div class="uFoot"><button class="uB uDim" data-b="dis">Disconnect</button><button class="uB uRed" data-b="off"><span class="uI">⭘</span>Switch it off</button></div></div></details>'+
    '</div>';});
  var cn='<div id="dvList"><p class="mut">Looking…</p></div><button class="btn alt" id="dvAgain">Look again</button>'+(us.length>1?'<button class="btn alt" id="dvAll">Disconnect all</button>':'');
- if(page)h+='<div class="card uPgSec">'+svDet('connect','Connect '+(us.length?'another unit':'a unit'),'',!us.length)+cn+'</div></details></div>';
- else h+='<div class="k">Connect '+(us.length?'another unit':'a unit')+'</div>'+cn+'<button class="btn alt" id="dvNo">Close</button>';
+ var svSavedHtml=function(){if(!sv.length)return'';return svDet('saved','Saved units ('+sv.length+')',wt.length?wt.length+' reconnecting':'not connected',false)+sv.map(function(u){var c=u.state=='connecting';
+   return'<div class="uWRow" data-wa="'+esc(u.addr)+'"><span class="uDot" style="background:'+(c?'#f5a524':'#5b6773')+'"></span><b>'+esc(svShort(u))+'</b><span class="mut">'+(c?'reconnecting · <span class="svSeekT" data-one="'+esc(u.addr)+'">'+svSeekClock([u])+'</span>':u.lost?'not found':'not connected')+'</span>'+
+   (c?'<button class="uB uDim" data-w="stop">Stop</button>':'<button class="uB uDim" data-w="retry">Connect</button>')+'<button class="uB uDim" data-w="forget">Forget</button></div>';}).join('')+'</div></details>';};
+ if(page)h+='<div class="card uPgSec">'+svDet('connect','Connect '+(us.length?'another unit':'a unit'),'',!us.length)+cn+'</div></details></div>'+(sv.length?'<div class="card uPgSec">'+svSavedHtml()+'</div>':'');
+ else h+='<div class="k">Connect '+(us.length?'another unit':'a unit')+'</div>'+cn+(sv.length?'<div class="card uPgSec" style="margin-top:10px">'+svSavedHtml()+'</div>':'')+'<button class="btn alt" id="dvNo">Close</button>';
+ svSeekTick();
  if(page)page.innerHTML=h;else svDlg(h);svDetWire(page?$('svUnitsPg'):$('svDlgIn'));if($('dvNo'))$('dvNo').onclick=svDlgClose;$('dvAgain').onclick=svScan;if($('dvAll'))$('dvAll').onclick=function(){svUnits().forEach(function(u){u.keep=false;u.state='off';});bClose('');svDevSave();svDlgClose();svDevChip();};
  Array.prototype.forEach.call(document.querySelectorAll((page?'#svUnitsPg':'#svDlgIn')+' [data-wa]'),function(row){var u=SVDEV.units[row.getAttribute('data-wa')];if(!u)return;
   Array.prototype.forEach.call(row.querySelectorAll('[data-w]'),function(b){b.onclick=function(){var k=b.getAttribute('data-w');
@@ -3630,6 +3637,11 @@ function svDevSheet(keepScan){svFwLoad();if(!svBleOk()){svDlg('<div class="big">
    else if(k=='xs')svXsList(u);else if(k=='info')svInfo(u).then(svDevSheet);else if(k=='off'){if(confirm('Switch '+svShort(u)+' off?'))svCmd(0x34,u);}
    else if(k=='dis'){u.keep=false;bClose(u.addr);u.state='off';svDevSave();svDevChip();svDevSheet();}};});});
  if(keepScan&&page)svFoundShow();else svScan();}
+// the reconnect clock: time since the phone started trying, to the 60 s give-up (SV_CONN_MS); ticks while the units page or sheet is open
+function svSeekClock(l){var t=0;l.forEach(function(u){if(u.cs)t=Math.max(t,Date.now()-u.cs);});var s=Math.min(SV_CONN_MS,t)/1000|0;return s+' s of '+(SV_CONN_MS/1000|0)+' s';}
+var svSeekIv=null;function svSeekTick(){clearInterval(svSeekIv);svSeekIv=setInterval(function(){var el=document.querySelectorAll('.svSeekT');if(!el.length){clearInterval(svSeekIv);return;}
+ var wt=svUnits().filter(function(u){return u.state=='connecting';});if(!wt.length){clearInterval(svSeekIv);return;}
+ Array.prototype.forEach.call(el,function(e){var a=e.getAttribute('data-one'),u=a&&SVDEV.units[a];e.textContent=svSeekClock(u?[u]:wt);});},1000);}
 function svScan(){var l=$('dvList');if(l)l.innerHTML='<p class="mut">Looking… (10 s)</p>';SVDEV.found=[];var r=TopsideAndroid.bleScan(10);if(r&&r!='ok'&&l)l.innerHTML='<p>'+esc(r)+'</p>';}
 function svFoundShow(err){var l=$('dvList');if(!l)return;var f=SVDEV.found.filter(function(x){var u=SVDEV.units[x.addr];return!u||u.state=='off';});
  if(!f.length){l.innerHTML='<p class="mut">'+(err?esc(err):'Nothing new. Is the unit on, with Bluetooth → Phone On?')+'</p>';return;}
