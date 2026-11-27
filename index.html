@@ -4079,6 +4079,7 @@ function landingShow(){SIDE='';store('ct-side','');
  h+='<button class="land mvCard" id="lMv"><span class="lic">'+mvIcon(34)+'</span><span class="lt">MapViewer</span><span class="ls" id="lMvS">Your cave maps on the line plot - tap a quad, the map comes up. Works with no signal.</span></button>'+
   '<button class="land taCard" id="lTa"><span class="lic">📐</span><span class="lt">Survey</span><span class="ls">Survey with the Tacheo, your caves, data photos and scans, GPS points, your computer.</span></button>';
  if(HOSTED&&!window.TOPSIDE_PC)h+='<p style="margin:16px 2px 0;font-size:13.5px;display:flex;gap:18px;flex-wrap:wrap"><a href="survey-tutorial.html" style="color:#7fb0ff">🎓 Learn to survey</a><a href="help.html" style="color:#7fb0ff">❓ Help and how-to</a></p>';
+ var av=(navigator.userAgent.match(/TopsideApp\/([\d.]+)/)||[])[1];if(av)h+='<p class="mut" style="font-size:12.5px;margin:14px 2px 0">Tacheo app '+esc(av)+'</p>';   // 27 Nov 2026 (Sully: "Wheres the version number")
  $('landIn').innerHTML=h;$('land').style.display='block';hookInstall('lInstall');
  var e;if(e=$('lFw'))e.onclick=function(){SIDE='tacheo';store('ct-side','tacheo');homeShow();devPage();};
  $('lMv').onclick=function(){mvShow();};
