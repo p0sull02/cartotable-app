@@ -3859,7 +3859,7 @@ setTimeout(function(){if(!window.TOPSIDE_PC&&!FW_OFF)fwLoad().then(fwTileUpd);},
 // 27 Nov 2026: the app's own Bluetooth updater before 1.12 gave the unit 20 s to clear its old firmware and hung up mid-erase, leaving it in its
 // USB update mode (20 Nov, and twice on 27 Nov - the second time 1.12 hadn't installed). Only app 1.12+ may send firmware over Bluetooth.
 function fwAppVer(){var m=navigator.userAgent.match(/TopsideApp\/([\d.]+)/);return m?m[1]:'';}
-function fwAppOk(){var v=fwAppVer();return!!v&&fwCmp(v,'1.13')>=0;}
+function fwAppOk(){var v=fwAppVer();return!!v&&fwCmp(v,'1.14')>=0;}
 function fwOk(){return!FW_OFF&&fwAppOk()&&!!(window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function');}
 function fwParse(txt){var out=[],cur=null;String(txt||'').split(/\r?\n/).forEach(function(l){if(/^\s*#/.test(l))return;var m=l.match(/^(\w+):\s*(.*)$/);
   if(!m){cur=null;return;}if(m[1]=='file'){cur={file:m[2].trim()};out.push(cur);var v=cur.file.match(/_v([\d.]+)_([A-Za-z0-9]+)\.zip$/);if(v){cur.ver=v[1];cur.build=v[2];}}else if(cur)cur[m[1]]=m[2].trim();});
@@ -3880,7 +3880,7 @@ function fwHot(){return!!(FW&&(FW.busy&&FW.busy.stage!='failed'||fwNews()>0));}
 function fwTileUpd(){var e=$('tFw');if(!e)return;e.classList.toggle('fwTile',fwHot());var s=$('tFwS');if(s)s.innerHTML=fwTileSub();}
 function fwTileSub(){if(!FW)return'New unit firmware, over Bluetooth - no computer needed';if(FW.busy)return'Updating '+esc(FW.busy.name)+' - '+(FW.busy.pct||0)+' %';var n=FW.list?fwNews():0;if(n)return'New firmware waiting for '+n+(n==1?' unit':' units')+' - tap to update';return Object.keys(load2('ct-fw-units')||{}).length?'Your units are up to date · firmware over Bluetooth':'Firmware for your units, over Bluetooth';}
 var FW_STAGE={reading:'Opening the firmware',connecting:'Connecting to the unit',jump:'Asking the unit to go into update mode',finding:'Waiting for the unit\'s update mode',
- starting:'Starting',erasing:'The unit is clearing its old firmware - keep the phone close',erased:'Cleared - sending next',sending:'Sending the new firmware',checking:'The unit is checking it',done:'Done',failed:'Stopped'};
+ starting:'Starting',erasing:'The unit is clearing its old firmware - keep the phone close',erased:'Cleared - sending next',sending:'Sending the new firmware',checking:'The unit is checking it',done:'Done',failed:'Stopped',rescuing:'Restarting the unit into its USB update mode - keep the phone close',rescued:'Restarted into its USB update mode'};
 function fwPage(fromDev){sheet('⬆ Update the Survey Device','<div id="fwBody"><div class="mut">Looking for new firmware…</div></div>');if(fromDev===true)$('pcBack').onclick=devPage;
  svOnUnits().forEach(function(u){if(!fwVB(u))svInfo(u);});
  fwLoad().then(fwRender);}
@@ -3889,7 +3889,7 @@ function fwRender(){var b=$('fwBody');if(!b)return;var h='';
  if(FW.err)h+='<div class="card" style="border-color:#b7791f">'+esc(FW.err)+'</div>';
  if(FW_OFF)h+='<div class="card" style="border-color:#334155"><b>Bluetooth updates are paused</b><div class="mut" style="font-size:13px;margin-top:4px">Update the units over USB with Tacheo on a computer for now. This page still shows what each unit runs and the newest firmware.</div></div>';
  else h+='<div class="card" style="border-color:#c0392b"><b>Test switch on - this phone only</b><div class="mut" style="font-size:13px;margin-top:4px">Bluetooth updates are pulled for everyone else: one stopped a unit on 20 Nov. Have the unit\'s USB cable and Tacheo on the computer ready before you start. 5 taps on Home\'s In Cave heading turns this off.</div></div>';
- if(!FW_OFF&&fwAppVer()&&!fwAppOk()&&window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function')h+='<div class="card" style="border-color:#c0392b"><b>This phone\'s Tacheo app is '+esc(fwAppVer())+' - too old for Bluetooth updates</b><div class="mut" style="font-size:13px;margin-top:4px">Its updater stops units part way. Install Tacheo app 1.13 or newer first (Settings → Apps → Tacheo shows the version), then swipe the app closed and open it again.</div></div>';
+ if(!FW_OFF&&fwAppVer()&&!fwAppOk()&&window.TopsideAndroid&&typeof TopsideAndroid.dfuStart=='function')h+='<div class="card" style="border-color:#c0392b"><b>This phone\'s Tacheo app is '+esc(fwAppVer())+' - too old for Bluetooth updates</b><div class="mut" style="font-size:13px;margin-top:4px">Its updater stops units part way. Install Tacheo app 1.14 or newer first (Settings → Apps → Tacheo shows the version), then swipe the app closed and open it again.</div></div>';
  else if(!fwOk()&&!FW_OFF){h+='<div class="card" style="border-color:#1d4ed8"><b>'+(IOS?'iPhones can\'t do this yet':'This needs the Tacheo app for Android')+'</b><div class="mut" style="font-size:13px;margin-top:4px">'+
    (IOS?'iPhones don\'t let web apps use Bluetooth. Update units with Tacheo on your computer (plug the unit in, Updates and Upgrades).':
    (/TopsideApp\//.test(navigator.userAgent)?'This copy of the app is too old for Bluetooth updates - update the Tacheo app (1.9 or newer) from Home.':'A web page can\'t reach the unit\'s radio. Install the Tacheo app for Android (Home has the button), or update the unit with Tacheo on your computer.'))+'</div></div>';}
@@ -3908,19 +3908,22 @@ function fwRender(){var b=$('fwBody');if(!b)return;var h='';
  if(FW.list&&FW.list.length){h+='<div class="k">Newest releases</div>';FW.list.forEach(function(p){h+='<div class="row"><div class="t">'+esc(fwBuildName(p.build))+'</div><div class="s">'+esc(p.ver)+' · '+Math.round((+p.size||0)/1024)+' KB</div></div>';});}
  if(fwTestOn()&&FW.test&&FW.test.length){h+='<div class="k">Test builds (not released)</div>';FW.test.forEach(function(p){h+='<div class="row"><div class="t">'+esc(fwBuildName(p.build))+'</div><div class="s">'+esc(p.ver)+' · '+Math.round((+p.size||0)/1024)+' KB</div></div>';});}
  h+='<label class="row" style="gap:10px;align-items:center;margin-top:12px"><input type="checkbox" id="fwTest"'+(fwTestOn()?' checked':'')+'><div><div class="t">Test builds</div><div class="s">Offer firmware that isn\'t released yet, for trying on your own units</div></div></label>';
- h+='<p class="mut" style="font-size:12.5px;margin-top:14px">Takes about two minutes with the phone next to the unit. Keep the app open and the screen on. If it ever stops part way, the unit waits in its update mode: plug it into Tacheo on your computer and update it there.</p>';
+ if(window.TopsideAndroid&&typeof TopsideAndroid.dfuRescue=='function')h+='<div class="card" style="margin-top:12px"><b>A unit stuck after an update?</b><div class="mut" style="font-size:13px;margin-top:4px">Frozen screen, no buttons: it is waiting in its Bluetooth update mode. This restarts it into its USB update mode (no need to open it) - then plug it into Tacheo on a computer.</div><button class="btn alt" id="fwRescue" style="margin-top:8px;width:100%"'+(FW.busy&&FW.busy.stage!='failed'&&FW.busy.stage!='rescued'?' disabled':'')+'>🔌 Restart a stuck unit</button></div>';
+ h+='<p class="mut" style="font-size:12.5px;margin-top:14px">Takes about five minutes with the phone next to the unit; the screen stays on. If it ever stops part way, the app restarts the unit into its USB update mode: plug it into Tacheo on your computer and update it there.</p>';
  b.innerHTML=h;var e;if(e=$('fwConn'))e.onclick=function(){$('pcOver').style.display='none';svUnitsShow();};
  if(e=$('fwTest'))e.onchange=function(){store('ct-fw-test',this.checked?'1':'0');fwLoad().then(function(){fwRender();fwTileUpd();});};
  [].forEach.call(b.querySelectorAll('[data-fw]'),function(x){x.onclick=function(){fwAsk(x.dataset.fw);};});
+ if(e=$('fwRescue'))e.onclick=function(){FW.busy={addr:'',name:'Stuck unit',ver:'USB update mode',stage:'rescuing',pct:0};fwRender();try{var r=TopsideAndroid.dfuRescue('');if(r!='ok')fwEvent({addr:'',stage:'failed',pct:0,msg:r});}catch(x){fwEvent({addr:'',stage:'failed',pct:0,msg:String(x)});}};
  if(e=$('fwStop'))e.onclick=function(){if(confirm('Stop the update? The unit will wait in its update mode until it gets firmware - over Bluetooth again, or USB.'))try{TopsideAndroid.dfuCancel();}catch(x){}};}
 function fwBuildName(b){return{cave:'TD-1 (OLED)',cavec:'TD-1 (colour screen)',cave2:'TD-2',sap5xc:'SAP5 with the colour screen',sap6:'SAP6',sap6c:'SAP6 (colour screen)'}[b]||b;}
-function fwBusyHtml(){var f=FW.busy,st=FW_STAGE[f.stage]||f.stage,c=f.stage=='failed'?'#c0392b':f.stage=='done'?SVA:'#1d4ed8';
- return'<div class="card" style="border:2px solid '+c+'"><b>'+(f.stage=='done'?'✅ ':f.stage=='failed'?'⚠ ':'⬆ ')+esc(f.name)+' → '+esc(f.ver)+'</b><div style="margin:6px 0 4px;font-size:14px">'+esc(st)+(f.stage=='sending'?' - '+f.pct+' %':'')+'</div>'+
+function fwBusyHtml(){var f=FW.busy,st=FW_STAGE[f.stage]||f.stage,c=f.stage=='failed'?'#c0392b':f.stage=='done'?SVA:f.stage=='rescued'?'#b7791f':'#1d4ed8';
+ return'<div class="card" style="border:2px solid '+c+'"><b>'+(f.stage=='done'?'✅ ':f.stage=='failed'?'⚠ ':f.stage=='rescued'?'🔌 ':'⬆ ')+esc(f.name)+' → '+esc(f.ver)+'</b><div style="margin:6px 0 4px;font-size:14px">'+esc(st)+(f.stage=='sending'?' - '+f.pct+' %':'')+'</div>'+
   '<div style="height:10px;background:#1f2935;border-radius:5px;overflow:hidden"><div style="height:100%;width:'+(f.stage=='done'?100:f.pct||0)+'%;background:'+c+'"></div></div>'+
   (f.msg?'<div class="mut" style="font-size:13px;margin-top:6px">'+esc(f.msg)+'</div>':'')+
   (f.stage=='done'?'<div class="mut" style="font-size:13px;margin-top:6px">The unit restarts on '+esc(f.ver)+'. Reconnecting…</div>':'')+
-  (f.stage=='failed'?'<div class="mut" style="font-size:13px;margin-top:6px">Nothing is lost - shots, calibration and settings stay on the unit. Try again with the phone close to it; if its screen is frozen, plug it into Tacheo on your computer.</div><button class="btn alt" id="fwClr">OK</button>':'')+
-  (f.stage!='done'&&f.stage!='failed'?'<button class="btn alt" id="fwStop" style="margin-top:8px">Stop</button>':'')+'</div>';}
+  (f.stage=='failed'?'<div class="mut" style="font-size:13px;margin-top:6px">Nothing is lost - shots, calibration and settings stay on the unit. Try again with the phone close to it; if its screen stays frozen, use Restart a stuck unit below, then plug it into Tacheo on your computer.</div><button class="btn alt" id="fwClr">OK</button>':'')+
+  (f.stage=='rescued'?'<button class="btn alt" id="fwClr" style="margin-top:8px">OK</button>':'')+
+  (f.stage!='done'&&f.stage!='failed'&&f.stage!='rescued'&&f.stage!='rescuing'?'<button class="btn alt" id="fwStop" style="margin-top:8px">Stop</button>':'')+'</div>';}
 function fwAsk(addr){var u=SVDEV.units[addr],vb=fwVB(u),p=vb&&fwFor(vb.build);if(!u||!p)return;
  if(vb.build!=p.build){toast('That package is for another build');return;}
  if(!confirm((fwCmp(p.ver,vb.ver)?'Update '+svShort(u)+' from '+vb.ver+' to '+p.ver:'Put '+p.ver+' on '+svShort(u)+' again')+(p.test?' (a test build, not released)':'')+'?\n\nAbout two minutes. The unit restarts into its update mode, takes the new firmware and restarts. Shots, calibration and settings stay. Keep the phone next to it with the app open.'))return;
@@ -3933,7 +3936,7 @@ function fwAsk(addr){var u=SVDEV.units[addr],vb=fwVB(u),p=vb&&fwFor(vb.build);if
  }).catch(function(e){fwEvent({addr:addr,stage:'failed',pct:0,msg:e.message||String(e)});});}
 function fwEvent(d){if(!FW.busy)FW.busy={addr:d.addr,name:d.addr,ver:'',stage:'',pct:0};var f=FW.busy;f.stage=d.stage;if(d.pct!=null)f.pct=+d.pct;f.msg=d.msg||'';
  fwTileUpd();
- if(d.stage=='done'||d.stage=='failed'){try{if(FW.lock)FW.lock.release();}catch(x){}FW.lock=null;if(navigator.vibrate)navigator.vibrate(d.stage=='done'?[60,80,60]:[300]);}
+ if(d.stage=='done'||d.stage=='failed'||d.stage=='rescued'){try{if(FW.lock)FW.lock.release();}catch(x){}FW.lock=null;if(navigator.vibrate)navigator.vibrate(d.stage=='done'?[60,80,60]:[300]);}
  if(d.stage=='done'){toast('✅ '+esc(f.name)+' updated to '+esc(f.ver),5000);var a=f.addr;setTimeout(function(){try{var u=svUnitOf(a);if(u.state=='off')bOpen(a);}catch(x){}},9000);
   setTimeout(function(){if(FW.busy&&FW.busy.stage=='done'){FW.busy=null;if($('fwBody'))fwRender();}},25000);}
  if($('fwBody')){fwRender();var c=$('fwClr');if(c)c.onclick=function(){FW.busy=null;fwRender();};}}
